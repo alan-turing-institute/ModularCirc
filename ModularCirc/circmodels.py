@@ -231,44 +231,68 @@ class TimeClass():
     def new_time_step(self):
         self.cti += 1
         
-
-class Chamber():
-    def __init__(self, 
-                 time_object:TimeClass, 
-                #  main_var:str
-                 ) -> None:
-        self._state_var = dict() 
-        self._to      = time_object
-        self.main_var = main_var
         
-        self._state_var['P_i'] = np.zeros((time_object.n_t,))
-        self._state_var['P_o'] = np.zeros((time_object.n_t,))
-        self._state_var['Q_i'] = np.zeros((time_object.n_t,))
-        self._state_var['Q_o'] = np.zeros((time_object.n_t,))
+class StateVariable():
+    def __init__(self, name:str, timeobj:TimeClass) -> None:
+        self._name  = name
+        self._to   = timeobj
+        self._u     = np.zeros((timeobj.n_t,))
+        self._dudt = None
+        
+    def set_dudt(self, function)->None:
+        self._dudt = function
+        
+    def set_name(self, name)->None:
+        self._name = name
         
     @property
+    def name(self):
+        return self._name
+        
+
+class Chamber():
+    def __init__(self,
+                 name,
+                 time_object:TimeClass, 
+                 ) -> None:
+        self._name     = name
+        self._to      = time_object
+        
+        self._P_i = StateVariable(name=name+'_P_i')
+        self._Q_i = StateVariable(name=name+'_Q_i')
+        self._P_o = StateVariable(name=name+'_P_o')
+        self._Q_o = StateVariable(name=name+'_Q_o')
+        self._V   = StateVariable(name=name+'_V' )
+        
+        self._V.set_dudt(function=chamber_volume_rate_change)
+                
+    @property
     def P_i(self):
-        return self._state_var['P_i']
+        return self._P_i._u
     
     @property
     def P_o(self):
-        return self._state_var['P_o']
+        return self._P_o._u
     
     @property
     def Q_i(self):
-        return self._state_var['Q_i']
+        return self._Q_i._u
     
     @property
     def Q_o(self):
-        return self._state_var['Q_o']
+        return self._Q_o._u
     
-    def comp_dvdt(self, ind):
-        return self.Q_i[ind] - self.Q_o[ind]
+    @property
+    def V(self):
+        return self._V._u
     
-    def comp_v(self, q_i, q_o, v_prev):
-        return v_prev  + self._to.dt * self.comp_dvdt(q_i, q_o)      
+    def comp_dvdt(self, intq:int=None, q_i:float=None, q_o:float=None):
+        if intq is not None:
+            return self.Q_i[intq] - self.Q_o[intq]
+        elif q_i is not None and q_o is not None:
+            return q_i - q_o
         
-        
+            
 class Rc_component(Chamber):
     def __init__(self, 
                  time_object:TimeClass, 
@@ -279,20 +303,35 @@ class Rc_component(Chamber):
                  ) -> None:
         # super().__init__(time_object, main_var)
         super().__init__(time_object)
-        self._state_var['V']   = np.zeros((time_object.n_t,))
         self.R = r
         self.C = c
         self.V_ref = v_ref
         
-    @property
-    def V(self):
-        return self._state_var['V']
+    def comp_dpdt(self, intq:int=None, q_in:float=None, q_out:float=None):
+        if intq is None and q_in is None and q_out is None:
+            raise Exception("You have to either asign a value to intq or to q_in and q_out.")
+        elif intq is None and q_in is None and q_out is not None:
+            raise Exception("If you define dpdt in terms of q_in and q_out both have to be assigned.")
+        elif intq is None and q_in is not None and q_out is None:
+            raise Exception("If you define dpdt in terms of q_in and q_out both have to be assigned.")
         
-    def comp_dpdt(self, Q_in:float, Q_out:float):
-        return 1.0 /  self.C * (Q_in - Q_out)
+        if intq is not None:    
+            return 1.0 /  self.C * (self.Q_i[intq] - self.Q_o[intq])
+        elif q_in is not None and q_out is not None:
+            return 1.0 / self.C * (q_in - q_out)
+        else: 
+            raise Exception("Input case not covered.")
     
-    def comp_p(self, V):
-        return (V - self.V_ref) / self.C
+    def comp_p_i(self, intv:int):
+        return (self.V[intv] - self.V_ref) / self.C
+    
+    def comp_q_o(self, intp:int=None, p_i:float=None, p_o:float=None):
+        if intp is not None:
+            return (self.P_i[intp] - self.P_o[intp]) / self.R
+        elif p_i is not None and p_o is not None:
+            return (p_i - p_o) / self.R
+        else:
+            raise Exception("Input case not covered")
     
     
 class Valve_leaky_diode(Chamber):
@@ -303,17 +342,22 @@ class Valve_leaky_diode(Chamber):
                  ) -> None:
         super().__init__(time_object)
         self.R = r
-        self._state_var['Q_o'] = self.Q_i
+        self._Q_o._u = self.Q_i
         self.max_func = max_func
         
-    def comp_q(self, p_i, p_o):
-        return self.max_func(p_i - p_o) / self.R
+    def comp_q(self, intp:int=None, p_in:float=None, p_out:float=None):
+        if intp is not None:
+            return self.max_func(self.P_i[intp] - self.P_o[intp]) / self.R
+        elif p_in is not None and p_out is not None:
+            return (p_in - p_out) / self.R
+        
     
 class HC_constant_elastance(Chamber):
     def __init__(self, 
                  time_object: TimeClass,
                  E_pas: float, 
                  E_act: float,
+                 V_ref: float,
                  activation_function_template = activation_function_1,
                  *args, **kwargs
                  ) -> None:
@@ -321,9 +365,10 @@ class HC_constant_elastance(Chamber):
         self._af = lambda t : activation_function_template(t, *args, **kwargs)
         self.E_pas = E_pas
         self.E_act = E_act
+        self.V_ref = V_ref
         self.eps = 1.0e-3
         
-        self._state_var['V']   = np.zeros((time_object.n_t,))
+        self._P_i._u = self.P_o
         
     def comp_E(self, t:float) -> float:
         return self._af(t) * self.E_act + (1.0 - self._af(t)) * self.E_pas
@@ -331,61 +376,156 @@ class HC_constant_elastance(Chamber):
     def comp_dEdt(self, t:float) -> float:
         return (self.comp_E(t + self.eps) - self.comp_E(t - self.eps)) / 2.0 / self.eps
     
-    def comp_dvdt(self, q_in:float, q_out:float) -> float:
-        return q_in - q_out
+    def comp_p(self, intt:int, intv:int):
+        e = self.comp_E(self._to._sym_t_norm[intt])
+        v = self.V[intv]
+        return e * (v - self.V_ref)
     
-    def comp_dpdt(self, t:float, q_in:float, q_out:float) -> float:
-        dvdt = self.comp_dvdt(q_in=q_in, q_out=q_out)
-        dEdt = self.comp_dEdt(t)
-        
-        
-        
+    def comp_dpdt(self, intt:int, intq:int=None, V:float=None, q_i:float=None, q_o:float=None) -> float:
+        dEdt = self.comp_dEdt(self._to._sym_t_norm[intt])
+        e    = self.comp_E(self._to._sym_t_norm[intt])
+        if intq is not None:
+            dvdt = self.comp_dvdt(intq=intq)
+            v    = self.V[intq]
+            return dEdt * (v - self.V_ref) + e * dvdt
+        elif V is not None and q_i is not None and q_o is not None:
+            return dEdt(V - self.V_ref) + e * (q_i - q_o)
+        else: 
+            raise Exception("Input case not covered.")
         
 class OdeModel():
     def __init__(self, time_setup_dict) -> None:
         self.time_object = TimeClass(time_setup_dict=time_setup_dict)
+        self._state_variable_dict = dict()
     
-    def connect_modules(self, module1:Chamber, module2:Chamber) ->None:
-        module2._state_var['Q_i'] = module1.Q_o
-        module2._state_var['P_o'] = module1.P_o
+    def connect_modules(self, 
+                        module1:Chamber, 
+                        module2:Chamber,
+                        pvariable:StateVariable = None,
+                        qvariable:StateVariable = None,
+                        plabel:str=None, 
+                        qlabel:str=None
+                        ) ->None:   
+        """
+        Method for connecting chamber modules.œ
+        
+        Inputs
+        ------
+        module1 (Chamber) : upstream chamber
+        module2 (Chamber) : downstream chamber
+        plabel (str) : new name for the shared pressure state variable
+        qlabel (str) : new name for the shared flow state variable
+        """     
+        module2._Q_i._u = module1.Q_o
+        module2._P_i._u = module1.P_o
+        if plabel is not None:
+            module1._P_o.set_name(plabel)
+            self._state_variable_dict[plabel] = module1._P_o
+        if qlabel is not None:
+            module1._Q_o.set_name(plabel)
+            self._state_variable_dict[qlabel] = module2._Q_o
+
     
 class NaghaviModel(OdeModel):
     def __init__(self, time_setup_dict) -> None:
         super().__init__(time_setup_dict)
         
-        # define a set of main variables
-        self._main_variable_keys = {
-            'p_lv', # pressure in the left ventricle
-            'p_la', # pressure in the left atrium
-            'p_ao', # pressure in the aorta
-            'p_ar', # pressure in the arteries
-            'p_lv', # pressure in the vena cava
-        }
         
-        self.av = Valve_leaky_diode(time_object=self.time_object,
-                                    r = 1.0,
-                                    max_func=relu_max
-                                    )
-        
+        # Defining the aorta object
         self.ao = Rc_component(time_object=self.time_object, 
                                   r = 1.0,
                                   c = 1.0, 
                                   v_ref = 1.0,
                                   )
         
+        # Defining the arterial system object
         self.art = Rc_component(time_object=self.time_object,
                                 r = 1.0,
                                 c = 1.0,
                                 v_ref= 1.0,
                                 )
         
+        # Defining the venous system object
         self.ven = Rc_component(time_object=self.time_object,
                                 r = 1.0,
                                 c = 1.0,
                                 v_ref= 1.0,
                                 )
         
-        self.connect_modules(self.ao,  self.art)
-        self.connect_modules(self.art, self.ven)
+        # Defining the aortic valve object
+        self.av  = Valve_leaky_diode(time_object=self.time_object,
+                                     r=1.0,
+                                     max_func=relu_max
+                                     )
+        
+        # Defining the mitral valve object
+        self.mv = Valve_leaky_diode(time_object=self.time_object,
+                                    r=1.0,
+                                    max_func=relu_max
+                                    )
+        
+        # Defining the left atrium activation function
+        la_af = lambda t: activation_function_1(t=t, 
+                                                t_max=1.0, 
+                                                t_tr=1.0, 
+                                                tau=1.0
+                                                )
+        # Defining the left atrium class
+        self.la = HC_constant_elastance(time_object=self.time_object,
+                                        E_pas=1.0,
+                                        E_act=1.0,
+                                        V_ref=1.0,
+                                        activation_function_template=la_af
+                                        )
+        
+        # Defining the left ventricle activation function
+        lv_af = lambda t: activation_function_1(t=t,
+                                                t_max=1.0,
+                                                t_tr=1.0,
+                                                tau=1.0
+                                                )
+        self.lv = HC_constant_elastance(time_object=self.time_object,
+                                        E_pas=1.0,
+                                        E_act=1.0,
+                                        V_ref=1.0,
+                                        activation_function_template=lv_af
+                                        )
+        
+        
+        # connect the left ventricle class to the aortic valve
+        self.connect_modules(self.lv,  self.av,  plabel='p_lv',   qlabel='q_la')
+        # connect the aortic valve to the aorta
+        self.connect_modules(self.av,  self.ao,  plabel='p_ao',   qlabel='q_av')
+        # connect the aorta to the arteries
+        self.connect_modules(self.ao,  self.art, plabel= 'p_art', qlabel= 'q_ao')
+        # connect the arteries to the veins
+        self.connect_modules(self.art, self.ven, plabel= 'p_ven', qlabel= 'q_art')
+        # connect the veins to the left atrium
+        self.connect_modules(self.ven, self.la,  plabel= 'p_la',  qlabel='q_ven')
+        # connect the left atrium to the mitral valve
+        self.connect_modules(self.la,  self.mv,  plabel= 'p_la',  qlabel='q_mv')
+        # connect the mitral valve to the left ventricle
+        self.connect_modules(self.mv,  self.lv,  plabel='p_lv' ,  qlabel='p_lv')
+        
+        # define a set of main variables
+        self._main_variables_dictionary = {
+            'p_lv'  : self.lv.P_i,  # pressure in the left ventricle
+            'p_la'  : self.la.P_i,  # pressure in the left atrium
+            'p_ao'  : self.ao.P_i,  # pressure in the aorta
+            'p_art' : self.art.P_i, # pressure in the arteries
+            'p_ven' : self.ven.P_i, # pressure in the vena cava
+            'q_mv'  : self.mv.Q_i,  # flow through the mitral valve
+            'q_av'  : self.av.Q_i,  
+        }
+        
+        self
+        
+    def get_main_variables(self, indt:int):
+        return {key:val[indt] for key, val in self._main_variables_dictionary.items()}
+    
+    def update_main_variables(self, indt:int, value_dict:dict):
+        for key in value_dict.keys():
+            self._main_variables_dictionary[key][indt] = value_dict[key]
+        
         
         
