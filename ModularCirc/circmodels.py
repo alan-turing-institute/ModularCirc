@@ -549,25 +549,6 @@ class NaghaviModel(OdeModel):
         # connect the mitral valve to the left ventricle
         self.connect_modules(self.mv,  self.lv,  plabel='p_lv' ,  qlabel='q_mv')
         
-    #     # define a set of main variables
-    #     self._main_variables_dictionary = {
-    #         'p_lv'  : self.lv.P_i,  # pressure in the left ventricle
-    #         'p_la'  : self.la.P_i,  # pressure in the left atrium
-    #         'p_ao'  : self.ao.P_i,  # pressure in the aorta
-    #         'p_art' : self.art.P_i, # pressure in the arteries
-    #         'p_ven' : self.ven.P_i, # pressure in the vena cava
-    #         'q_mv'  : self.mv.Q_i,  # flow through the mitral valve
-    #         'q_av'  : self.av.Q_i,  
-    #     }
-        
-    #     self
-        
-    # def get_main_variables(self, indt:int):
-    #     return {key:val[indt] for key, val in self._main_variables_dictionary.items()}
-    
-    # def update_main_variables(self, indt:int, value_dict:dict):
-    #     for key in value_dict.keys():
-    #         self._main_variables_dictionary[key][indt] = value_dict[key]
         
         
         
