@@ -239,10 +239,14 @@ class StateVariable():
         self._u     = np.zeros((timeobj.n_t,))
         self._dudt = None
         
+    def __repr__(self) -> str:
+        return f" > variable name: {self._name}"
+        
     def set_dudt(self, function)->None:
         self._dudt = function
         
     def set_name(self, name)->None:
+        # print(f" -- name {name} replaces {÷self._name}")
         self._name = name
         
     @property
@@ -258,13 +262,23 @@ class Chamber():
         self._name     = name
         self._to      = time_object
         
-        self._P_i = StateVariable(name=name+'_P_i')
-        self._Q_i = StateVariable(name=name+'_Q_i')
-        self._P_o = StateVariable(name=name+'_P_o')
-        self._Q_o = StateVariable(name=name+'_Q_o')
-        self._V   = StateVariable(name=name+'_V' )
+        self._P_i = StateVariable(name=name+'_P_i', timeobj=time_object)
+        self._Q_i = StateVariable(name=name+'_Q_i', timeobj=time_object)
+        self._P_o = StateVariable(name=name+'_P_o', timeobj=time_object)
+        self._Q_o = StateVariable(name=name+'_Q_o', timeobj=time_object)
+        self._V   = StateVariable(name=name+'_V' , timeobj=time_object)
         
         self._V.set_dudt(function=chamber_volume_rate_change)
+        return
+        
+    def __repr__(self) -> str:
+        var = (f" Component {self._name}" + '\n' +
+               f" - P_i " + str(self._P_i) + '\n' +
+               f" - Q_i " + str(self._Q_i) + '\n' +
+               f" - P_o " + str(self._P_o) + '\n' +
+               f" - Q_o " + str(self._Q_o) + '\n'
+               )
+        return var
                 
     @property
     def P_i(self):
@@ -292,9 +306,18 @@ class Chamber():
         elif q_i is not None and q_o is not None:
             return q_i - q_o
         
+    def make_unique_io_state_variable(self, q_flag:bool=False, p_flag:bool=True) -> None:
+        if q_flag: 
+            self._Q_o = self._Q_i
+            self._Q_o.set_name(self._name + '_Q')
+        if p_flag: 
+            self._P_o = self._P_i
+            self._P_o.set_name(self._name + '_P')
+        return 
             
 class Rc_component(Chamber):
     def __init__(self, 
+                 name:str, 
                  time_object:TimeClass, 
                 #  main_var:str, 
                  r:float, 
@@ -302,7 +325,7 @@ class Rc_component(Chamber):
                  v_ref:float
                  ) -> None:
         # super().__init__(time_object, main_var)
-        super().__init__(time_object)
+        super().__init__(time_object=time_object, name=name)
         self.R = r
         self.C = c
         self.V_ref = v_ref
@@ -334,15 +357,18 @@ class Rc_component(Chamber):
             raise Exception("Input case not covered")
     
     
-class Valve_leaky_diode(Chamber):
+class Valve_non_ideal(Chamber):
     def __init__(self, 
+                 name:str,
                  time_object: TimeClass,
                  r:float, 
                  max_func
                  ) -> None:
-        super().__init__(time_object)
+        super().__init__(name=name, time_object=time_object)
+        # allow for pressure gradient but not for flow
+        self.make_unique_io_state_variable(q_flag=True, p_flag=False) 
+        # setting the resistance value
         self.R = r
-        self._Q_o._u = self.Q_i
         self.max_func = max_func
         
     def comp_q(self, intp:int=None, p_in:float=None, p_out:float=None):
@@ -354,6 +380,7 @@ class Valve_leaky_diode(Chamber):
     
 class HC_constant_elastance(Chamber):
     def __init__(self, 
+                 name:str,
                  time_object: TimeClass,
                  E_pas: float, 
                  E_act: float,
@@ -361,14 +388,14 @@ class HC_constant_elastance(Chamber):
                  activation_function_template = activation_function_1,
                  *args, **kwargs
                  ) -> None:
-        super().__init__(time_object)
+        super().__init__(name=name, time_object=time_object)
         self._af = lambda t : activation_function_template(t, *args, **kwargs)
         self.E_pas = E_pas
         self.E_act = E_act
         self.V_ref = V_ref
         self.eps = 1.0e-3
         
-        self._P_i._u = self.P_o
+        self.make_unique_io_state_variable(p_flag=True, q_flag=False)
         
     def comp_E(self, t:float) -> float:
         return self._af(t) * self.E_act + (1.0 - self._af(t)) * self.E_pas
@@ -407,7 +434,7 @@ class OdeModel():
                         qlabel:str=None
                         ) ->None:   
         """
-        Method for connecting chamber modules.œ
+        Method for connecting chamber modules.
         
         Inputs
         ------
@@ -415,51 +442,64 @@ class OdeModel():
         module2 (Chamber) : downstream chamber
         plabel (str) : new name for the shared pressure state variable
         qlabel (str) : new name for the shared flow state variable
-        """     
-        module2._Q_i._u = module1.Q_o
-        module2._P_i._u = module1.P_o
+        """
+        module2._Q_i = module1._Q_o
+        module2._P_i = module1._P_o
+        # module2._Q_i._u = module1.Q_o
+        # module2._P_i._u = module1.P_o
         if plabel is not None:
             module1._P_o.set_name(plabel)
             self._state_variable_dict[plabel] = module1._P_o
+            print(plabel + ' ' + module1._P_o.name)
         if qlabel is not None:
-            module1._Q_o.set_name(plabel)
-            self._state_variable_dict[qlabel] = module2._Q_o
+            module1._Q_o.set_name(qlabel)
+            self._state_variable_dict[qlabel] = module1._Q_o
+            print(qlabel + ' ' + module1._Q_o.name)
+            
+    @property
+    def state_variable_dict(self):
+        return self._state_variable_dict
 
     
 class NaghaviModel(OdeModel):
-    def __init__(self, time_setup_dict) -> None:
+    def __init__(self, time_setup_dict,) -> None:
         super().__init__(time_setup_dict)
         
         
         # Defining the aorta object
-        self.ao = Rc_component(time_object=self.time_object, 
-                                  r = 1.0,
-                                  c = 1.0, 
-                                  v_ref = 1.0,
+        self.ao = Rc_component( name='Aorta',
+                                time_object=self.time_object, 
+                                r = 1.0,
+                                c = 1.0, 
+                                v_ref = 1.0,
                                   )
         
         # Defining the arterial system object
-        self.art = Rc_component(time_object=self.time_object,
+        self.art = Rc_component(name='Arteries',
+                                time_object=self.time_object,
                                 r = 1.0,
                                 c = 1.0,
                                 v_ref= 1.0,
                                 )
         
         # Defining the venous system object
-        self.ven = Rc_component(time_object=self.time_object,
+        self.ven = Rc_component(name='VenaCava',
+                                time_object=self.time_object,
                                 r = 1.0,
                                 c = 1.0,
                                 v_ref= 1.0,
                                 )
         
         # Defining the aortic valve object
-        self.av  = Valve_leaky_diode(time_object=self.time_object,
+        self.av  = Valve_non_ideal(  name='AorticValve',
+                                     time_object=self.time_object,
                                      r=1.0,
                                      max_func=relu_max
                                      )
         
         # Defining the mitral valve object
-        self.mv = Valve_leaky_diode(time_object=self.time_object,
+        self.mv = Valve_non_ideal(  name='MitralValve',
+                                    time_object=self.time_object,
                                     r=1.0,
                                     max_func=relu_max
                                     )
@@ -471,7 +511,8 @@ class NaghaviModel(OdeModel):
                                                 tau=1.0
                                                 )
         # Defining the left atrium class
-        self.la = HC_constant_elastance(time_object=self.time_object,
+        self.la = HC_constant_elastance(name='LeftAtrium',
+                                        time_object=self.time_object,
                                         E_pas=1.0,
                                         E_act=1.0,
                                         V_ref=1.0,
@@ -484,7 +525,8 @@ class NaghaviModel(OdeModel):
                                                 t_tr=1.0,
                                                 tau=1.0
                                                 )
-        self.lv = HC_constant_elastance(time_object=self.time_object,
+        self.lv = HC_constant_elastance(name='LeftVentricle', 
+                                        time_object=self.time_object,
                                         E_pas=1.0,
                                         E_act=1.0,
                                         V_ref=1.0,
@@ -493,7 +535,7 @@ class NaghaviModel(OdeModel):
         
         
         # connect the left ventricle class to the aortic valve
-        self.connect_modules(self.lv,  self.av,  plabel='p_lv',   qlabel='q_la')
+        self.connect_modules(self.lv,  self.av,  plabel='p_lv',   qlabel='q_av')
         # connect the aortic valve to the aorta
         self.connect_modules(self.av,  self.ao,  plabel='p_ao',   qlabel='q_av')
         # connect the aorta to the arteries
@@ -505,27 +547,27 @@ class NaghaviModel(OdeModel):
         # connect the left atrium to the mitral valve
         self.connect_modules(self.la,  self.mv,  plabel= 'p_la',  qlabel='q_mv')
         # connect the mitral valve to the left ventricle
-        self.connect_modules(self.mv,  self.lv,  plabel='p_lv' ,  qlabel='p_lv')
+        self.connect_modules(self.mv,  self.lv,  plabel='p_lv' ,  qlabel='q_mv')
         
-        # define a set of main variables
-        self._main_variables_dictionary = {
-            'p_lv'  : self.lv.P_i,  # pressure in the left ventricle
-            'p_la'  : self.la.P_i,  # pressure in the left atrium
-            'p_ao'  : self.ao.P_i,  # pressure in the aorta
-            'p_art' : self.art.P_i, # pressure in the arteries
-            'p_ven' : self.ven.P_i, # pressure in the vena cava
-            'q_mv'  : self.mv.Q_i,  # flow through the mitral valve
-            'q_av'  : self.av.Q_i,  
-        }
+    #     # define a set of main variables
+    #     self._main_variables_dictionary = {
+    #         'p_lv'  : self.lv.P_i,  # pressure in the left ventricle
+    #         'p_la'  : self.la.P_i,  # pressure in the left atrium
+    #         'p_ao'  : self.ao.P_i,  # pressure in the aorta
+    #         'p_art' : self.art.P_i, # pressure in the arteries
+    #         'p_ven' : self.ven.P_i, # pressure in the vena cava
+    #         'q_mv'  : self.mv.Q_i,  # flow through the mitral valve
+    #         'q_av'  : self.av.Q_i,  
+    #     }
         
-        self
+    #     self
         
-    def get_main_variables(self, indt:int):
-        return {key:val[indt] for key, val in self._main_variables_dictionary.items()}
+    # def get_main_variables(self, indt:int):
+    #     return {key:val[indt] for key, val in self._main_variables_dictionary.items()}
     
-    def update_main_variables(self, indt:int, value_dict:dict):
-        for key in value_dict.keys():
-            self._main_variables_dictionary[key][indt] = value_dict[key]
+    # def update_main_variables(self, indt:int, value_dict:dict):
+    #     for key in value_dict.keys():
+    #         self._main_variables_dictionary[key][indt] = value_dict[key]
         
         
         
