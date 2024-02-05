@@ -5,19 +5,8 @@ from .HelperRoutines import *
 from .Time import *
 from .StateVariable import StateVariable
 from .Component import *
+from .Solver import *
 
-        
-class Solver():
-    def __init__(self, type:str=None, time_object:TimeClass=None) -> None:
-        self.type = None
-        self._pvk = []
-        self._svk = []
-        
-    def setup(self, state_variable_dictionary:dict)->None:
-        print('Blah')
-        for key, component in state_variable_dictionary.items():
-            print(f' * {key}')
-            
         
         
 class OdeModel():
@@ -27,7 +16,7 @@ class OdeModel():
         self.commponents = dict()
         self.name = 'Template'
         
-        self.solver = Solver(time_object=self.time_object)
+        self.solver = Solver(time_object=self.time_object, state_variable_dictionary= self._state_variable_dict)
     
     def connect_modules(self, 
                         module1:Component, 
@@ -47,8 +36,29 @@ class OdeModel():
         plabel (str) : new name for the shared pressure state variable
         qlabel (str) : new name for the shared flow state variable
         """
-        module2._Q_i = module1._Q_o
-        module2._P_i = module1._P_o
+        if qvariable is None:
+            print(f" {module1._Q_o._ode_sys_mapping['u_func']} : {module1._Q_o._ode_sys_mapping['dudt_func']} : {module2._Q_i._ode_sys_mapping['u_func']} : {module2._Q_i._ode_sys_mapping['dudt_func']}")
+            if module1._Q_o._ode_sys_mapping['u_func'] is not None or module1._Q_o._ode_sys_mapping['dudt_func'] is not None:
+                module2._Q_i = module1._Q_o
+            elif module2._Q_i._ode_sys_mapping['u_func'] is not None or module2._Q_i._ode_sys_mapping['dudt_func'] is not None:
+                module1._Q_o = module2._Q_i
+            else:
+                raise Exception(f'Definition of flow between modules {module1._name} and {module2._name} is ambiguous.')
+        else:
+            module2._Q_i = qvariable
+            module1._Q_o = qvariable
+            
+        if pvariable is None:
+            if module1._P_o._ode_sys_mapping['u_func'] is not None or module1._P_o._ode_sys_mapping['dudt_func'] is not None:
+                module2._P_i = module1._P_o
+            elif module2._P_i._ode_sys_mapping['u_func'] is not None or module2._P_i._ode_sys_mapping['dudt_func'] is not None:
+                module1._P_o = module2._P_i
+            else:
+                raise Exception(f'Definition of pressure between modules {module1._name} and {module2._name} is ambiguous')
+        else:
+            module2._P_i = pvariable
+            module1._P_o = pvariable
+             
         if plabel is not None:
             module1._P_o.set_name(plabel)
             self._state_variable_dict[plabel] = module1._P_o
@@ -130,6 +140,8 @@ class NaghaviModel(OdeModel):
                                         V_ref=1.0,
                                         activation_function_template=la_af
                                         )
+        self._state_variable_dict['v_la'] = self.commponents['la']._V
+        self._state_variable_dict['v_la'].set_name('v_la')
         
         # Defining the left ventricle activation function
         lv_af = lambda t: activation_function_1(t=t,
@@ -144,13 +156,20 @@ class NaghaviModel(OdeModel):
                                         V_ref=1.0,
                                         activation_function_template=lv_af
                                         )
+        self._state_variable_dict['v_lv'] = self.commponents['lv']._V
+        self._state_variable_dict['v_lv'].set_name('v_lv')
         
+        for component in self.commponents.values():
+            component.setup()
         
         # connect the left ventricle class to the aortic valve
         self.connect_modules(self.commponents['lv'],  
                              self.commponents['av'],  
                              plabel='p_lv',   
-                             qlabel='q_av')
+                             qlabel='q_av',
+                            #  pvariable=self.commponents['lv']._P_o,
+                            #  qvariable=self.commponents['av']._Q_i
+                             )
         # connect the aortic valve to the aorta
         self.connect_modules(self.commponents['av'],  
                              self.commponents['ao'],  
@@ -170,7 +189,10 @@ class NaghaviModel(OdeModel):
         self.connect_modules(self.commponents['ven'], 
                              self.commponents['la'],  
                              plabel= 'p_la',  
-                             qlabel='q_ven')
+                             qlabel='q_ven',
+                            #  qvariable=self.commponents['ven']._Q_o,
+                            #  pvariable=self.commponents['la']._P_i
+                             )
         # connect the left atrium to the mitral valve
         self.connect_modules(self.commponents['la'],  
                              self.commponents['mv'],  
@@ -180,12 +202,12 @@ class NaghaviModel(OdeModel):
         self.connect_modules(self.commponents['mv'],  
                              self.commponents['lv'],  
                              plabel='p_lv',  
-                             qlabel='q_mv')
-        
-        for component in self.commponents.values():
-            component.setup()
+                             qlabel='q_mv',
+                            #  pvariable=self.commponents['lv']._P_o,
+                            #  qvariable=self.commponents['mv']._Q_i
+                             )
             
-        self.solver.setup(state_variable_dictionary=self.state_variable_dict,)
+        self.solver.setup()
         
         
         
