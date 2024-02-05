@@ -392,6 +392,8 @@ class Rc_component(Chamber):
         self._P_i.set_inputs([self._Q_i.name, self._Q_o.name])
         self._Q_o.set_u_func(lambda p_in, p_out : resistor_model_flow(p_in=p_in, p_out=p_out, r=self.R))
         self._Q_o.set_inputs([self._P_i.name, self._P_o.name])
+        self._V.set_dudt_func(chamber_volume_rate_change)
+        self._V.set_inputs([self._Q_i.name, self._Q_o.name])
     
     
 class Valve_non_ideal(Chamber):
@@ -449,9 +451,15 @@ class HC_constant_elastance(Chamber):
         v = self.V[intv]
         return e * (v - self.V_ref)
     
-    def comp_dpdt(self, intt:int, intq:int=None, V:float=None, q_i:float=None, q_o:float=None) -> float:
-        dEdt = self.comp_dEdt(self._to._sym_t_norm[intt])
-        e    = self.comp_E(self._to._sym_t_norm[intt])
+    def comp_dpdt(self, intt:int=None, intq:int=None, t:float=None, V:float=None, q_i:float=None, q_o:float=None) -> float:
+        if intt is not None:
+            dEdt = self.comp_dEdt(self._to._sym_t_norm[intt])
+            e    = self.comp_E(self._to._sym_t_norm[intt])
+        elif t is not None:
+            dEdt = self.comp_dEdt(t)
+            e    = self.comp_E(t)
+        else:
+            raise Exception("Input case not covered.")
         if intq is not None:
             dvdt = self.comp_dvdt(intq=intq)
             v    = self.V[intq]
@@ -460,6 +468,26 @@ class HC_constant_elastance(Chamber):
             return dEdt(V - self.V_ref) + e * (q_i - q_o)
         else: 
             raise Exception("Input case not covered.")
+        return
+    
+    def setup(self) -> None:
+        self._V.set_dudt_func(chamber_volume_rate_change)
+        self._V.set_inputs([self._Q_i.name, self._Q_o.name])
+        self._P_i.set_dudt_func(lambda t, V, q_i, q_o: self.comp_dpdt(V=V, q_i=q_i, q_o=q_o)) # setup to be reviewed
+        self._P_i.set_inputs(['Time', self._V.name, self._Q_i.name, self._Q_o.name])
+        
+class Solver():
+    def __init__(self, type:str=None, time_object:TimeClass=None) -> None:
+        self.type = None
+        self._pvk = []
+        self._svk = []
+        
+    def setup(self, state_variable_dictionary:dict)->None:
+        print('Blah')
+        for key, component in state_variable_dictionary.items():
+            print(f' * {key}')
+            
+        
         
 class OdeModel():
     def __init__(self, time_setup_dict) -> None:
@@ -467,6 +495,8 @@ class OdeModel():
         self._state_variable_dict = dict()
         self.commponents = dict()
         self.name = 'Template'
+        
+        self.solver = Solver(time_object=self.time_object)
     
     def connect_modules(self, 
                         module1:Chamber, 
@@ -494,6 +524,8 @@ class OdeModel():
         if qlabel is not None:
             module1._Q_o.set_name(qlabel)
             self._state_variable_dict[qlabel] = module1._Q_o
+        return
+        
             
     @property
     def state_variable_dict(self):
@@ -505,8 +537,8 @@ class OdeModel():
             out += (str(component) + '\n')
         out += '\n'
         out += 'Main State Variable Dictionary \n'
-        for val, key in self._state_variable_dict.items():
-            out += f" - {val} \n"
+        for key in self._state_variable_dict.keys():
+            out += f" - {key} \n"
         return out
 
     
@@ -619,7 +651,10 @@ class NaghaviModel(OdeModel):
                              plabel='p_lv',  
                              qlabel='q_mv')
         
-        self.commponents['ao'].setup()
+        for component in self.commponents.values():
+            component.setup()
+            
+        self.solver.setup(state_variable_dictionary=self.state_variable_dict,)
         
         
         
