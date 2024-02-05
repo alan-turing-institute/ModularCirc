@@ -168,3 +168,11 @@ def chamber_exponential_law(v:float, E:float, k:float, v_ref:float, *args, **kwa
         float: chamber pressure
     """
     return E * np.exp(k * (v - v_ref) - 1)
+
+
+BOLD = '\033[1m'
+YELLOW = '\033[93m'
+END  = '\033[0m'
+
+def bold_text(str_:str):
+    return BOLD + YELLOW + str_ + END
