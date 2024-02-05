@@ -11,17 +11,21 @@ class StateVariable():
         self._ode_sys_mapping = {
             'dudt_func' : None,
             'u_func'    : None,
-            'inputs'    : {}
+            'inputs'    : {},
+            'dudt_name' : None,
+            'u_name'    : None,
         }
         
     def __repr__(self) -> str:
         return f" > variable name: {self._name}"
         
-    def set_dudt_func(self, function)->None:
+    def set_dudt_func(self, function, function_name:str)->None:
         self._ode_sys_mapping['dudt_func'] = function
+        self._ode_sys_mapping['dudt_name'] = function_name
         
-    def set_u_func(self, function)->None:
+    def set_u_func(self, function, function_name:str)->None:
         self._ode_sys_mapping['u_func'] = function
+        self._ode_sys_mapping['u_name'] = function_name
         
     def set_inputs(self, inputs:list[str]):
         self._ode_sys_mapping['inputs'] = inputs
@@ -34,9 +38,21 @@ class StateVariable():
         return self._name
     
     @property
-    def dudt(self):
+    def dudt_func(self):
         return self._ode_sys_mapping['dudt_func']
+    
+    @property
+    def dudt_name(self):
+        return self._ode_sys_mapping['dudt_name']
     
     @property
     def inputs(self):
         return self._ode_sys_mapping['inputs']
+    
+    @property
+    def u_func(self):
+        return self._ode_sys_mapping['u_func']
+    
+    @property
+    def u_name(self):
+        return self._ode_sys_mapping['u_name']

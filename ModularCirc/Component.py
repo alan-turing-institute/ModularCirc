@@ -16,7 +16,8 @@ class Component():
         self._Q_o = StateVariable(name=name+'_Q_o', timeobj=time_object)
         self._V   = StateVariable(name=name+'_V' , timeobj=time_object)
         
-        self._V.set_dudt_func(function=chamber_volume_rate_change)
+        self._V.set_dudt_func(function=chamber_volume_rate_change, 
+                              function_name='chamber_volume_rate_change')
         return
         
     def __repr__(self) -> str:
@@ -117,11 +118,14 @@ class Rc_component(Component):
             raise Exception("Input case not covered")
     
     def setup(self) -> None:
-        self._P_i.set_dudt_func(lambda q_in, q_out: grounded_capacitor_model_pressure(q_in=q_in, q_out=q_out, c=self.C))
+        self._P_i.set_dudt_func(lambda q_in, q_out: grounded_capacitor_model_pressure(q_in=q_in, q_out=q_out, c=self.C),
+                                function_name='lambda grounded_capacitor_model_pressure')
         self._P_i.set_inputs([self._Q_i.name, self._Q_o.name])
-        self._Q_o.set_u_func(lambda p_in, p_out : resistor_model_flow(p_in=p_in, p_out=p_out, r=self.R))
+        self._Q_o.set_u_func(lambda p_in, p_out : resistor_model_flow(p_in=p_in, p_out=p_out, r=self.R),
+                             function_name='lambda resistor_model_flow')
         self._Q_o.set_inputs([self._P_i.name, self._P_o.name])
-        self._V.set_dudt_func(chamber_volume_rate_change)
+        self._V.set_dudt_func(chamber_volume_rate_change,
+                              function_name='chamber_volume_rate_change')
         self._V.set_inputs([self._Q_i.name, self._Q_o.name])
     
     
@@ -146,7 +150,8 @@ class Valve_non_ideal(Component):
             return (p_in - p_out) / self.R
         
     def setup(self) -> None:
-        self._Q_i.set_u_func(lambda p_in, p_out : resistor_model_flow(p_in=p_in, p_out=p_out, r=self.R))
+        self._Q_i.set_u_func(lambda p_in, p_out : resistor_model_flow(p_in=p_in, p_out=p_out, r=self.R),
+                             function_name='lambda resistor_model_flow')
         self._Q_i.set_inputs([self._P_i.name, self._P_o.name])
         
     
@@ -200,7 +205,9 @@ class HC_constant_elastance(Component):
         return
     
     def setup(self) -> None:
-        self._V.set_dudt_func(chamber_volume_rate_change)
+        self._V.set_dudt_func(chamber_volume_rate_change,
+                              function_name='chamber_volume_rate_change')
         self._V.set_inputs([self._Q_i.name, self._Q_o.name])
-        self._P_i.set_dudt_func(lambda t, V, q_i, q_o: self.comp_dpdt(V=V, q_i=q_i, q_o=q_o)) # setup to be reviewed
+        self._P_i.set_dudt_func(lambda t, V, q_i, q_o: self.comp_dpdt(V=V, q_i=q_i, q_o=q_o),
+                                function_name='lamda constant elastance dpdt') # setup to be reviewed
         self._P_i.set_inputs(['Time', self._V.name, self._Q_i.name, self._Q_o.name])
