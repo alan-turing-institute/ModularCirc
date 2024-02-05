@@ -234,24 +234,43 @@ class TimeClass():
         
 class StateVariable():
     def __init__(self, name:str, timeobj:TimeClass) -> None:
-        self._name  = name
+        self._name = name
         self._to   = timeobj
-        self._u     = np.zeros((timeobj.n_t,))
-        self._dudt = None
+        self._u    = np.zeros((timeobj.n_t,))
+        self._cv   = 0.0
+        
+        self._ode_sys_mapping = {
+            'dudt_func' : None,
+            'u_func'    : None,
+            'inputs'    : {}
+        }
         
     def __repr__(self) -> str:
         return f" > variable name: {self._name}"
         
-    def set_dudt(self, function)->None:
-        self._dudt = function
+    def set_dudt_func(self, function)->None:
+        self._ode_sys_mapping['dudt_func'] = function
+        
+    def set_u_func(self, function)->None:
+        self._ode_sys_mapping['u_func'] = function
+        
+    def set_inputs(self, inputs:list[str]):
+        self._ode_sys_mapping['inputs'] = inputs
         
     def set_name(self, name)->None:
-        # print(f" -- name {name} replaces {÷self._name}")
         self._name = name
         
     @property
     def name(self):
         return self._name
+    
+    @property
+    def dudt(self):
+        return self._ode_sys_mapping['dudt_func']
+    
+    @property
+    def inputs(self):
+        return self._ode_sys_mapping['inputs']
         
 
 class Chamber():
@@ -268,7 +287,7 @@ class Chamber():
         self._Q_o = StateVariable(name=name+'_Q_o', timeobj=time_object)
         self._V   = StateVariable(name=name+'_V' , timeobj=time_object)
         
-        self._V.set_dudt(function=chamber_volume_rate_change)
+        self._V.set_dudt_func(function=chamber_volume_rate_change)
         return
         
     def __repr__(self) -> str:
@@ -300,6 +319,15 @@ class Chamber():
     def V(self):
         return self._V._u
     
+    @property
+    def global_state_variable_names(self):
+        return {
+            'P_i' : self._P_i.name,
+            'P_o' : self._P_o.name,
+            'Q_i' : self._Q_i.name,
+            'Q_o' : self._Q_o.name
+            }
+    
     def comp_dvdt(self, intq:int=None, q_i:float=None, q_o:float=None):
         if intq is not None:
             return self.Q_i[intq] - self.Q_o[intq]
@@ -314,6 +342,9 @@ class Chamber():
             self._P_o = self._P_i
             self._P_o.set_name(self._name + '_P')
         return 
+    
+    def setup(self) -> None:
+        raise Exception("This is a template class only.")
             
 class Rc_component(Chamber):
     def __init__(self, 
@@ -356,6 +387,12 @@ class Rc_component(Chamber):
         else:
             raise Exception("Input case not covered")
     
+    def setup(self) -> None:
+        self._P_i.set_dudt_func(lambda q_in, q_out: grounded_capacitor_model_pressure(q_in=q_in, q_out=q_out, c=self.C))
+        self._P_i.set_inputs([self._Q_i.name, self._Q_o.name])
+        self._Q_o.set_u_func(lambda p_in, p_out : resistor_model_flow(p_in=p_in, p_out=p_out, r=self.R))
+        self._Q_o.set_inputs([self._P_i.name, self._P_o.name])
+    
     
 class Valve_non_ideal(Chamber):
     def __init__(self, 
@@ -376,6 +413,10 @@ class Valve_non_ideal(Chamber):
             return self.max_func(self.P_i[intp] - self.P_o[intp]) / self.R
         elif p_in is not None and p_out is not None:
             return (p_in - p_out) / self.R
+        
+    def setup(self) -> None:
+        self._Q_i.set_u_func(lambda p_in, p_out : resistor_model_flow(p_in=p_in, p_out=p_out, r=self.R))
+        self._Q_i.set_inputs([self._P_i.name, self._P_o.name])
         
     
 class HC_constant_elastance(Chamber):
@@ -424,6 +465,8 @@ class OdeModel():
     def __init__(self, time_setup_dict) -> None:
         self.time_object = TimeClass(time_setup_dict=time_setup_dict)
         self._state_variable_dict = dict()
+        self.commponents = dict()
+        self.name = 'Template'
     
     def connect_modules(self, 
                         module1:Chamber, 
@@ -445,28 +488,33 @@ class OdeModel():
         """
         module2._Q_i = module1._Q_o
         module2._P_i = module1._P_o
-        # module2._Q_i._u = module1.Q_o
-        # module2._P_i._u = module1.P_o
         if plabel is not None:
             module1._P_o.set_name(plabel)
             self._state_variable_dict[plabel] = module1._P_o
-            print(plabel + ' ' + module1._P_o.name)
         if qlabel is not None:
             module1._Q_o.set_name(qlabel)
             self._state_variable_dict[qlabel] = module1._Q_o
-            print(qlabel + ' ' + module1._Q_o.name)
             
     @property
     def state_variable_dict(self):
         return self._state_variable_dict
+    
+    def __str__(self) -> str:
+        out = f'Model {self.name} \n\n'
+        for component in self.commponents.values():
+            out += (str(component) + '\n')
+        out += '\n'
+        out += 'Main State Variable Dictionary \n'
+        for val, key in self._state_variable_dict.items():
+            out += f" - {val} \n"
+        return out
 
     
 class NaghaviModel(OdeModel):
     def __init__(self, time_setup_dict,) -> None:
         super().__init__(time_setup_dict)
-        
-        self.commponents = dict()
-        
+        self.name = 'NaghaviModel'
+                
         # Defining the aorta object
         self.commponents['ao'] = Rc_component( name='Aorta',
                                 time_object=self.time_object, 
@@ -571,6 +619,7 @@ class NaghaviModel(OdeModel):
                              plabel='p_lv',  
                              qlabel='q_mv')
         
+        self.commponents['ao'].setup()
         
         
         
