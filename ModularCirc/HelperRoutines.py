@@ -1,3 +1,5 @@
+import numpy as np  
+
 def resistor_model_flow(p_in:float, p_out:float, r:float) -> float:
     """
     Resistor model.
