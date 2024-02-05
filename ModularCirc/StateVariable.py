@@ -1,4 +1,5 @@
 from .Time import TimeClass
+import numpy as np
 
 class StateVariable():
     def __init__(self, name:str, timeobj:TimeClass) -> None:
