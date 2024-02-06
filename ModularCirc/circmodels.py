@@ -37,7 +37,6 @@ class OdeModel():
         qlabel (str) : new name for the shared flow state variable
         """
         if qvariable is None:
-            print(f" {module1._Q_o._ode_sys_mapping['u_func']} : {module1._Q_o._ode_sys_mapping['dudt_func']} : {module2._Q_i._ode_sys_mapping['u_func']} : {module2._Q_i._ode_sys_mapping['dudt_func']}")
             if module1._Q_o._ode_sys_mapping['u_func'] is not None or module1._Q_o._ode_sys_mapping['dudt_func'] is not None:
                 module2._Q_i = module1._Q_o
             elif module2._Q_i._ode_sys_mapping['u_func'] is not None or module2._Q_i._ode_sys_mapping['dudt_func'] is not None:
@@ -167,8 +166,6 @@ class NaghaviModel(OdeModel):
                              self.commponents['av'],  
                              plabel='p_lv',   
                              qlabel='q_av',
-                            #  pvariable=self.commponents['lv']._P_o,
-                            #  qvariable=self.commponents['av']._Q_i
                              )
         # connect the aortic valve to the aorta
         self.connect_modules(self.commponents['av'],  
@@ -190,8 +187,6 @@ class NaghaviModel(OdeModel):
                              self.commponents['la'],  
                              plabel= 'p_la',  
                              qlabel='q_ven',
-                            #  qvariable=self.commponents['ven']._Q_o,
-                            #  pvariable=self.commponents['la']._P_i
                              )
         # connect the left atrium to the mitral valve
         self.connect_modules(self.commponents['la'],  
@@ -203,8 +198,6 @@ class NaghaviModel(OdeModel):
                              self.commponents['lv'],  
                              plabel='p_lv',  
                              qlabel='q_mv',
-                            #  pvariable=self.commponents['lv']._P_o,
-                            #  qvariable=self.commponents['mv']._Q_i
                              )
             
         self.solver.setup()

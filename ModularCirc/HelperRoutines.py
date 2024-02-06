@@ -1,6 +1,6 @@
 import numpy as np  
 
-def resistor_model_flow(p_in:float, p_out:float, r:float) -> float:
+def resistor_model_flow(t:float, p_in:float, p_out:float, r:float) -> float:
     """
     Resistor model.
 
@@ -17,7 +17,7 @@ def resistor_model_flow(p_in:float, p_out:float, r:float) -> float:
 def resistor_model_dp(q_in:float, r:float) -> float:
     return q_in * r
 
-def grounded_capacitor_model_pressure(v:float, v_ref:float, c:float) -> float:
+def grounded_capacitor_model_pressure(t:float, v:float, v_ref:float, c:float) -> float:
     """
     Capacitor model with constant capacitance. 
 
@@ -33,7 +33,7 @@ def grounded_capacitor_model_pressure(v:float, v_ref:float, c:float) -> float:
     """
     return (v - v_ref) / c
 
-def chamber_volume_rate_change(q_in:float, q_out:float) -> float:
+def chamber_volume_rate_change(t:float, q_in:float, q_out:float) -> float:
     """
     Volume change rate in chamber
 
