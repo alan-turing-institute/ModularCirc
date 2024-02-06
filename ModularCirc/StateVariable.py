@@ -1,20 +1,22 @@
 from .Time import TimeClass
+from pandera.typing import Series, DataFrame
 import numpy as np
+import pandas as pd
 
 class StateVariable():
     def __init__(self, name:str, timeobj:TimeClass) -> None:
         self._name = name
         self._to   = timeobj
-        self._u    = np.zeros((timeobj.n_t,))
+        self._u    = pd.Series(np.zeros((timeobj.n_t,)), name=name, dtype='float64')
         self._cv   = 0.0
         
-        self._ode_sys_mapping = {
+        self._ode_sys_mapping = pd.Series({
             'dudt_func' : None,
             'u_func'    : None,
-            'inputs'    : {},
+            'inputs'    : None, # series
             'dudt_name' : None,
             'u_name'    : None,
-        }
+        })
         
     def __repr__(self) -> str:
         return f" > variable name: {self._name}"
@@ -27,7 +29,7 @@ class StateVariable():
         self._ode_sys_mapping['u_func'] = function
         self._ode_sys_mapping['u_name'] = function_name
         
-    def set_inputs(self, inputs:dict[str,str]):
+    def set_inputs(self, inputs:Series[str]):
         self._ode_sys_mapping['inputs'] = inputs
         
     def set_name(self, name)->None:
@@ -42,11 +44,11 @@ class StateVariable():
         return self._ode_sys_mapping['dudt_func']
     
     @property
-    def dudt_name(self):
+    def dudt_name(self) -> str:
         return self._ode_sys_mapping['dudt_name']
     
     @property
-    def inputs(self):
+    def inputs(self) -> Series[str]:
         return self._ode_sys_mapping['inputs']
     
     @property
@@ -54,21 +56,21 @@ class StateVariable():
         return self._ode_sys_mapping['u_func']
     
     @property
-    def u_name(self):
+    def u_name(self) -> str:
         return self._ode_sys_mapping['u_name']
     
     @property
-    def u(self):
+    def u(self) -> list[float]:
         return self._u
     
 class StateVariableDictionary:
     def __init__(self, dict_:dict[str,StateVariable]=None) -> None:
         if dict_ is None:
-            self._data = dict()
+            self._data = pd.Series()
         else:
             for sv in dict_.values():
                 if not isinstance(sv, StateVariable): raise Exception(' This dictionary can only contain StateVariable instance values.')
-            self._data = dict_
+            self._data = pd.Series(dict_)
         return
     
     def __getitem__(self, key:str)->StateVariable:
@@ -90,15 +92,23 @@ class StateVariableDictionary:
     def values(self) -> list[StateVariable]:
         return self._data.values()
     
-    def get_sv_values(self, tind:int):
-        return {name : sv.u[tind] for name, sv in self.items()}
+    def get_sv_values(self, tind:int) -> dict[str,float]:
+        return self._data.apply(lambda sv : sv.u[tind])
     
+    def get_sv_dudt_func(self) -> pd.Series:
+        return self._data.apply(lambda sv : sv.dudt_func)
     
+    def get_sv_u_func(self) -> pd.Series:
+        return self._data.apply(lambda sv : sv.u_func)
     
-def get_dfdt(input_dict:StateVariableDictionary, output_dict:StateVariableDictionary):
-    input_keys  = input_dict.keys()
-    output_keys = output_dict.keys()
-    func = [lambda t, **kwarg : sv for sv in output_dict.values()]
+    def get_sv_inputs(self) -> Series[StateVariable]:
+        return self._data.apply(lambda sv : sv.inputs)  
+    
+    # def get_sv_local_global_input_mapping(self, input_:Series[float]) -> Series[tuple[str, str]]:
+    #     return self._data.apply(lambda sv : zip(sv.inputs.keys(), input_.loc[sv.inputs.values()]))
+    
+    def apply(self, *args, **kwargs):
+        return self._data.apply(*args, **kwargs)
     
             
          

@@ -3,20 +3,20 @@ import sympy as sp
 # from .timeclass import TimeSeries
 from .HelperRoutines import *
 from .Time import *
-from .StateVariable import StateVariable
+from .StateVariable import StateVariable, StateVariableDictionary
 from .Component import *
-from .Solver import *
+# from .Solver import *
 
         
         
 class OdeModel():
     def __init__(self, time_setup_dict) -> None:
         self.time_object = TimeClass(time_setup_dict=time_setup_dict)
-        self._state_variable_dict = dict()
+        self._state_variable_dict = StateVariableDictionary()
+        self.all_sv_data = pd.DataFrame(index=self.time_object.time.index, dtype='float64')
         self.commponents = dict()
         self.name = 'Template'
         
-        self.solver = Solver(time_object=self.time_object, state_variable_dictionary= self._state_variable_dict)
     
     def connect_modules(self, 
                         module1:Component, 
@@ -61,9 +61,11 @@ class OdeModel():
         if plabel is not None:
             module1._P_o.set_name(plabel)
             self._state_variable_dict[plabel] = module1._P_o
+            self.all_sv_data[plabel] = module1.P_o
         if qlabel is not None:
             module1._Q_o.set_name(qlabel)
             self._state_variable_dict[qlabel] = module1._Q_o
+            self.all_sv_data[qlabel] = module1.Q_o
         return
         
             
@@ -112,14 +114,14 @@ class NaghaviModel(OdeModel):
                                 )
         
         # Defining the aortic valve object
-        self.commponents['av']  = Valve_non_ideal(  name='AorticValve',
+        self.commponents['av']  = Valve_non_ideal(name='AorticValve',
                                      time_object=self.time_object,
                                      r=1.0,
                                      max_func=relu_max
                                      )
         
         # Defining the mitral valve object
-        self.commponents['mv'] = Valve_non_ideal(  name='MitralValve',
+        self.commponents['mv'] = Valve_non_ideal(name='MitralValve',
                                     time_object=self.time_object,
                                     r=1.0,
                                     max_func=relu_max
@@ -141,6 +143,7 @@ class NaghaviModel(OdeModel):
                                         )
         self._state_variable_dict['v_la'] = self.commponents['la']._V
         self._state_variable_dict['v_la'].set_name('v_la')
+        self.all_sv_data['v_la'] = self.commponents['la'].V
         
         # Defining the left ventricle activation function
         lv_af = lambda t: activation_function_1(t=t,
@@ -157,6 +160,7 @@ class NaghaviModel(OdeModel):
                                         )
         self._state_variable_dict['v_lv'] = self.commponents['lv']._V
         self._state_variable_dict['v_lv'].set_name('v_lv')
+        self.all_sv_data['v_lv'] = self.commponents['lv'].V
         
         for component in self.commponents.values():
             component.setup()
@@ -199,8 +203,6 @@ class NaghaviModel(OdeModel):
                              plabel='p_lv',  
                              qlabel='q_mv',
                              )
-            
-        self.solver.setup()
-        
+                    
         
         

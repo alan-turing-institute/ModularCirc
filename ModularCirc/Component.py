@@ -1,6 +1,7 @@
 from .Time import TimeClass
 from .HelperRoutines import *
 from .StateVariable import StateVariable
+import pandas as pd
 
 class Component():
     def __init__(self,
@@ -120,16 +121,16 @@ class Rc_component(Component):
     def setup(self) -> None:
         self._P_i.set_dudt_func(lambda t, q_in, q_out: grounded_capacitor_model_pressure(t=t, q_in=q_in, q_out=q_out, c=self.C),
                                 function_name='lambda grounded_capacitor_model_pressure')
-        self._P_i.set_inputs({'q_in' :self._Q_i.name, 
-                              'q_out':self._Q_o.name})
+        self._P_i.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
+                                        'q_out':self._Q_o.name}))
         self._Q_o.set_u_func(lambda t, p_in, p_out : resistor_model_flow(t, p_in=p_in, p_out=p_out, r=self.R),
                              function_name='lambda resistor_model_flow')
-        self._Q_o.set_inputs({'p_in':self._P_i.name, 
-                              'p_out':self._P_o.name})
+        self._Q_o.set_inputs(pd.Series({'p_in':self._P_i.name, 
+                                        'p_out':self._P_o.name}))
         self._V.set_dudt_func(lambda t, q_in, q_out : chamber_volume_rate_change(t=t, q_in=q_in, q_out=q_out),
                               function_name='lambda chamber_volume_rate_change')
-        self._V.set_inputs({'q_in':self._Q_i.name, 
-                            'q_out':self._Q_o.name}) 
+        self._V.set_inputs(pd.Series({'q_in':self._Q_i.name, 
+                                      'q_out':self._Q_o.name})) 
     
     
 class Valve_non_ideal(Component):
@@ -155,8 +156,8 @@ class Valve_non_ideal(Component):
     def setup(self) -> None:
         self._Q_i.set_u_func(lambda t, p_in, p_out : resistor_model_flow(t=t ,p_in=p_in, p_out=p_out, r=self.R),
                              function_name='lambda resistor_model_flow')
-        self._Q_i.set_inputs({'p_in':self._P_i.name, 
-                              'p_out':self._P_o.name})
+        self._Q_i.set_inputs(pd.Series({'p_in':self._P_i.name, 
+                                        'p_out':self._P_o.name}))
         
     
 class HC_constant_elastance(Component):
@@ -185,14 +186,14 @@ class HC_constant_elastance(Component):
         return (self.comp_E(t + self.eps) - self.comp_E(t - self.eps)) / 2.0 / self.eps
     
     def comp_p(self, intt:int, intv:int):
-        e = self.comp_E(self._to._sym_t_norm[intt])
+        e = self.comp_E(self._to.time['real_t'].iloc[intt])
         v = self.V[intv]
         return e * (v - self.V_ref)
     
     def comp_dpdt(self, intt:int=None, intq:int=None, t:float=None, V:float=None, q_i:float=None, q_o:float=None) -> float:
         if intt is not None:
-            dEdt = self.comp_dEdt(self._to._sym_t_norm[intt])
-            e    = self.comp_E(self._to._sym_t_norm[intt])
+            dEdt = self.comp_dEdt(self._to.time['real_t'].iloc[intt])
+            e    = self.comp_E(self._to.time['real_t'].iloc[intt])
         elif t is not None:
             dEdt = self.comp_dEdt(t)
             e    = self.comp_E(t)
@@ -211,10 +212,10 @@ class HC_constant_elastance(Component):
     def setup(self) -> None:
         self._V.set_dudt_func(lambda t, q_in, q_out : chamber_volume_rate_change(t, q_in=q_in, q_out=q_out),
                               function_name='lambda chamber_volume_rate_change')
-        self._V.set_inputs({'q_in':self._Q_i.name, 
-                            'q_out':self._Q_o.name})
+        self._V.set_inputs(pd.Series({'q_in':self._Q_i.name, 
+                                      'q_out':self._Q_o.name}))
         self._P_i.set_dudt_func(lambda t, V, q_i, q_o: self.comp_dpdt(t=t, V=V, q_i=q_i, q_o=q_o),
                                 function_name='lamda constant elastance dpdt') # setup to be reviewed
-        self._P_i.set_inputs({'V':self._V.name, 
-                              'q_i':self._Q_i.name, 
-                              'q_o':self._Q_o.name})
+        self._P_i.set_inputs(pd.Series({'V':self._V.name, 
+                                        'q_i':self._Q_i.name, 
+                                        'q_o':self._Q_o.name}))
