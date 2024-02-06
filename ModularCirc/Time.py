@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 TEMPLATE_TIME_SETUP_DICT = {
     'name'    :  'generic',
@@ -36,22 +37,24 @@ class TimeClass():
     
     def _initialize_time_array(self):
         # discretization of on heart beat, used as template
-        self._cycle_t = np.linspace(
+        self._cycle_t = pd.Series(np.linspace(
             start= 0.0,
             stop = self.tcycle,
             num  = int(self.tcycle / self.dt)+1,
             dtype= np.float64
-            )
+            ))
         
         # discretization of the entire simulation duration
-        self._sym_t = np.array(
+        self._sym_t = pd.Series(
             [t+cycle*self.tcycle for cycle in range(self.ncycles) for t in self._cycle_t[:-1]]
         )
         
         # array of the current time within the heart cycle
-        self._sym_t_norm = np.array(
+        self._real_t = pd.Series(
             [t for _ in range(self.ncycles) for t in self._cycle_t[:-1]]
         )
+        
+        self.time = pd.DataFrame({'real_t' : self._real_t, 'sym_t' : self._sym_t})
         
         # the total number of time steps including initial time step
         self.n_t = len(self._sym_t)
