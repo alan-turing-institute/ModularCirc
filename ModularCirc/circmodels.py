@@ -3,7 +3,7 @@ import sympy as sp
 # from .timeclass import TimeSeries
 from .HelperRoutines import *
 from .Time import *
-from .StateVariable import StateVariable, StateVariableDictionary
+from .StateVariable import StateVariable
 from .Component import *
 # from .Solver import *
 
@@ -12,7 +12,7 @@ from .Component import *
 class OdeModel():
     def __init__(self, time_setup_dict) -> None:
         self.time_object = TimeClass(time_setup_dict=time_setup_dict)
-        self._state_variable_dict = StateVariableDictionary()
+        self._state_variable_dict = pd.Series()
         self.all_sv_data = pd.DataFrame(index=self.time_object.time.index, dtype='float64')
         self.commponents = dict()
         self.name = 'Template'

@@ -1,5 +1,5 @@
 from .Time import TimeClass
-from .StateVariable import StateVariable, StateVariableDictionary
+from .StateVariable import StateVariable
 from .HelperRoutines import bold_text
 from pandera.typing import DataFrame, Series
 from .circmodels import *
@@ -28,8 +28,8 @@ class Solver():
         else:
             self.use_back_component = False
         #####
-        self._psv = StateVariableDictionary()
-        self._ssv = StateVariableDictionary()
+        self._psv = pd.Series()
+        self._ssv = pd.Series()
         #####
         self._asd = model.all_sv_data
         self._psd = model.all_sv_data[self._asd.columns]
@@ -66,15 +66,15 @@ class Solver():
             
     @property
     def psv(self) -> Series[StateVariable]:
-        return self._psv._data
+        return self._psv
     
     @property
     def ssv(self) -> Series[StateVariable]:
-        return self._ssv._data
+        return self._ssv
     
     @property
     def vd(self) -> Series[StateVariable]:
-        return self._vd._data
+        return self._vd
     
     @property
     def dt(self) -> float:
@@ -89,7 +89,7 @@ class Solver():
     def generate_dfdt_functions(self):
         
         def s_u_update(t:float, y:Series[float]) -> Series[float]:
-            return self.ssv.apply(lambda sv : sv.u_func(t=t, **dict(zip(sv.inputs.index, y[sv.inputs]))))
+            return self._ssv.apply(lambda sv : sv.u_func(t=t, **dict(zip(sv.inputs.index, y[sv.inputs]))))
         
         def pv_dfdt_function(t:float, y:Series[float]) -> Series[float]:
             """
@@ -106,7 +106,7 @@ class Solver():
             """
             y_secondary = s_u_update(t=t, y=y)
             y_new = pd.concat([y, y_secondary])
-            return self.psv.apply(lambda sv: sv.dudt_func(t=t, **dict(zip(sv.inputs.index, y_new[sv.inputs]))))
+            return self._psv.apply(lambda sv: sv.dudt_func(t=t, **dict(zip(sv.inputs.index, y_new[sv.inputs]))))
             
         def pv_dfdt_Jacobian_function(t:float, y:Series[float]) ->DataFrame[float]:
             # create a perturbation matrix

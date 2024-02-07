@@ -63,57 +63,5 @@ class StateVariable():
     def u(self) -> list[float]:
         return self._u
     
-class StateVariableDictionary:
-    def __init__(self, dict_:dict[str,StateVariable]=None) -> None:
-        if dict_ is None:
-            self._data = pd.Series()
-        else:
-            for sv in dict_.values():
-                if not isinstance(sv, StateVariable): raise Exception(' This dictionary can only contain StateVariable instance values.')
-            self._data = pd.Series(dict_)
-        return
-    
-    def __getitem__(self, key:str)->StateVariable:
-        return self._data[key]
-    
-    def __setitem__(self, key:str, value:StateVariable) -> None:
-        if not isinstance(value, StateVariable): raise Exception(' This dictionary can only contain StateVariable instance values.')
-        self._data[key] = value
-        
-    def __len__(self) -> None:
-        return len(self._data)
-    
-    def items(self) -> list[tuple[str,StateVariable]]:
-        return self._data.items()
-    
-    def keys(self) -> list[str]:
-        return self._data.keys()
-    
-    @property
-    def values(self) -> list[StateVariable]:
-        return self._data.values
-    
-    @property
-    def index(self) -> list:
-        return self._data.index
-    
-    def get_sv_values(self, tind:int) -> dict[str,float]:
-        return self._data.apply(lambda sv : sv.u[tind])
-    
-    def get_sv_dudt_func(self) -> pd.Series:
-        return self._data.apply(lambda sv : sv.dudt_func)
-    
-    def get_sv_u_func(self) -> pd.Series:
-        return self._data.apply(lambda sv : sv.u_func)
-    
-    def get_sv_inputs(self) -> Series[StateVariable]:
-        return self._data.apply(lambda sv : sv.inputs)  
-    
-    # def get_sv_local_global_input_mapping(self, input_:Series[float]) -> Series[tuple[str, str]]:
-    #     return self._data.apply(lambda sv : zip(sv.inputs.keys(), input_.loc[sv.inputs.values()]))
-    
-    def apply(self, *args, **kwargs):
-        return self._data.apply(*args, **kwargs)
-    
             
          
