@@ -50,11 +50,11 @@ class TimeClass():
         )
         
         # array of the current time within the heart cycle
-        self._real_t = pd.Series(
+        self._cycle_t = pd.Series(
             [t for _ in range(self.ncycles) for t in self._cycle_t[:-1]]
         )
         
-        self.time = pd.DataFrame({'real_t' : self._real_t, 'sym_t' : self._sym_t})
+        self.time = pd.DataFrame({'cycle_t' : self._cycle_t, 'sym_t' : self._sym_t})
         
         # the total number of time steps including initial time step
         self.n_t = len(self._sym_t)

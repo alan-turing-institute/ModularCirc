@@ -33,6 +33,9 @@ def grounded_capacitor_model_pressure(t:float, v:float, v_ref:float, c:float) ->
     """
     return (v - v_ref) / c
 
+def grounded_capacitor_model_dpdt(t:float, q_in:float, q_out:float, c:float) -> float:
+    return (q_in - q_out) / c
+
 def chamber_volume_rate_change(t:float, q_in:float, q_out:float) -> float:
     """
     Volume change rate in chamber

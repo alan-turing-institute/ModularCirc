@@ -203,6 +203,9 @@ class NaghaviModel(OdeModel):
                              plabel='p_lv',  
                              qlabel='q_mv',
                              )
+        
+        for component in self.commponents.values():
+            component.setup()
                     
         
         

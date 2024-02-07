@@ -119,8 +119,8 @@ class Rc_component(Component):
             raise Exception("Input case not covered")
     
     def setup(self) -> None:
-        self._P_i.set_dudt_func(lambda t, q_in, q_out: grounded_capacitor_model_pressure(t=t, q_in=q_in, q_out=q_out, c=self.C),
-                                function_name='lambda grounded_capacitor_model_pressure')
+        self._P_i.set_dudt_func(lambda t, q_in, q_out: grounded_capacitor_model_dpdt(t=t, q_in=q_in, q_out=q_out, c=self.C),
+                                function_name='lambda grounded_capacitor_model_dpdt')
         self._P_i.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                         'q_out':self._Q_o.name}))
         self._Q_o.set_u_func(lambda t, p_in, p_out : resistor_model_flow(t, p_in=p_in, p_out=p_out, r=self.R),
@@ -204,7 +204,7 @@ class HC_constant_elastance(Component):
             v    = self.V[intq]
             return dEdt * (v - self.V_ref) + e * dvdt
         elif V is not None and q_i is not None and q_o is not None:
-            return dEdt(V - self.V_ref) + e * (q_i - q_o)
+            return dEdt * (V - self.V_ref) + e * (q_i - q_o)
         else: 
             raise Exception("Input case not covered.")
         return

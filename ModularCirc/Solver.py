@@ -1,7 +1,7 @@
 from .Time import TimeClass
 from .StateVariable import StateVariable, StateVariableDictionary
 from .HelperRoutines import bold_text
-from pandera.typing import DataFrame
+from pandera.typing import DataFrame, Series
 from .circmodels import *
 
 import pandas as pd
@@ -9,25 +9,37 @@ import pandas as pd
 
 class Solver():
     def __init__(self, 
-                 type_:str=None, 
-                #  time_object:TimeClass=None, 
-                #  state_variable_dictionary:StateVariableDictionary=None,
-                #  all_sv_data:DataFrame=None
-                model:OdeModel=None
+                type_:str=None, 
+                model:OdeModel=None,
+                theta:float=0.0
                  ) -> None:
-        self.type = None
+        
+        self._Solver_types = {
+            None : 'ForwarddEuler',
+            'ForwarddEuler' : 'ForwarddEuler',
+            'BackwardEuler' : 'BackwardEuler',
+            'ThetaScheme'   : 'ThetaScheme'
+        }
+        
+        self.type = self._Solver_types[type_]
         self.model = model
+        if self.type == 'BackwardEuler' or self.type == 'ThetaScheme' : 
+            self.use_back_component = True
+        else:
+            self.use_back_component = False
         #####
-        self._pvk = StateVariableDictionary()
-        self._svk = StateVariableDictionary()
+        self._psv = StateVariableDictionary()
+        self._ssv = StateVariableDictionary()
         #####
         self._asd = model.all_sv_data
+        self._psd = model.all_sv_data[self._asd.columns]
         #####
-        self._pvk_len = 0
-        self._svk_len = 0
+        self._psv_len = 0
+        self._ssv_len = 0
         self._vd  = model._state_variable_dict
         self._to  = model.time_object
         self._type = type_
+        self._eps = 0.001
         
         self.setup()
         
@@ -39,77 +51,86 @@ class Solver():
             if component.dudt_func is not None:
                 print(f" -- Variable {bold_text(key)} added to the principal variable key list.")
                 print(f'    - name of update function: {bold_text(component._ode_sys_mapping["dudt_name"])}')
-                self._pvk[key] = component
+                self._psv[key] = component
             elif component.u_func is not None:
                 print(f" -- Variable {bold_text(key)} added to the secondary variable key list.")
                 print(f'    - name of update function: {bold_text(component._ode_sys_mapping["u_name"])}')
-                self._svk[key] = component
+                self._ssv[key] = component
             else:
                 continue
-        self._pvk_len = len(self._pvk)
-        self._svk_len = len(self._svk)
+        self._psv_len = len(self._psv)
+        self._ssv_len = len(self._ssv)
+        
+        self.generate_dfdt_functions()
         return
             
     @property
-    def pvk(self) -> StateVariableDictionary:
-        return self._pvk
+    def psv(self) -> Series[StateVariable]:
+        return self._psv._data
     
     @property
-    def svk(self) -> StateVariableDictionary:
-        return self._svk
+    def ssv(self) -> Series[StateVariable]:
+        return self._ssv._data
     
     @property
-    def vd(self) -> StateVariableDictionary:
-        return self._vd
+    def vd(self) -> Series[StateVariable]:
+        return self._vd._data
+    
+    @property
+    def dt(self) -> float:
+        return self._to.dt
     
     def get_principal_values(self, tind:int) -> dict[str,float]:
-        return {name : sv.u[tind] for name, sv in self._pvk.items()}
+        return {name : sv.u[tind] for name, sv in self._psv.items()}
     
     def get_secondary_values(self, tind:int) -> dict[str,float]:
-        return {name : sv.u[tind] for name, sv in self._svk.items()}
+        return {name : sv.u[tind] for name, sv in self._ssv.items()}
         
-    def update_generator(self):
+    def generate_dfdt_functions(self):
         
-        def s_u_update(ti:int) -> dict[str, float]:
-            # return self.svk.apply(lambda sv : sv.u_func(t=self._to._sym_t_norm[ti],
-            #                                              ))) )
-            
-            input_value_dict = self.vd.get_sv_values(ti)
-            return {sv.name : 
-                    sv.u_func(**dict(zip(sv.inputs.keys(), input_value_dict[sv.inputs.values()]))) 
-                    for sv in self.svk.values()}
-                
+        def s_u_update(t:float, y:Series[float]) -> Series[float]:
+            return self.ssv.apply(lambda sv : sv.u_func(t=t, **dict(zip(sv.inputs.index, y[sv.inputs]))))
         
-        def pv_dfdt_generated(ti:int, y:list[float]) -> pd.Series:
+        def pv_dfdt_function(t:float, y:Series[float]) -> Series[float]:
             """
             Function for computing dfdt for the principal state variables of the simulations.
 
             Args:
             -----
                 ti (int): time index of dfdt
-                y (list[float]): current prinicipal state variable values
+                y (Series[float]): current prinicipal state variable values
 
             Returns:
             --------
-                dict[str, float]: (state variable name), (dfdt value)
+                Series[float]: dfdt value
             """
-            input_value_dict = {key : 0.0 for key in self.vd.keys()}
-            s_u = s_u_update(ti=ti)
+            y_secondary = s_u_update(t=t, y=y)
+            y_new = pd.concat([y, y_secondary])
+            return self.psv.apply(lambda sv: sv.dudt_func(t=t, **dict(zip(sv.inputs.index, y_new[sv.inputs]))))
             
-            for key, values in s_u.items():
-                input_value_dict[key] = values
-                
-            for i, key in enumerate(self.pvk) :
-                input_value_dict[key] = y[i]
-                
-            return pd.Series({sv.name:
-                    sv.dudt_func(
-                        t=self._to._sym_t_norm[ti],
-                        **dict(zip(sv.inputs.keys(), input_value_dict[sv.inputs.values()]))
-                        )
-                    for sv in self.pvk.values()})
+        def pv_dfdt_Jacobian_function(t:float, y:Series[float]) ->DataFrame[float]:
+            # create a perturbation matrix
+            pm = self._eps * pd.DataFrame(index =y.index, columns=y.index, data=np.eye(N=y.index.size))
+            # apply perturbation on y to for each entry to generate the Jacobian matrix
+            return pm.apply(lambda col: (pv_dfdt_function(t, y+col) - pv_dfdt_function(t, y-col)) / 2.0 / self._eps) 
             
-        return pv_dfdt_generated
+        self.pv_dfdt_global = pv_dfdt_function
+        if self.use_back_component : self.pv_J_djdt_global = pv_dfdt_Jacobian_function
+        
+        
+    def define_advancing_method(self):
+        pass
+    
+    
+    def solve(self):
+        for ind, trow in self._to.time.iterrows():
+            # skip time zero
+            if ind == 0 : continue
+            
+            ht = trow['cycle_t']
+            yp = self._psd.iloc[ind-1]
+            dydp = self.pv_dfdt_global(ht, y=yp)
+            self._psd.iloc[ind] = yp + self.dt * dydp
             
             
         

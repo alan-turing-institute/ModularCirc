@@ -89,8 +89,13 @@ class StateVariableDictionary:
     def keys(self) -> list[str]:
         return self._data.keys()
     
+    @property
     def values(self) -> list[StateVariable]:
-        return self._data.values()
+        return self._data.values
+    
+    @property
+    def index(self) -> list:
+        return self._data.index
     
     def get_sv_values(self, tind:int) -> dict[str,float]:
         return self._data.apply(lambda sv : sv.u[tind])
