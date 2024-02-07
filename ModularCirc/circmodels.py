@@ -114,6 +114,9 @@ class NaghaviModelParameters():
             out += '\n'
         return out
     
+    def __getitem__(self, key):
+        return self.components[key]
+    
     def set_rc_comp(self, key:str, r:float=None, c:float=None, v_ref:float=None)->None:
         if key not in ['ao','art', 'ven']:
             raise Exception('Wrong key!')
@@ -160,7 +163,7 @@ class NaghaviModelParameters():
         
     
 class NaghaviModel(OdeModel):
-    def __init__(self, time_setup_dict,) -> None:
+    def __init__(self, time_setup_dict, parobj:NaghaviModelParameters=NaghaviModelParameters()) -> None:
         super().__init__(time_setup_dict)
         self.name = 'NaghaviModel'
         
@@ -170,53 +173,53 @@ class NaghaviModel(OdeModel):
         # Defining the aorta object
         self.commponents['ao'] = Rc_component( name='Aorta',
                                 time_object=self.time_object, 
-                                r = 1.0,
-                                c = 1.0, 
-                                v_ref = 1.0,
+                                r = parobj['ao']['r'],
+                                c = parobj['ao']['c'], 
+                                v_ref = parobj['ao']['v_ref'],
                                   )
         
         # Defining the arterial system object
         self.commponents['art'] = Rc_component(name='Arteries',
                                 time_object=self.time_object,
-                                r = 1.0,
-                                c = 1.0,
-                                v_ref= 1.0,
+                                r = parobj['art']['r'],
+                                c = parobj['art']['c'], 
+                                v_ref = parobj['art']['v_ref'],
                                 )
         
         # Defining the venous system object
         self.commponents['ven'] = Rc_component(name='VenaCava',
                                 time_object=self.time_object,
-                                r = 1.0,
-                                c = 1.0,
-                                v_ref= 1.0,
+                                r = parobj['ven']['r'],
+                                c = parobj['ven']['c'], 
+                                v_ref = parobj['ven']['v_ref'],
                                 )
         
         # Defining the aortic valve object
         self.commponents['av']  = Valve_non_ideal(name='AorticValve',
                                      time_object=self.time_object,
-                                     r=1.0,
-                                     max_func=relu_max
+                                     r=parobj['av']['r'],
+                                     max_func=parobj['av']['max_func']
                                      )
         
         # Defining the mitral valve object
         self.commponents['mv'] = Valve_non_ideal(name='MitralValve',
                                     time_object=self.time_object,
-                                    r=1.0,
-                                    max_func=relu_max
+                                    r=parobj['mv']['r'],
+                                     max_func=parobj['mv']['max_func']
                                     )
         
         # Defining the left atrium activation function
         la_af = lambda t: activation_function_1(t=t, 
-                                                t_max=1.0, 
-                                                t_tr=1.0, 
-                                                tau=1.0
+                                                t_max=parobj['la']['t_max'], 
+                                                t_tr=parobj['la']['t_tr'], 
+                                                tau=parobj['la']['tau']
                                                 )
         # Defining the left atrium class
         self.commponents['la'] = HC_constant_elastance(name='LeftAtrium',
                                         time_object=self.time_object,
-                                        E_pas=1.0,
-                                        E_act=10.0,
-                                        V_ref=1.0,
+                                        E_pas=parobj['la']['E_pas'],
+                                        E_act=parobj['la']['E_act'],
+                                        V_ref=parobj['la']['V_ref'],
                                         activation_function_template=la_af
                                         )
         self._state_variable_dict['v_la'] = self.commponents['la']._V
@@ -225,15 +228,15 @@ class NaghaviModel(OdeModel):
         
         # Defining the left ventricle activation function
         lv_af = lambda t: activation_function_1(t=t,
-                                                t_max=1.0,
-                                                t_tr=1.0,
-                                                tau=1.0
+                                                t_max=parobj['lv']['t_max'], 
+                                                t_tr=parobj['lv']['t_tr'], 
+                                                tau=parobj['lv']['tau']
                                                 )
         self.commponents['lv'] = HC_constant_elastance(name='LeftVentricle', 
                                         time_object=self.time_object,
-                                        E_pas=1.0,
-                                        E_act=10.0,
-                                        V_ref=1.0,
+                                        E_pas=parobj['lv']['E_pas'],
+                                        E_act=parobj['lv']['E_act'],
+                                        V_ref=parobj['lv']['V_ref'],
                                         activation_function_template=lv_af
                                         )
         self._state_variable_dict['v_lv'] = self.commponents['lv']._V
