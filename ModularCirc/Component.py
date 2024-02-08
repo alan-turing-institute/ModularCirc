@@ -16,9 +16,6 @@ class Component():
         self._P_o = StateVariable(name=name+'_P_o', timeobj=time_object)
         self._Q_o = StateVariable(name=name+'_Q_o', timeobj=time_object)
         self._V   = StateVariable(name=name+'_V' , timeobj=time_object)
-        
-        # self._V.set_dudt_func(function=chamber_volume_rate_change, 
-        #                       function_name='chamber_volume_rate_change')
         return
         
     def __repr__(self) -> str:
@@ -91,32 +88,6 @@ class Rc_component(Component):
         self.R = r
         self.C = c
         self.V_ref = v_ref
-        
-    def comp_dpdt(self, intq:int=None, q_in:float=None, q_out:float=None):
-        if intq is None and q_in is None and q_out is None:
-            raise Exception("You have to either asign a value to intq or to q_in and q_out.")
-        elif intq is None and q_in is None and q_out is not None:
-            raise Exception("If you define dpdt in terms of q_in and q_out both have to be assigned.")
-        elif intq is None and q_in is not None and q_out is None:
-            raise Exception("If you define dpdt in terms of q_in and q_out both have to be assigned.")
-        
-        if intq is not None:    
-            return 1.0 /  self.C * (self.Q_i[intq] - self.Q_o[intq])
-        elif q_in is not None and q_out is not None:
-            return 1.0 / self.C * (q_in - q_out)
-        else: 
-            raise Exception("Input case not covered.")
-    
-    def comp_p_i(self, intv:int):
-        return (self.V[intv] - self.V_ref) / self.C
-    
-    def comp_q_o(self, intp:int=None, p_i:float=None, p_o:float=None):
-        if intp is not None:
-            return (self.P_i[intp] - self.P_o[intp]) / self.R
-        elif p_i is not None and p_o is not None:
-            return (p_i - p_o) / self.R
-        else:
-            raise Exception("Input case not covered")
     
     def setup(self) -> None:
         self._P_i.set_dudt_func(lambda t, q_in, q_out: grounded_capacitor_model_dpdt(t=t, q_in=q_in, q_out=q_out, c=self.C),
@@ -131,8 +102,8 @@ class Rc_component(Component):
                               function_name='lambda chamber_volume_rate_change')
         self._V.set_inputs(pd.Series({'q_in':self._Q_i.name, 
                                       'q_out':self._Q_o.name})) 
-    
-    
+        
+        
 class Valve_non_ideal(Component):
     def __init__(self, 
                  name:str,
@@ -146,12 +117,6 @@ class Valve_non_ideal(Component):
         # setting the resistance value
         self.R = r
         self.max_func = max_func
-        
-    def comp_q(self, intp:int=None, p_in:float=None, p_out:float=None):
-        if intp is not None:
-            return self.max_func(self.P_i[intp] - self.P_o[intp]) / self.R
-        elif p_in is not None and p_out is not None:
-            return (p_in - p_out) / self.R
         
     def setup(self) -> None:
         self._Q_i.set_u_func(lambda t, p_in, p_out : resistor_model_flow(t=t ,p_in=p_in, p_out=p_out, r=self.R),

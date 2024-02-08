@@ -177,6 +177,9 @@ class NaghaviModel(OdeModel):
                                 c = parobj['ao']['c'], 
                                 v_ref = parobj['ao']['v_ref'],
                                   )
+        self._state_variable_dict['v_ao'] = self.commponents['ao']._V
+        self._state_variable_dict['v_ao'].set_name('v_ao')
+        self.all_sv_data['v_ao'] = self.commponents['ao'].V
         
         # Defining the arterial system object
         self.commponents['art'] = Rc_component(name='Arteries',
@@ -185,6 +188,9 @@ class NaghaviModel(OdeModel):
                                 c = parobj['art']['c'], 
                                 v_ref = parobj['art']['v_ref'],
                                 )
+        self._state_variable_dict['v_art'] = self.commponents['art']._V
+        self._state_variable_dict['v_art'].set_name('v_art')
+        self.all_sv_data['v_art'] = self.commponents['art'].V
         
         # Defining the venous system object
         self.commponents['ven'] = Rc_component(name='VenaCava',
@@ -193,6 +199,9 @@ class NaghaviModel(OdeModel):
                                 c = parobj['ven']['c'], 
                                 v_ref = parobj['ven']['v_ref'],
                                 )
+        self._state_variable_dict['v_ven'] = self.commponents['ven']._V
+        self._state_variable_dict['v_ven'].set_name('v_ven')
+        self.all_sv_data['v_ven'] = self.commponents['ven'].V
         
         # Defining the aortic valve object
         self.commponents['av']  = Valve_non_ideal(name='AorticValve',
