@@ -59,10 +59,12 @@ class OdeModel():
             module1._P_o.set_name(plabel)
             self._state_variable_dict[plabel] = module1._P_o
             self.all_sv_data[plabel] = module1.P_o
+            module1._P_o._u = self.all_sv_data[plabel]
         if qlabel is not None:
             module1._Q_o.set_name(qlabel)
             self._state_variable_dict[qlabel] = module1._Q_o
             self.all_sv_data[qlabel] = module1.Q_o
+            module1._Q_o._u = self.all_sv_data[qlabel]
         return
         
             
@@ -86,21 +88,21 @@ class NaghaviModelParameters():
         components = ['ao', 'art', 'ven', 'av', 'mv', 'la', 'lv']
         self.components = {key : None for key in components}
         for key in ['ao', 'art', 'ven']:
-            self.components[key] = pd.Series(index=['r', 'c', 'v_ref'], dtype='float64')
+            self.components[key] = pd.Series(index=['r', 'c', 'v_ref', 'v'], dtype='float64')
         for key in ['av', 'mv']:
             self.components[key] = pd.Series(index=['r', 'max_func'], dtype=object)
         for key in ['la', 'lv']:
-            self.components[key] = pd.Series(index=['E_pas', 'E_act', 'V_ref', 't_max', 't_tr', 'tau'], dtype='float64')
+            self.components[key] = pd.Series(index=['E_pas', 'E_act', 'V_ref', 't_max', 't_tr', 'tau', 'V'], dtype='float64')
                         
-        self.components['ao'].loc[:] =  [32000., 0.0025, 100.]
-        self.components['art'].loc[:] = [150000., 0.025, 900.]
-        self.components['ven'].loc[:] = [1200., 1., 2800.]
+        self.components['ao'].loc[:] =  [32000., 0.0025, 100., 0.025*5200.0]
+        self.components['art'].loc[:] = [150000., 0.025, 900., 0.021*5200.0]
+        self.components['ven'].loc[:] = [1200., 1., 2800., 0.727*5200.0]
         
         self.components['av'].loc[:] = [800., relu_max]
         self.components['mv'].loc[:] = [550., relu_max]
         
-        self.components['la'].loc[:] = [60., 0.44/0.0075, 10., 150, 225., 25.]
-        self.components['lv'].loc[:] = [400, 1./0.0075, 10., 280., 420., 25.]
+        self.components['la'].loc[:] = [60., 0.44/0.0075, 10., 150, 225., 25., 0.018*5200.0]
+        self.components['lv'].loc[:] = [400, 1./0.0075, 10., 280., 420., 25., 0.02*5200.0]
         
     def __repr__(self) -> str:
         out = 'Naghavi Model parameter set: \n'
@@ -114,7 +116,7 @@ class NaghaviModelParameters():
     def __getitem__(self, key):
         return self.components[key]
     
-    def set_rc_comp(self, key:str, r:float=None, c:float=None, v_ref:float=None)->None:
+    def set_rc_comp(self, key:str, r:float=None, c:float=None, v_ref:float=None, v:float=None)->None:
         if key not in ['ao','art', 'ven']:
             raise Exception('Wrong key!')
         if r is not None:
@@ -123,6 +125,8 @@ class NaghaviModelParameters():
             self.components[key].loc['c'] = c
         if v_ref is not None:
             self.components[key].loc['v_ref'] = v_ref
+        if v is not None:
+            self.components[key].loc['v'] = v
         return
             
     def set_valve_comp(self, key:str, r:float=None, max_func=None)->None:
@@ -170,36 +174,43 @@ class NaghaviModel(OdeModel):
         # Defining the aorta object
         self.commponents['ao'] = Rc_component( name='Aorta',
                                 time_object=self.time_object, 
-                                r = parobj['ao']['r'],
-                                c = parobj['ao']['c'], 
+                                r     = parobj['ao']['r'],
+                                c     = parobj['ao']['c'], 
                                 v_ref = parobj['ao']['v_ref'],
+                                v     = parobj['ao']['v']
                                   )
+        # self.commponents['ao']._V.set_name('v_ao')     ##### test
         self._state_variable_dict['v_ao'] = self.commponents['ao']._V
         self._state_variable_dict['v_ao'].set_name('v_ao')
-        self.all_sv_data['v_ao'] = self.commponents['ao'].V
+        self.all_sv_data['v_ao'] = self.commponents['ao'].V     ##### test
+        self.commponents['ao']._V._u = self.all_sv_data['v_ao']
         
         # Defining the arterial system object
         self.commponents['art'] = Rc_component(name='Arteries',
                                 time_object=self.time_object,
-                                r = parobj['art']['r'],
-                                c = parobj['art']['c'], 
+                                r     = parobj['art']['r'],
+                                c     = parobj['art']['c'], 
                                 v_ref = parobj['art']['v_ref'],
+                                v     = parobj['art']['v']
                                 )
         self._state_variable_dict['v_art'] = self.commponents['art']._V
         self._state_variable_dict['v_art'].set_name('v_art')
         self.all_sv_data['v_art'] = self.commponents['art'].V
+        self.commponents['art']._V._u = self.all_sv_data['v_art']
         
         # Defining the venous system object
         self.commponents['ven'] = Rc_component(name='VenaCava',
                                 time_object=self.time_object,
-                                r = parobj['ven']['r'],
-                                c = parobj['ven']['c'], 
+                                r     = parobj['ven']['r'],
+                                c     = parobj['ven']['c'], 
                                 v_ref = parobj['ven']['v_ref'],
+                                v     = parobj['ven']['v']
                                 )
         self._state_variable_dict['v_ven'] = self.commponents['ven']._V
         self._state_variable_dict['v_ven'].set_name('v_ven')
         self.all_sv_data['v_ven'] = self.commponents['ven'].V
-        
+        self.commponents['ven']._V._u = self.all_sv_data['v_ven']
+                
         # Defining the aortic valve object
         self.commponents['av']  = Valve_non_ideal(name='AorticValve',
                                      time_object=self.time_object,
@@ -226,11 +237,13 @@ class NaghaviModel(OdeModel):
                                         E_pas=parobj['la']['E_pas'],
                                         E_act=parobj['la']['E_act'],
                                         V_ref=parobj['la']['V_ref'],
+                                        v    =parobj['la']['V'],
                                         activation_function_template=la_af
                                         )
         self._state_variable_dict['v_la'] = self.commponents['la']._V
         self._state_variable_dict['v_la'].set_name('v_la')
         self.all_sv_data['v_la'] = self.commponents['la'].V
+        self.commponents['la']._V._u = self.all_sv_data['v_la']
         
         # Defining the left ventricle activation function
         lv_af = lambda t: activation_function_1(t=t,
@@ -243,11 +256,13 @@ class NaghaviModel(OdeModel):
                                         E_pas=parobj['lv']['E_pas'],
                                         E_act=parobj['lv']['E_act'],
                                         V_ref=parobj['lv']['V_ref'],
+                                        v    =parobj['lv']['V'],
                                         activation_function_template=lv_af
                                         )
         self._state_variable_dict['v_lv'] = self.commponents['lv']._V
         self._state_variable_dict['v_lv'].set_name('v_lv')
         self.all_sv_data['v_lv'] = self.commponents['lv'].V
+        self.commponents['lv']._V._u = self.all_sv_data['v_lv']
         
         for component in self.commponents.values():
             component.setup()

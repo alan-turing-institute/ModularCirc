@@ -6,7 +6,8 @@ import pandas as pd
 class Component():
     def __init__(self,
                  name,
-                 time_object:TimeClass, 
+                 time_object:TimeClass,
+                 v:float = None,
                  ) -> None:
         self._name     = name
         self._to      = time_object
@@ -16,6 +17,9 @@ class Component():
         self._P_o = StateVariable(name=name+'_P_o', timeobj=time_object)
         self._Q_o = StateVariable(name=name+'_Q_o', timeobj=time_object)
         self._V   = StateVariable(name=name+'_V' , timeobj=time_object)
+        
+        if v is not None:
+            self.V.loc[0] = v
         return
         
     def __repr__(self) -> str:
@@ -77,13 +81,14 @@ class Component():
 class Rc_component(Component):
     def __init__(self, 
                  name:str, 
-                 time_object:TimeClass, 
+                 time_object:TimeClass,
                  r:float, 
                  c:float, 
-                 v_ref:float
+                 v_ref:float,
+                 v:float=None, 
                  ) -> None:
         # super().__init__(time_object, main_var)
-        super().__init__(time_object=time_object, name=name)
+        super().__init__(time_object=time_object, name=name, v=v)
         self.R = r
         self.C = c
         self.V_ref = v_ref
@@ -138,10 +143,11 @@ class HC_constant_elastance(Component):
                  E_pas: float, 
                  E_act: float,
                  V_ref: float,
+                 v    : float = None,
                  activation_function_template = activation_function_1,
                  *args, **kwargs
                  ) -> None:
-        super().__init__(name=name, time_object=time_object)
+        super().__init__(name=name, time_object=time_object, v=v)
         self._af = lambda t : activation_function_template(t, *args, **kwargs)
         self.E_pas = E_pas
         self.E_act = E_act
@@ -192,7 +198,9 @@ class HC_constant_elastance(Component):
                                         'q_o':self._Q_o.name}))
         self._P_i.set_i_func(lambda V: chamber_pressure_function(t=0, v=V, v_ref=self.V_ref, 
                                                                  E_pas=self.E_pas, E_act=self.E_act,
-                                                                 activation_function=activation_function_1,
+                                                                 activation_function=self._af,
                                                                  active_law = chamber_linear_elastic_law,
                                                                  passive_law= chamber_linear_elastic_law),
                              function_name='lamda chamber_pressure_function + activation_function_1 + 2xchamber_linear_elastic_law')
+        self._P_i.set_i_inputs(pd.Series({'V':self._V.name}))
+        print(f' Blaaaah {self._P_i.i_inputs}')

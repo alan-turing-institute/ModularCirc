@@ -32,7 +32,6 @@ class Solver():
         self._ssv = pd.Series()
         #####
         self._asd = model.all_sv_data
-        self._psd = model.all_sv_data[self._asd.columns]
         #####
         self._vd  = model._state_variable_dict
         self._to  = model.time_object
@@ -83,11 +82,11 @@ class Solver():
         
         def initialize_by_function_rountine(y:Series[float]) -> Series[float]:
             return self._initialize_by_function.apply(
-                lambda sv : y[sv.inputs].reindex(sv.inputs.index).to_dict())
+                lambda sv : sv.i_func(**sv.i_inputs.apply(lambda key : y[key])))
         
         def s_u_update(t:float, y:Series[float]) -> Series[float]:
             return self._ssv.apply(
-                lambda sv : sv.u_func(t=t, **y[sv.inputs].reindex(sv.inputs.index).to_dict()))
+                 lambda sv : sv.u_func(t=t, **sv.inputs.apply(lambda key : y[key])))
         
         def pv_dfdt_function(t:float, y:Series[float]) -> Series[float]:
             """
@@ -105,7 +104,7 @@ class Solver():
             y_secondary = s_u_update(t=t, y=y)
             y_new = pd.concat([y, y_secondary])
             return self._psv.apply(
-                lambda sv: sv.dudt_func(t=t, **y[sv.inputs].reindex(sv.inputs.index).to_dict()))
+                lambda sv : sv.dudt_func(t=t, **sv.inputs.apply(lambda key : y_new[key])))
             
         def pv_dfdt_Jacobian_function(t:float, y:Series[float]) ->DataFrame[float]:
             # create a perturbation matrix
@@ -123,16 +122,14 @@ class Solver():
     
     
     def solve(self):
+        self._asd.loc[0, self._initialize_by_function.index] = \
+            self.initialize_by_function_rountine(y=self._asd.loc[0])
         for ind, trow in self._to.time.iterrows():
-            # skip time zero
             if ind == 0 : continue
-            
             ht = trow['cycle_t']
-            yp = self._psd.iloc[ind-1]
+            yp = self._asd.loc[ind-1, self._psv.index]
             dydp = self.pv_dfdt_global(ht, y=yp)
-            self._psd.iloc[ind] = yp + self.dt * dydp
-            
-            
+            self._asd.loc[ind, self._psv.index] = yp + self.dt * dydp            
         
 
             

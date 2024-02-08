@@ -31,6 +31,7 @@ def grounded_capacitor_model_pressure(t:float, v:float, v_ref:float, c:float) ->
     --------
         float: pressure at input node
     """
+    # print(f' ** {v} - {v_ref} - {c}')
     return (v - v_ref) / c
 
 def grounded_capacitor_model_dpdt(t:float, q_in:float, q_out:float, c:float) -> float:
