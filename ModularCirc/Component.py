@@ -78,7 +78,6 @@ class Rc_component(Component):
     def __init__(self, 
                  name:str, 
                  time_object:TimeClass, 
-                #  main_var:str, 
                  r:float, 
                  c:float, 
                  v_ref:float
@@ -90,19 +89,25 @@ class Rc_component(Component):
         self.V_ref = v_ref
     
     def setup(self) -> None:
+        # Set the dudt function for the input pressure state variable 
         self._P_i.set_dudt_func(lambda t, q_in, q_out: grounded_capacitor_model_dpdt(t=t, q_in=q_in, q_out=q_out, c=self.C),
                                 function_name='lambda grounded_capacitor_model_dpdt')
+        # Set the mapping betwen the local input names and the global names of the state variables
         self._P_i.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                         'q_out':self._Q_o.name}))
+        # Set the initialization function for the input pressure state variable
+        self._P_i.set_i_func(lambda V: grounded_capacitor_model_pressure(t=0.0, v=V, v_ref=self.V_ref, c=self.C))
+        self._P_i.set_i_inputs(pd.Series({'V':self._V.name}))
+        # Set the function for computing the flows based on the current pressure values at the nodes of the componet
         self._Q_o.set_u_func(lambda t, p_in, p_out : resistor_model_flow(t, p_in=p_in, p_out=p_out, r=self.R),
                              function_name='lambda resistor_model_flow')
         self._Q_o.set_inputs(pd.Series({'p_in':self._P_i.name, 
                                         'p_out':self._P_o.name}))
+        # Set the dudt function for the compartment volume
         self._V.set_dudt_func(lambda t, q_in, q_out : chamber_volume_rate_change(t=t, q_in=q_in, q_out=q_out),
                               function_name='lambda chamber_volume_rate_change')
         self._V.set_inputs(pd.Series({'q_in':self._Q_i.name, 
-                                      'q_out':self._Q_o.name})) 
-        
+                                      'q_out':self._Q_o.name}))         
         
 class Valve_non_ideal(Component):
     def __init__(self, 
@@ -184,3 +189,8 @@ class HC_constant_elastance(Component):
         self._P_i.set_inputs(pd.Series({'V':self._V.name, 
                                         'q_i':self._Q_i.name, 
                                         'q_o':self._Q_o.name}))
+        self._P_i.set_i_func(lambda V: chamber_pressure_function(t=0, v=V, v_ref=self.V_ref, 
+                                                                 E_pas=self.E_pas, E_act=self.E_act,
+                                                                 activation_function=activation_function_1,
+                                                                 active_law = chamber_linear_elastic_law,
+                                                                 passive_law= chamber_linear_elastic_law))
