@@ -1,12 +1,9 @@
 import numpy as np
 import sympy as sp
-# from .timeclass import TimeSeries
 from .HelperRoutines import *
 from .Time import *
 from .StateVariable import StateVariable
 from .Component import *
-# from .Solver import *
-
         
         
 class OdeModel():

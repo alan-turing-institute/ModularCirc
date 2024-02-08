@@ -34,13 +34,12 @@ class Solver():
         self._asd = model.all_sv_data
         self._psd = model.all_sv_data[self._asd.columns]
         #####
-        self._psv_len = 0
-        self._ssv_len = 0
         self._vd  = model._state_variable_dict
         self._to  = model.time_object
         self._type = type_
         self._eps = 0.001
         
+        self._initialize_by_function = pd.Series()
         self.setup()
         
     def setup(self)->None:
@@ -48,6 +47,8 @@ class Solver():
         Method for detecting which are the principal variables and which are the secondary ones.
         """
         for key, component in self._vd.items():
+            if component.i_func is not None:
+                self._initialize_by_function[key] = component
             if component.dudt_func is not None:
                 print(f" -- Variable {bold_text(key)} added to the principal variable key list.")
                 print(f'    - name of update function: {bold_text(component._ode_sys_mapping["dudt_name"])}')
@@ -57,10 +58,8 @@ class Solver():
                 print(f'    - name of update function: {bold_text(component._ode_sys_mapping["u_name"])}')
                 self._ssv[key] = component
             else:
-                continue
-        self._psv_len = len(self._psv)
-        self._ssv_len = len(self._ssv)
-        
+                continue        
+        print(' ')
         self.generate_dfdt_functions()
         return
             
@@ -79,17 +78,16 @@ class Solver():
     @property
     def dt(self) -> float:
         return self._to.dt
-    
-    def get_principal_values(self, tind:int) -> dict[str,float]:
-        return {name : sv.u[tind] for name, sv in self._psv.items()}
-    
-    def get_secondary_values(self, tind:int) -> dict[str,float]:
-        return {name : sv.u[tind] for name, sv in self._ssv.items()}
         
     def generate_dfdt_functions(self):
         
+        def initialize_by_function_rountine(y:Series[float]) -> Series[float]:
+            return self._initialize_by_function.apply(
+                lambda sv : y[sv.inputs].reindex(sv.inputs.index).to_dict())
+        
         def s_u_update(t:float, y:Series[float]) -> Series[float]:
-            return self._ssv.apply(lambda sv : sv.u_func(t=t, **dict(zip(sv.inputs.index, y[sv.inputs]))))
+            return self._ssv.apply(
+                lambda sv : sv.u_func(t=t, **y[sv.inputs].reindex(sv.inputs.index).to_dict()))
         
         def pv_dfdt_function(t:float, y:Series[float]) -> Series[float]:
             """
@@ -106,14 +104,16 @@ class Solver():
             """
             y_secondary = s_u_update(t=t, y=y)
             y_new = pd.concat([y, y_secondary])
-            return self._psv.apply(lambda sv: sv.dudt_func(t=t, **dict(zip(sv.inputs.index, y_new[sv.inputs]))))
+            return self._psv.apply(
+                lambda sv: sv.dudt_func(t=t, **y[sv.inputs].reindex(sv.inputs.index).to_dict()))
             
         def pv_dfdt_Jacobian_function(t:float, y:Series[float]) ->DataFrame[float]:
             # create a perturbation matrix
             pm = self._eps * pd.DataFrame(index =y.index, columns=y.index, data=np.eye(N=y.index.size))
             # apply perturbation on y to for each entry to generate the Jacobian matrix
             return pm.apply(lambda col: (pv_dfdt_function(t, y+col) - pv_dfdt_function(t, y-col)) / 2.0 / self._eps) 
-            
+           
+        self.initialize_by_function_rountine = initialize_by_function_rountine    
         self.pv_dfdt_global = pv_dfdt_function
         if self.use_back_component : self.pv_J_djdt_global = pv_dfdt_Jacobian_function
         

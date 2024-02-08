@@ -96,7 +96,8 @@ class Rc_component(Component):
         self._P_i.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                         'q_out':self._Q_o.name}))
         # Set the initialization function for the input pressure state variable
-        self._P_i.set_i_func(lambda V: grounded_capacitor_model_pressure(t=0.0, v=V, v_ref=self.V_ref, c=self.C))
+        self._P_i.set_i_func(lambda V: grounded_capacitor_model_pressure(t=0.0, v=V, v_ref=self.V_ref, c=self.C),
+                             function_name= 'lambda grounded_capacitor_model_pressure')
         self._P_i.set_i_inputs(pd.Series({'V':self._V.name}))
         # Set the function for computing the flows based on the current pressure values at the nodes of the componet
         self._Q_o.set_u_func(lambda t, p_in, p_out : resistor_model_flow(t, p_in=p_in, p_out=p_out, r=self.R),
@@ -193,4 +194,5 @@ class HC_constant_elastance(Component):
                                                                  E_pas=self.E_pas, E_act=self.E_act,
                                                                  activation_function=activation_function_1,
                                                                  active_law = chamber_linear_elastic_law,
-                                                                 passive_law= chamber_linear_elastic_law))
+                                                                 passive_law= chamber_linear_elastic_law),
+                             function_name='lamda chamber_pressure_function + activation_function_1 + 2xchamber_linear_elastic_law')
