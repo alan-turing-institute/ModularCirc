@@ -13,9 +13,11 @@ class StateVariable():
         self._ode_sys_mapping = pd.Series({
             'dudt_func' : None,
             'u_func'    : None,
-            'inputs'    : None, # series
-            'dudt_name' : None,
-            'u_name'    : None,
+            'inputs'    : None, # inputs for u_func and dudt_func
+            'dudt_name' : None, # str
+            'u_name'    : None, # str
+            'i_func'    : None, # initialization function
+            'i_inputs'  : None, # initialization function inputs
         })
         
     def __repr__(self) -> str:
@@ -24,16 +26,27 @@ class StateVariable():
     def set_dudt_func(self, function, function_name:str)->None:
         self._ode_sys_mapping['dudt_func'] = function
         self._ode_sys_mapping['dudt_name'] = function_name
+        return
         
     def set_u_func(self, function, function_name:str)->None:
         self._ode_sys_mapping['u_func'] = function
         self._ode_sys_mapping['u_name'] = function_name
+        return
         
     def set_inputs(self, inputs:Series[str]):
         self._ode_sys_mapping['inputs'] = inputs
+        return
         
     def set_name(self, name)->None:
         self._name = name
+        return
+        
+    def set_i_func(self, function, function_name:str)->None:
+        self._ode_sys_mapping['i_func'] = function
+        self._ode_sys_mapping['i_name'] = function_name
+        
+    def set_i_inputs(self, inputs:Series[str])->None:
+        self._ode_sys_mapping['i_inputs'] = inputs
         
     @property
     def name(self):
@@ -62,6 +75,18 @@ class StateVariable():
     @property
     def u(self) -> list[float]:
         return self._u
+    
+    @property
+    def i_func(self):
+        return self._ode_sys_mapping['i_func']
+    
+    @property
+    def i_name(self):
+        return self._ode_sys_mapping['i_name']
+    
+    @property
+    def i_inputs(self):
+        return self._ode_sys_mapping['i_inputs']
     
             
          
