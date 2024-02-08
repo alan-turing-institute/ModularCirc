@@ -125,23 +125,6 @@ def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
         return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
     else:
         return 0.5 * np.exp(-(t - t_tr)/tau)
-    
-def chamber_pressure_function(v:float, t:float, activation_function, active_law, passive_law) ->float:
-    """
-    Generic function returning the chamber pressure at a given time for a given imput
-
-    Args:
-        v (float): current volume
-        t (float): current time
-        activation_function (procedure): activation function
-        active_law (procedure): active p-v relation
-        passive_law (procedure): passive p-v relation
-
-    Returns:
-        float: pressure
-    """
-    a = activation_function(t)
-    return a * active_law(v,t) + (1 - a) * passive_law(v,t)
 
 def chamber_linear_elastic_law(v:float, E:float, v_ref:float, *args, **kwargs) -> float:
     """
@@ -171,6 +154,31 @@ def chamber_exponential_law(v:float, E:float, k:float, v_ref:float, *args, **kwa
         float: chamber pressure
     """
     return E * np.exp(k * (v - v_ref) - 1)
+
+def chamber_pressure_function(t:float, v:float, v_ref:float, E_pas:float, E_act:float,
+                              activation_function = activation_function_1, 
+                              active_law = chamber_linear_elastic_law, 
+                              passive_law = chamber_linear_elastic_law,
+                              *args, **kwargs) ->float:
+    """
+    Generic function returning the chamber pressure at a given time for a given imput
+
+    Args:
+    -----
+        t (float): current time
+        v (float): current volume
+        v_ref (float) : reference volume
+        activation_function (procedure): activation function
+        active_law (procedure): active p-v relation
+        passive_law (procedure): passive p-v relation
+
+    Returns:
+    --------
+        float: pressure
+    """
+    a = activation_function(t)
+    return (a * active_law(v=v, v_ref=v_ref,t=t, E=E_act, **kwargs) 
+            + (1 - a) * passive_law(v=v, v_ref=v_ref, t=t, E=E_pas, **kwargs))
 
 
 BOLD = '\033[1m'
