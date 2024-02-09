@@ -114,12 +114,12 @@ class Solver():
            
         self.initialize_by_function_rountine = initialize_by_function_rountine    
         self.pv_dfdt_global = pv_dfdt_function
+        self.s_u_update     = s_u_update
         if self.use_back_component : self.pv_J_djdt_global = pv_dfdt_Jacobian_function
         
         
     def define_advancing_method(self):
-        pass
-    
+        pass    
     
     def solve(self):
         self._asd.loc[0, self._initialize_by_function.index] = \
@@ -129,7 +129,8 @@ class Solver():
             ht = trow['cycle_t']
             yp = self._asd.loc[ind-1, self._psv.index]
             dydp = self.pv_dfdt_global(ht, y=yp)
-            self._asd.loc[ind, self._psv.index] = yp + self.dt * dydp            
+            self._asd.loc[ind, self._psv.index] = yp + self.dt * dydp 
+            self._asd.loc[ind, self._ssv.index] = self.s_u_update(ind, self._asd.loc[ind])        
         
 
             

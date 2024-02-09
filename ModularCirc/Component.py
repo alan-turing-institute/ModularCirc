@@ -130,8 +130,8 @@ class Valve_non_ideal(Component):
         self.max_func = max_func
         
     def setup(self) -> None:
-        self._Q_i.set_u_func(lambda t, p_in, p_out : resistor_model_flow(t=t ,p_in=p_in, p_out=p_out, r=self.R),
-                             function_name='lambda resistor_model_flow')
+        self._Q_i.set_u_func(lambda t, p_in, p_out : non_ideal_diode_flow(p_in=p_in, p_out=p_out, r=self.R, max_func=self.max_func),
+                             function_name='lambda non_ideal_diode_flow + max_func')
         self._Q_i.set_inputs(pd.Series({'p_in':self._P_i.name, 
                                         'p_out':self._P_o.name}))
         
@@ -148,7 +148,7 @@ class HC_constant_elastance(Component):
                  *args, **kwargs
                  ) -> None:
         super().__init__(name=name, time_object=time_object, v=v)
-        self._af = lambda t : activation_function_template(t, *args, **kwargs)
+        self._af = lambda t : activation_function_template(t)
         self.E_pas = E_pas
         self.E_act = E_act
         self.V_ref = V_ref
@@ -203,4 +203,4 @@ class HC_constant_elastance(Component):
                                                                  passive_law= chamber_linear_elastic_law),
                              function_name='lamda chamber_pressure_function + activation_function_1 + 2xchamber_linear_elastic_law')
         self._P_i.set_i_inputs(pd.Series({'V':self._V.name}))
-        print(f' Blaaaah {self._P_i.i_inputs}')
+        # print(f' Blaaaah {self._P_i.i_inputs}')

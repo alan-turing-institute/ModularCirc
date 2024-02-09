@@ -94,15 +94,23 @@ class NaghaviModelParameters():
         for key in ['la', 'lv']:
             self.components[key] = pd.Series(index=['E_pas', 'E_act', 'V_ref', 't_max', 't_tr', 'tau', 'V'], dtype='float64')
                         
+        # self.components['ao'].loc[:] =  [32000., 0.0025, 100., 0.025*5200.0]
         self.components['ao'].loc[:] =  [32000., 0.0025, 100., 0.025*5200.0]
-        self.components['art'].loc[:] = [150000., 0.025, 900., 0.021*5200.0]
+        self.components['art'].loc[:] = [150000., 0.025, 50., 0.21*5200.0]
         self.components['ven'].loc[:] = [1200., 1., 2800., 0.727*5200.0]
         
         self.components['av'].loc[:] = [800., relu_max]
-        self.components['mv'].loc[:] = [550., relu_max]
+        self.components['mv'].loc[:] = [550., relu_max]        
         
-        self.components['la'].loc[:] = [60., 0.44/0.0075, 10., 150, 225., 25., 0.018*5200.0]
-        self.components['lv'].loc[:] = [400, 1./0.0075, 10., 280., 420., 25., 0.02*5200.0]
+        # self.components['av'].loc[:] = [800., get_softplus_max(0.2)]
+        # self.components['mv'].loc[:] = [550., get_softplus_max(0.2)]
+        
+        # original
+        # self.components['la'].loc[:] = [60., 0.44/0.0075, 10., 150., 1.5*150., 25., 0.018*5200.0]
+        # self.components['lv'].loc[:] = [400, 1./0.0075, 10., 280., 1.5*280., 25., 0.02*5200.0]
+        
+        self.components['la'].loc[:] = [60., 0.44/0.0075, 10., 150., 1.5*150., 50., 0.018*5200.0]
+        self.components['lv'].loc[:] = [400, 1./0.0075  , 10., 280., 1.5*280., 50., 0.02*5200.0]
         
     def __repr__(self) -> str:
         out = 'Naghavi Model parameter set: \n'
@@ -222,11 +230,11 @@ class NaghaviModel(OdeModel):
         self.commponents['mv'] = Valve_non_ideal(name='MitralValve',
                                     time_object=self.time_object,
                                     r=parobj['mv']['r'],
-                                     max_func=parobj['mv']['max_func']
+                                    max_func=parobj['mv']['max_func']
                                     )
         
         # Defining the left atrium activation function
-        la_af = lambda t: activation_function_1(t=t, 
+        la_af = lambda t: activation_function_2(t=time_shift(t, 100., self.time_object), 
                                                 t_max=parobj['la']['t_max'], 
                                                 t_tr=parobj['la']['t_tr'], 
                                                 tau=parobj['la']['tau']
@@ -246,7 +254,7 @@ class NaghaviModel(OdeModel):
         self.commponents['la']._V._u = self.all_sv_data['v_la']
         
         # Defining the left ventricle activation function
-        lv_af = lambda t: activation_function_1(t=t,
+        lv_af = lambda t: activation_function_2(t=t,
                                                 t_max=parobj['lv']['t_max'], 
                                                 t_tr=parobj['lv']['t_tr'], 
                                                 tau=parobj['lv']['tau']

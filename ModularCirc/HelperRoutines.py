@@ -1,4 +1,5 @@
 import numpy as np  
+from .Time import TimeClass
 
 def resistor_model_flow(t:float, p_in:float, p_out:float, r:float) -> float:
     """
@@ -31,7 +32,6 @@ def grounded_capacitor_model_pressure(t:float, v:float, v_ref:float, c:float) ->
     --------
         float: pressure at input node
     """
-    # print(f' ** {v} - {v_ref} - {c}')
     return (v - v_ref) / c
 
 def grounded_capacitor_model_dpdt(t:float, q_in:float, q_out:float, c:float) -> float:
@@ -87,7 +87,8 @@ def non_ideal_diode_flow(p_in:float, p_out:float, r:float, max_func=relu_max) ->
     Returns:
         float: q (flow rate through valve)
     """
-    return max_func([p_in - p_out, 0.0]) / r
+    # print('*', max_func(p_in - p_out) / r)
+    return max_func(p_in - p_out) / r
 
 
 def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
@@ -125,7 +126,16 @@ def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
     if t <= t_tr:
         return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
     else:
-        return 0.5 * np.exp(-(t - t_tr)/tau)
+        coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
+        return  np.exp(-(t - t_tr)/tau) * coeff
+    
+def activation_function_2(t:float, t_max:float, t_tr:float, tau:float) -> float:
+    if t < t_max:
+        return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
+    elif t - t_max < tau:
+        return 0.5 * (1.0 + np.cos(np.pi * (t - t_max) / tau))
+    else:
+        return 0.0
 
 def chamber_linear_elastic_law(v:float, E:float, v_ref:float, *args, **kwargs) -> float:
     """
@@ -180,6 +190,12 @@ def chamber_pressure_function(t:float, v:float, v_ref:float, E_pas:float, E_act:
     a = activation_function(t)
     return (a * active_law(v=v, v_ref=v_ref,t=t, E=E_act, **kwargs) 
             + (1 - a) * passive_law(v=v, v_ref=v_ref, t=t, E=E_pas, **kwargs))
+    
+def time_shift(t:float, shift:float, time_obj:TimeClass):
+    if t < time_obj.tcycle - shift:
+        return t + shift
+    else:
+        return t + shift - time_obj.tcycle
 
 
 BOLD = '\033[1m'

@@ -37,7 +37,7 @@ class TimeClass():
     
     def _initialize_time_array(self):
         # discretization of on heart beat, used as template
-        self._cycle_t = pd.Series(np.linspace(
+        self._one_cycle_t = pd.Series(np.linspace(
             start= 0.0,
             stop = self.tcycle,
             num  = int(self.tcycle / self.dt)+1,
@@ -46,18 +46,22 @@ class TimeClass():
         
         # discretization of the entire simulation duration
         self._sym_t = pd.Series(
-            [t+cycle*self.tcycle for cycle in range(self.ncycles) for t in self._cycle_t[:-1]]
+            [t+cycle*self.tcycle for cycle in range(self.ncycles) for t in self._one_cycle_t[:-1]]
         )
         
         # array of the current time within the heart cycle
         self._cycle_t = pd.Series(
-            [t for _ in range(self.ncycles) for t in self._cycle_t[:-1]]
+            [t for _ in range(self.ncycles) for t in self._one_cycle_t[:-1]]
         )
         
         self.time = pd.DataFrame({'cycle_t' : self._cycle_t, 'sym_t' : self._sym_t})
         
         # the total number of time steps including initial time step
         self.n_t = len(self._sym_t)
+        
+        # the number of time steps in a cycle
+        self.n_c = len(self._one_cycle_t)
+        return
         
     def new_time_step(self):
         self.cti += 1
