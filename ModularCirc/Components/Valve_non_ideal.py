@@ -2,6 +2,8 @@ from .ComponentBase import ComponentBase
 from ..Time import TimeClass
 from ..HelperRoutines import non_ideal_diode_flow 
 
+import pandas as pd
+
 class Valve_non_ideal(ComponentBase):
     def __init__(self, 
                  name:str,

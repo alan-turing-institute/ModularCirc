@@ -5,6 +5,8 @@ from ..HelperRoutines import grounded_capacitor_model_dpdt, \
             chamber_volume_rate_change
 from ..Time import TimeClass
 
+import pandas as pd
+
 class Rc_component(ComponentBase):
     def __init__(self, 
                  name:str, 

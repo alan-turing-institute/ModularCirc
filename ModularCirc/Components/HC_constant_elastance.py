@@ -5,6 +5,8 @@ from ..HelperRoutines import activation_function_1, \
             chamber_linear_elastic_law
 from ..Time import TimeClass
 
+import pandas as pd
+
 class HC_constant_elastance(ComponentBase):
     def __init__(self, 
                  name:str,
