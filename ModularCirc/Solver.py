@@ -1,11 +1,12 @@
 from .Time import TimeClass
 from .StateVariable import StateVariable
+from .Models.OdeModel import OdeModel
 from .HelperRoutines import bold_text
 from pandera.typing import DataFrame, Series
-from .circmodels import *
+from .Models.OdeModel import OdeModel
 
 import pandas as pd
-
+import numpy as np
 
 class Solver():
     def __init__(self, 
