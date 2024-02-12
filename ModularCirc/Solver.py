@@ -40,7 +40,6 @@ class Solver():
         self._eps = 0.001
         
         self._initialize_by_function = pd.Series()
-        self.setup()
         
     def setup(self)->None:
         """

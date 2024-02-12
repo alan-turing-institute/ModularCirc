@@ -18,6 +18,23 @@ def resistor_model_flow(t:float, p_in:float, p_out:float, r:float) -> float:
 def resistor_model_dp(q_in:float, r:float) -> float:
     return q_in * r
 
+def resistor_impedance_flux_rate(t:float, p_in:float, p_out:float, q_out:float, r:float, l:float) -> float:
+    """
+    Resistor and impedance in series flux rate of change model. 
+
+    Args:
+        t (float): current time
+        p_in (float): inflow pressure
+        p_out (float): outflow pressure
+        q_out (float): outflow flux
+        r (float): resistor constant
+        l (float): impedance constant
+
+    Returns:
+        float: flux rate of change
+    """
+    return (p_in - p_out) / l - q_out * r 
+
 def grounded_capacitor_model_pressure(t:float, v:float, v_ref:float, c:float) -> float:
     """
     Capacitor model with constant capacitance. 
