@@ -1,6 +1,6 @@
 from .OdeModel import OdeModel
 from .NaghaviModelParameters import NaghaviModelParameters
-from ..Component import Rc_component, Valve_non_ideal, HC_constant_elastance
+from ..Components import Rc_component, Valve_non_ideal, HC_constant_elastance
 from ..HelperRoutines import *
 
 class NaghaviModel(OdeModel):

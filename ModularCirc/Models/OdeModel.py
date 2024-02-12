@@ -1,5 +1,5 @@
 from ..Time import TEMPLATE_TIME_SETUP_DICT, TimeClass
-from ..Component import Component
+from ..Components.ComponentBase import ComponentBase
 from ..StateVariable import StateVariable
 
 import pandas as pd
@@ -14,8 +14,8 @@ class OdeModel():
         
     
     def connect_modules(self, 
-                        module1:Component, 
-                        module2:Component,
+                        module1:ComponentBase, 
+                        module2:ComponentBase,
                         pvariable:StateVariable = None,
                         qvariable:StateVariable = None,
                         plabel:str=None, 
