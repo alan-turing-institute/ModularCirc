@@ -26,11 +26,11 @@ class NaghaviModelParameters():
         self.components['lv'].loc[:] = [400, 1./0.0075, 10., 280., 1.5*280., 25., 0.02*5200.0]
         
     def __repr__(self) -> str:
-        out = 'Naghavi Model parameter set: \n'
+        out = 'Naghavi Model parameters set: \n'
         for comp in self.components: 
-            out += f" * Component - {comp}" + '\n'
+            out += f" * Component - {bold_text(str(comp))}" + '\n'
             for key, item in self.components[comp].items():
-                out += (f"  - {key:<10} : {item}") + '\n'
+                out += (f"  - {bold_text(str(key)):<10} : {item}") + '\n'
             out += '\n'
         return out
     

@@ -19,7 +19,6 @@ class NaghaviModel(OdeModel):
                                 v_ref = parobj['ao']['v_ref'],
                                 v     = parobj['ao']['v']
                                   )
-        # self.commponents['ao']._V.set_name('v_ao')     ##### test
         self._state_variable_dict['v_ao'] = self.commponents['ao']._V
         self._state_variable_dict['v_ao'].set_name('v_ao')
         self.all_sv_data['v_ao'] = self.commponents['ao'].V     ##### test
