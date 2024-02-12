@@ -30,7 +30,10 @@ class NaghaviModelParameters():
         for comp in self.components: 
             out += f" * Component - {bold_text(str(comp))}" + '\n'
             for key, item in self.components[comp].items():
-                out += (f"  - {bold_text(str(key)):<10} : {item}") + '\n'
+                if isinstance(item, float):
+                    out += (f"  - {bold_text(str(key)):<20} : {item:.3e}") + '\n'
+                else:
+                    out += (f"  - {bold_text(str(key)):<20} : {item}") + '\n'
             out += '\n'
         return out
     
