@@ -149,8 +149,8 @@ def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
 def activation_function_2(t:float, t_max:float, t_tr:float, tau:float) -> float:
     if t < t_max:
         return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
-    elif t - t_max < tau:
-        return 0.5 * (1.0 + np.cos(np.pi * (t - t_max) / tau))
+    elif t < tau:
+        return 0.5 * (1.0 + np.cos(np.pi * (t - t_max) / (tau - t_max)))   
     else:
         return 0.0
 
@@ -209,6 +209,8 @@ def chamber_pressure_function(t:float, v:float, v_ref:float, E_pas:float, E_act:
             + (1 - a) * passive_law(v=v, v_ref=v_ref, t=t, E=E_pas, **kwargs))
     
 def time_shift(t:float, shift:float, time_obj:TimeClass):
+    if shift is None:
+        return t
     if t < time_obj.tcycle - shift:
         return t + shift
     else:
