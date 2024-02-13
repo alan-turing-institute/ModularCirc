@@ -17,6 +17,7 @@ class ComponentBase():
         self._V   = StateVariable(name=name+'_V' , timeobj=time_object)
         
         if v is not None:
+            self.v0 = v
             self.V.loc[0] = v
         return
         

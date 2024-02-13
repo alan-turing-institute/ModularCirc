@@ -15,12 +15,17 @@ class Rc_component(ComponentBase):
                  c:float, 
                  v_ref:float,
                  v:float=None, 
+                 p:float=None,
                  ) -> None:
         # super().__init__(time_object, main_var)
         super().__init__(time_object=time_object, name=name, v=v)
         self.R = r
         self.C = c
         self.V_ref = v_ref
+        
+        if p is not None:
+            self.p0 = p
+            self.P_i.loc[0] = p
     
     def setup(self) -> None:
         # Set the dudt function for the input pressure state variable 
