@@ -65,7 +65,7 @@ class NaghaviModel(OdeModel):
                                     )
         
         # Defining the left atrium activation function
-        la_af = lambda t: activation_function_2(t=time_shift(t, 100., self.time_object), 
+        la_af = lambda t: parobj['la']['activation_function'](t=time_shift(t, 100., self.time_object), 
                                                 t_max=parobj['la']['t_max'], 
                                                 t_tr=parobj['la']['t_tr'], 
                                                 tau=parobj['la']['tau']
@@ -85,7 +85,7 @@ class NaghaviModel(OdeModel):
         self.commponents['la']._V._u = self.all_sv_data['v_la']
         
         # Defining the left ventricle activation function
-        lv_af = lambda t: activation_function_2(t=t,
+        lv_af = lambda t: parobj['lv']['activation_function'](t=t,
                                                 t_max=parobj['lv']['t_max'], 
                                                 t_tr=parobj['lv']['t_tr'], 
                                                 tau=parobj['lv']['tau']

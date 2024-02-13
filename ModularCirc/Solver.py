@@ -39,7 +39,6 @@ class Solver():
         """
         Method for detecting which are the principal variables and which are the secondary ones.
         """
-        print(self._global_sv_id)
         for key, component in self._vd.items():
             mkey = self._global_sv_id[key]
             if component.i_func is not None:

@@ -11,7 +11,14 @@ class NaghaviModelParameters():
         for key in ['av', 'mv']:
             self.components[key] = pd.Series(index=['r', 'max_func'], dtype=object)
         for key in ['la', 'lv']:
-            self.components[key] = pd.Series(index=['E_pas', 'E_act', 'V_ref', 't_max', 't_tr', 'tau', 'V'], dtype='float64')
+            self.components[key] = pd.Series(index=['E_pas', 
+                                                    'E_act', 
+                                                    'V_ref', 
+                                                    'activation_function', 
+                                                    't_max', 
+                                                    't_tr', 
+                                                    'tau', 
+                                                    'V'], dtype=object)
                         
         self.components['ao'].loc[:] =  [32000., 0.0025, 0.0, 100. , 0.025*5200.0]
         self.components['art'].loc[:] = [150000., 0.025, 0.0, 50.  , 0.21*5200.0]
@@ -22,8 +29,24 @@ class NaghaviModelParameters():
         
         
         # original
-        self.components['la'].loc[:] = [60., 0.44/0.0075, 10., 150., 1.5*150., 25., 0.018*5200.0]
-        self.components['lv'].loc[:] = [400, 1./0.0075,   10., 280., 1.5*280., 25., 0.02*5200.0]
+        self.components['la'].loc[:] = [60.,           # E_pas
+                                        0.44/0.0075,   # E_act
+                                        10.,           # V_ref
+                                        activation_function_2,
+                                        150.,          # t_max
+                                        1.5*150.,      # t_tr
+                                        25.,           # tau
+                                        0.018*5200.0   # V
+                                        ]
+        self.components['lv'].loc[:] = [400,           # E_pas
+                                        1./0.0075,     # E_act
+                                        10.,           # V_ref 
+                                        activation_function_2,
+                                        280.,          # t_max 
+                                        1.5*280.,      # t_tr 
+                                        25.,           # tau 
+                                        0.02*5200.0    # V
+                                        ]
         
     def __repr__(self) -> str:
         out = 'Naghavi Model parameters set: \n'
@@ -101,4 +124,11 @@ class NaghaviModelParameters():
             self.components[key].loc['t_tr'] = t_tr
         if tau is not None:
             self.components[key].loc['tau'] = tau
+        return
+            
+    def set_activation_function(self, key:str, activation_func=activation_function_2) -> None:
+        if key not in ['lv', 'la']:
+            raise Exception('Wrong key!')
+        if activation_func is not None:
+            self.components[key].loc['activation_function'] = activation_func
         
