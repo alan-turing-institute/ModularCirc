@@ -66,11 +66,8 @@ class NaghaviModelRLC(OdeModel):
                                     )
         
         # Defining the left atrium activation function
-        la_af = lambda t: activation_function_2(t=time_shift(t, 100., self.time_object), 
-                                                t_max=parobj['la']['t_max'], 
-                                                t_tr=parobj['la']['t_tr'], 
-                                                tau=parobj['la']['tau']
-                                                )
+        def la_af(t, t_max=parobj['la']['t_max'], t_tr=parobj['la']['t_tr'], tau=parobj['la']['tau'], af=parobj['la']['activation_function']):
+            return af(time_shift(t, 100., self.time_object), t_max=t_max, t_tr=t_tr, tau=tau)
         # Defining the left atrium class
         self.commponents['la'] = HC_constant_elastance(name='LeftAtrium',
                                         time_object=self.time_object,
@@ -86,11 +83,8 @@ class NaghaviModelRLC(OdeModel):
         self.commponents['la']._V._u = self.all_sv_data['v_la']
         
         # Defining the left ventricle activation function
-        lv_af = lambda t: activation_function_2(t=t,
-                                                t_max=parobj['lv']['t_max'], 
-                                                t_tr=parobj['lv']['t_tr'], 
-                                                tau=parobj['lv']['tau']
-                                                )
+        def lv_af(t, t_max=parobj['lv']['t_max'], t_tr=parobj['lv']['t_tr'], tau=parobj['lv']['tau'], af=parobj['lv']['activation_function']):
+            return af(t, t_max=t_max, t_tr=t_tr, tau=tau)
         self.commponents['lv'] = HC_constant_elastance(name='LeftVentricle', 
                                         time_object=self.time_object,
                                         E_pas=parobj['lv']['E_pas'],
