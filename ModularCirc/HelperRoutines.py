@@ -33,7 +33,7 @@ def resistor_impedance_flux_rate(t:float, p_in:float, p_out:float, q_out:float, 
     Returns:
         float: flux rate of change
     """
-    return (p_in - p_out) / l - q_out * r 
+    return (p_in - p_out - q_out * r ) / l 
 
 def grounded_capacitor_model_pressure(t:float, v:float, v_ref:float, c:float) -> float:
     """
