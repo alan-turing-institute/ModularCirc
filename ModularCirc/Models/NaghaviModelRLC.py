@@ -8,7 +8,6 @@ class NaghaviModelRLC(OdeModel):
         super().__init__(time_setup_dict)
         self.name = 'NaghaviModelRLC'
         
-        # base = NaghaviModelParameters()
         print(parobj)
         
         # Defining the aorta object
