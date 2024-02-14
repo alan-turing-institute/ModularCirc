@@ -7,7 +7,7 @@ class NaghaviModelParameters():
         components = ['ao', 'art', 'ven', 'av', 'mv', 'la', 'lv']
         self.components = {key : None for key in components}
         for key in ['ao', 'art', 'ven']:
-            self.components[key] = pd.Series(index=['r', 'c', 'l', 'v_ref', 'v'], dtype='float64')
+            self.components[key] = pd.Series(index=['r', 'c', 'l', 'v_ref', 'v', 'p'], dtype=object)
         for key in ['av', 'mv']:
             self.components[key] = pd.Series(index=['r', 'max_func'], dtype=object)
         for key in ['la', 'lv']:
@@ -17,12 +17,14 @@ class NaghaviModelParameters():
                                                     'activation_function', 
                                                     't_max', 
                                                     't_tr', 
-                                                    'tau', 
-                                                    'V'], dtype=object)
+                                                    'tau',
+                                                    'delay',
+                                                    'V',
+                                                    'P'], dtype=object)
                         
-        self.components['ao'].loc[:] =  [32000., 0.0025, 0.0, 100. , 0.025*5200.0]
-        self.components['art'].loc[:] = [150000., 0.025, 0.0, 50.  , 0.21*5200.0]
-        self.components['ven'].loc[:] = [1200.,   1.   , 0.0, 2800., 0.727*5200.0]
+        self.components['ao'].loc[:] =  [32000., 0.0025, 0.0, 100. , 0.025*5200.0, None]
+        self.components['art'].loc[:] = [150000., 0.025, 0.0, 50.  , 0.21*5200.0, None]
+        self.components['ven'].loc[:] = [1200.,   1.   , 0.0, 2800., 0.727*5200.0, None]
         
         self.components['av'].loc[:] = [800., relu_max]
         self.components['mv'].loc[:] = [550., relu_max]        
@@ -35,8 +37,10 @@ class NaghaviModelParameters():
                                         activation_function_2,
                                         150.,          # t_max
                                         1.5*150.,      # t_tr
-                                        25.,           # tau
-                                        0.018*5200.0   # V
+                                        175.,          # tau
+                                        100.,          # delay
+                                        0.018*5200.0,   # V
+                                        None,
                                         ]
         self.components['lv'].loc[:] = [400,           # E_pas
                                         1./0.0075,     # E_act
@@ -44,8 +48,10 @@ class NaghaviModelParameters():
                                         activation_function_2,
                                         280.,          # t_max 
                                         1.5*280.,      # t_tr 
-                                        25.,           # tau 
-                                        0.02*5200.0    # V
+                                        305.,          # tau 
+                                        None,          # delay
+                                        0.02*5200.0,    # V
+                                        None,
                                         ]
         
     def __repr__(self) -> str:
@@ -67,7 +73,8 @@ class NaghaviModelParameters():
                     r:float=None, 
                     c:float=None,
                     v_ref:float=None, 
-                    v:float=None)->None:
+                    v:float=None,
+                    p:float=None)->None:
         if key not in ['ao','art', 'ven']:
             raise Exception('Wrong key!')
         if r is not None:
@@ -78,6 +85,8 @@ class NaghaviModelParameters():
             self.components[key].loc['v_ref'] = v_ref
         if v is not None:
             self.components[key].loc['v'] = v
+        if p is not None:
+            self.components[key].loc['p'] = p
         return
     
     def set_rlc_comp(self, key:str, 
@@ -85,12 +94,13 @@ class NaghaviModelParameters():
                     c:float=None,
                     l:float=None, 
                     v_ref:float=None, 
-                    v:float=None)->None:
+                    v:float=None,
+                    p:float=None)->None:
         if key not in ['ao','art', 'ven']:
             raise Exception('Wrong key!')
         if l is not None:
             self.components[key].loc['l'] = l
-        self.set_rc_comp(key=key, r=r,c=c, v_ref=v_ref, v=v)
+        self.set_rc_comp(key=key, r=r,c=c, v_ref=v_ref, v=v, p=p)
             
     def set_valve_comp(self, key:str, r:float=None, max_func=None)->None:
         if key not in ['av', 'mv']:
@@ -105,10 +115,13 @@ class NaghaviModelParameters():
                          key:str, 
                          E_pas:float=None, 
                          E_act:float=None, 
-                         V_ref:float=None, 
+                         V_ref:float=None,
+                         V0:float=None,
+                         P0:float=None,
                          t_max:float=None, 
                          t_tr:float=None, 
-                         tau:float=None
+                         tau:float=None,
+                         delay:float=None,
                          )->None:
         if key not in ['lv', 'la']:
             raise Exception('Wrong key!')
@@ -118,12 +131,18 @@ class NaghaviModelParameters():
             self.components[key].loc['E_act'] = E_act
         if V_ref is not None:
             self.components[key].loc['V_ref'] = V_ref
+        if V0 is not None:
+            self.components[key].loc['V'] = V0
+        if P0 is not None:
+            self.components[key].loc['P'] = P0 
         if t_max is not None:
             self.components[key].loc['t_max'] = t_max
         if t_tr is not None:
             self.components[key].loc['t_tr'] = t_tr
         if tau is not None:
             self.components[key].loc['tau'] = tau
+        if delay is not None:
+            self.components[key].loc['delay'] = delay
         return
             
     def set_activation_function(self, key:str, activation_func=activation_function_2) -> None:

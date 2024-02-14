@@ -15,11 +15,10 @@ class HC_constant_elastance(ComponentBase):
                  E_act: float,
                  V_ref: float,
                  v    : float = None,
-                 activation_function_template = activation_function_1,
-                 *args, **kwargs
+                 af = activation_function_1,
                  ) -> None:
         super().__init__(name=name, time_object=time_object, v=v)
-        self._af = lambda t : activation_function_template(t)
+        self._af = af
         self.E_pas = E_pas
         self.E_act = E_act
         self.V_ref = V_ref
@@ -33,37 +32,22 @@ class HC_constant_elastance(ComponentBase):
     def comp_dEdt(self, t:float) -> float:
         return (self.comp_E(t + self.eps) - self.comp_E(t - self.eps)) / 2.0 / self.eps
     
-    def comp_p(self, intt:int, intv:int):
-        e = self.comp_E(self._to.time['real_t'].iloc[intt])
-        v = self.V[intv]
+    def comp_p(self, t:float, v:float) ->float:
+        e = self.comp_E(t)
         return e * (v - self.V_ref)
     
-    def comp_dpdt(self, intt:int=None, intq:int=None, t:float=None, V:float=None, q_i:float=None, q_o:float=None) -> float:
-        if intt is not None:
-            dEdt = self.comp_dEdt(self._to.time['real_t'].iloc[intt])
-            e    = self.comp_E(self._to.time['real_t'].iloc[intt])
-        elif t is not None:
-            dEdt = self.comp_dEdt(t)
-            e    = self.comp_E(t)
-        else:
-            raise Exception("Input case not covered.")
-        if intq is not None:
-            dvdt = self.comp_dvdt(intq=intq)
-            v    = self.V[intq]
-            return dEdt * (v - self.V_ref) + e * dvdt
-        elif V is not None and q_i is not None and q_o is not None:
-            return dEdt * (V - self.V_ref) + e * (q_i - q_o)
-        else: 
-            raise Exception("Input case not covered.")
-        return
-    
+    def comp_dpdt(self, t:float=None, V:float=None, q_i:float=None, q_o:float=None) -> float:
+        dEdt = self.comp_dEdt(t)
+        e    = self.comp_E(t)
+        return dEdt * (V - self.V_ref) + e * (q_i - q_o)
+        
     def setup(self) -> None:
-        self._V.set_dudt_func(lambda t, q_in, q_out : chamber_volume_rate_change(t, q_in=q_in, q_out=q_out),
-                              function_name='lambda chamber_volume_rate_change')
+        self._V.set_dudt_func(chamber_volume_rate_change,
+                              function_name='chamber_volume_rate_change')
         self._V.set_inputs(pd.Series({'q_in':self._Q_i.name, 
                                       'q_out':self._Q_o.name}))
-        self._P_i.set_dudt_func(lambda t, V, q_i, q_o: self.comp_dpdt(t=t, V=V, q_i=q_i, q_o=q_o),
-                                function_name='lamda constant elastance dpdt') # setup to be reviewed
+        self._P_i.set_dudt_func(self.comp_dpdt,
+                                function_name='self.comp_dpdt') # setup to be reviewed
         self._P_i.set_inputs(pd.Series({'V':self._V.name, 
                                         'q_i':self._Q_i.name, 
                                         'q_o':self._Q_o.name}))

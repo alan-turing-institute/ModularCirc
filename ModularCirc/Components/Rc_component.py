@@ -26,8 +26,16 @@ class Rc_component(ComponentBase):
         if p is not None:
             self.p0 = p
             self.P_i.loc[0] = p
+        else:
+            self.p0 = None
+            
+    def define_functions(self):
+        def q_o_u_func(t, y):
+            return resistor_model_flow(t, p_in=y[0], p_out=y[1], r=self.R)
+        self.q_o_u_func = q_o_u_func
     
     def setup(self) -> None:
+        self.define_functions()
         # Set the dudt function for the input pressure state variable 
         self._P_i.set_dudt_func(lambda t, q_in, q_out: grounded_capacitor_model_dpdt(t=t, q_in=q_in, q_out=q_out, c=self.C),
                                 function_name='lambda grounded_capacitor_model_dpdt')
@@ -39,13 +47,11 @@ class Rc_component(ComponentBase):
                              function_name= 'lambda grounded_capacitor_model_pressure')
         self._P_i.set_i_inputs(pd.Series({'V':self._V.name}))
         # Set the function for computing the flows based on the current pressure values at the nodes of the componet
-        self._Q_o.set_u_func(lambda t, p_in, p_out : resistor_model_flow(t, p_in=p_in, p_out=p_out, r=self.R),
-                             function_name='lambda resistor_model_flow')
+        self._Q_o.set_u_func(self.q_o_u_func, function_name='resistor_model_flow')
         self._Q_o.set_inputs(pd.Series({'p_in':self._P_i.name, 
                                         'p_out':self._P_o.name}))
         # Set the dudt function for the compartment volume
-        self._V.set_dudt_func(lambda t, q_in, q_out : chamber_volume_rate_change(t=t, q_in=q_in, q_out=q_out),
-                              function_name='lambda chamber_volume_rate_change')
+        self._V.set_dudt_func(chamber_volume_rate_change, function_name='chamber_volume_rate_change')
         self._V.set_inputs(pd.Series({'q_in':self._Q_i.name, 
                                       'q_out':self._Q_o.name}))         
         

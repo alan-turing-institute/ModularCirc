@@ -90,7 +90,7 @@ def get_softplus_max(alpha:float):
     """
     return lambda val : softplus(val=val, alpha=alpha)
 
-def non_ideal_diode_flow(p_in:float, p_out:float, r:float, max_func=relu_max) -> float:
+def non_ideal_diode_flow(t:float, p_in:float, p_out:float, r:float, max_func=relu_max) -> float:
     """
     Nonideal diode model with the option to choose the re
 

@@ -75,17 +75,16 @@ class Solver():
         return self._to.dt
         
     def generate_dfdt_functions(self):
-            
+
         def initialize_by_function_rountine_2(y:np.ndarray[float]) -> np.ndarray[float]:
             funcs = self._global_sv_init_fun.values()
             ids   = self._global_sv_init_ind.values()
             return [fun(*y[inds]) for fun, inds in zip(funcs, ids)]
-        
             
         def s_u_update_2(t, y:np.ndarray[float]) -> np.ndarray[float]:
             funcs = self._global_ssv_update_fun.values()
             ids   = self._global_ssv_update_ind.values()
-            return [fun(t, *y[inds]) for fun, inds in zip(funcs, ids)]
+            return [fun(t, y[inds]) for fun, inds in zip(funcs, ids)]
             
         def pv_dfdt_function_2(t, y:np.ndarray[float]) -> np.ndarray[float]:
             ht = t%self._to.tcycle
@@ -104,7 +103,7 @@ class Solver():
     def solve(self):
         # initialize the solution fields
         self._asd.loc[0, self._initialize_by_function.index] = \
-            self.initialize_by_function_rountine(y=self._asd.loc[0])
+            self.initialize_by_function_rountine(y=self._asd.loc[0].to_numpy())
                     
         t = self._to._sym_t.values 
         
@@ -121,7 +120,9 @@ class Solver():
             self._asd.iloc[:,id] = res.y[ind,:]
         
         # update the secondary variables...   
-        temp = self._asd.apply(lambda y: pd.Series(self.s_u_update(t=0, y=y.values)), axis=1)
+        def temp_func(y:Series)->Series:
+            return pd.Series(self.s_u_update(t=0, y=y.values))
+        temp = self._asd.apply(temp_func, axis=1)
         for ind, id in enumerate(self._global_ssv_update_fun.keys()):
             self._asd.iloc[:,id] = temp.loc[:,ind]
             

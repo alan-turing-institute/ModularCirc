@@ -19,6 +19,8 @@ class ComponentBase():
         if v is not None:
             self.v0 = v
             self.V.loc[0] = v
+        else:
+            self.v0 = None
         return
         
     def __repr__(self) -> str:
