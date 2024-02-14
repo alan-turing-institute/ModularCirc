@@ -8,8 +8,7 @@ class NaghaviModel(OdeModel):
         super().__init__(time_setup_dict)
         self.name = 'NaghaviModel'
         
-        base = NaghaviModelParameters()
-        print(base)
+        print(parobj)
                 
         # Defining the aorta object
         self.commponents['ao'] = Rc_component( name='Aorta',
