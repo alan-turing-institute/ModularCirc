@@ -130,7 +130,13 @@ def get_softplus_max(alpha:float):
     """
     return lambda val : softplus(val=val, alpha=alpha)
 
-def non_ideal_diode_flow(t:float, p_in:float, p_out:float, r:float, max_func:Callable[[float],float]=relu_max) -> float:
+def non_ideal_diode_flow(t:float, 
+                         p_in:float=None, 
+                         p_out:float=None, 
+                         r:float=None, 
+                         max_func:Callable[[float],float]=relu_max,
+                         y:np.ndarray[float]=None,
+                         ) -> float:
     """
     Nonideal diode model with the option to choose the re
 
@@ -144,6 +150,8 @@ def non_ideal_diode_flow(t:float, p_in:float, p_out:float, r:float, max_func:Cal
     Returns:
         float: q (flow rate through valve)
     """
+    if y is not None:
+        p_in, p_out = y[:2]
     return (max_func(p_in - p_out) / r)
 
 

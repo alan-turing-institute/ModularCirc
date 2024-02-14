@@ -51,21 +51,6 @@ class ComponentBase():
     @property
     def V(self):
         return self._V._u
-    
-    @property
-    def global_state_variable_names(self):
-        return {
-            'P_i' : self._P_i.name,
-            'P_o' : self._P_o.name,
-            'Q_i' : self._Q_i.name,
-            'Q_o' : self._Q_o.name
-            }
-    
-    def comp_dvdt(self, intq:int=None, q_i:float=None, q_o:float=None):
-        if intq is not None:
-            return self.Q_i[intq] - self.Q_o[intq]
-        elif q_i is not None and q_o is not None:
-            return q_i - q_o
         
     def make_unique_io_state_variable(self, q_flag:bool=False, p_flag:bool=True) -> None:
         if q_flag: 
