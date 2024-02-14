@@ -78,7 +78,7 @@ class NaghaviModelRLC(OdeModel):
                                         E_act=parobj['la']['E_act'],
                                         V_ref=parobj['la']['V_ref'],
                                         v    =parobj['la']['V'],
-                                        activation_function_template=la_af
+                                        af=la_af
                                         )
         self._state_variable_dict['v_la'] = self.commponents['la']._V
         self._state_variable_dict['v_la'].set_name('v_la')
@@ -97,7 +97,7 @@ class NaghaviModelRLC(OdeModel):
                                         E_act=parobj['lv']['E_act'],
                                         V_ref=parobj['lv']['V_ref'],
                                         v    =parobj['lv']['V'],
-                                        activation_function_template=lv_af
+                                        af=lv_af
                                         )
         self._state_variable_dict['v_lv'] = self.commponents['lv']._V
         self._state_variable_dict['v_lv'].set_name('v_lv')

@@ -1,7 +1,15 @@
 import numpy as np  
 from .Time import TimeClass
 
-def resistor_model_flow(t:float, p_in:float, p_out:float, r:float) -> float:
+from numba import jit
+from collections.abc import Callable
+
+def resistor_model_flow(t:float, 
+                        p_in:float=None,
+                        p_out:float=None,
+                        r:float=None,
+                        y:np.ndarray[float]=None
+                        ) -> float:
     """
     Resistor model.
 
@@ -13,12 +21,20 @@ def resistor_model_flow(t:float, p_in:float, p_out:float, r:float) -> float:
     Returns:
         float: q (flow rate through resistive unit)
     """
+    if y is not None:
+        p_in, p_out= y[:2]
     return (p_in - p_out) / r
 
 def resistor_model_dp(q_in:float, r:float) -> float:
     return q_in * r
 
-def resistor_impedance_flux_rate(t:float, p_in:float, p_out:float, q_out:float, r:float, l:float) -> float:
+def resistor_impedance_flux_rate(t:float, 
+                                 p_in:float=None,
+                                 p_out:float=None,
+                                 q_out:float=None,
+                                 r:float=None,
+                                 l:float=None,
+                                 y:np.ndarray[float]=None) -> float:
     """
     Resistor and impedance in series flux rate of change model. 
 
@@ -33,9 +49,16 @@ def resistor_impedance_flux_rate(t:float, p_in:float, p_out:float, q_out:float, 
     Returns:
         float: flux rate of change
     """
+    if y is not None:
+        p_in, p_out, q_out = y[:3]
     return (p_in - p_out - q_out * r ) / l 
 
-def grounded_capacitor_model_pressure(t:float, v:float, v_ref:float, c:float) -> float:
+def grounded_capacitor_model_pressure(t:float, 
+                                      v:float=None, 
+                                      v_ref:float=None,
+                                      c:float=None, 
+                                      y:np.ndarray[float]=None
+                                      ) -> float:
     """
     Capacitor model with constant capacitance. 
 
@@ -49,12 +72,25 @@ def grounded_capacitor_model_pressure(t:float, v:float, v_ref:float, c:float) ->
     --------
         float: pressure at input node
     """
+    if y is not None:
+        v = y
     return (v - v_ref) / c
 
-def grounded_capacitor_model_dpdt(t:float, q_in:float, q_out:float, c:float) -> float:
+def grounded_capacitor_model_dpdt(t:float, 
+                                  q_in:float=None, 
+                                  q_out:float=None, 
+                                  c:float=None, 
+                                  y:np.ndarray[float]=None
+                                  ) -> float:
+    if y is not None:
+        q_in, q_out = y[:2]
     return (q_in - q_out) / c
 
-def chamber_volume_rate_change(t:float, q_in:float, q_out:float) -> float:
+def chamber_volume_rate_change(t:float, 
+                               q_in:float=None, 
+                               q_out:float=None,
+                               y:np.ndarray[float]=None
+                               ) -> float:
     """
     Volume change rate in chamber
 
@@ -65,16 +101,20 @@ def chamber_volume_rate_change(t:float, q_in:float, q_out:float) -> float:
     Returns:
         float: _description_
     """
+    if y is not None:
+        q_in, q_out = y[:2]
     return q_in - q_out
 
 def relu_max(val:float) -> float: 
-    return np.max([val, 0.0])
+    return np.maximum(val, 0.0)
 
-def softplus(val:float, alpha:float) -> float:
-    if alpha * val <= 20.0:
-        return 1/ alpha * np.log(1 + np.exp(alpha * val))
+def softplus(val:float, alpha:float=0.2) -> float:
+    if isinstance(val, float):
+        return 1/ alpha * np.log(1 + np.exp(alpha * val)) if alpha * val <= 20.0 else val
     else:
-        return val
+        y = val.copy()
+        y[alpha * y <= 20.0] = 1/ alpha * np.log(1 + np.exp(alpha * y[alpha * y <=20.0]))
+        return y
     
 def get_softplus_max(alpha:float):
     """
@@ -90,7 +130,7 @@ def get_softplus_max(alpha:float):
     """
     return lambda val : softplus(val=val, alpha=alpha)
 
-def non_ideal_diode_flow(t:float, p_in:float, p_out:float, r:float, max_func=relu_max) -> float:
+def non_ideal_diode_flow(t:float, p_in:float, p_out:float, r:float, max_func:Callable[[float],float]=relu_max) -> float:
     """
     Nonideal diode model with the option to choose the re
 
@@ -104,8 +144,7 @@ def non_ideal_diode_flow(t:float, p_in:float, p_out:float, r:float, max_func=rel
     Returns:
         float: q (flow rate through valve)
     """
-    # print('*', max_func(p_in - p_out) / r)
-    return max_func(p_in - p_out) / r
+    return (max_func(p_in - p_out) / r)
 
 
 def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
@@ -125,7 +164,7 @@ def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
         return (p_in - p_out) / r_o
     else:
         return (p_in - p_out) / r_r
-    
+
 def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
     """
     Activation function that dictates the transition between the passive and active behaviors.

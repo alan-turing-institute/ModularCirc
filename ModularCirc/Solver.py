@@ -75,56 +75,53 @@ class Solver():
         return self._to.dt
         
     def generate_dfdt_functions(self):
+        
+        funcs1 = self._global_sv_init_fun.values()
+        ids1   = self._global_sv_init_ind.values()
 
-        def initialize_by_function_rountine_2(y:np.ndarray[float]) -> np.ndarray[float]:
-            funcs = self._global_sv_init_fun.values()
-            ids   = self._global_sv_init_ind.values()
-            return [fun(*y[inds]) for fun, inds in zip(funcs, ids)]
+        def initialize_by_function(y:np.ndarray[float]) -> np.ndarray[float]:
+            return np.array([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)])
+        
+        funcs2 = self._global_ssv_update_fun.values()
+        ids2   = self._global_ssv_update_ind.values()
             
-        def s_u_update_2(t, y:np.ndarray[float]) -> np.ndarray[float]:
-            funcs = self._global_ssv_update_fun.values()
-            ids   = self._global_ssv_update_ind.values()
-            return [fun(t, y[inds]) for fun, inds in zip(funcs, ids)]
+        def s_u_update(t, y:np.ndarray[float,float]) -> np.ndarray[float]:
+            return np.array([fun(t=t, y=y[inds]) for fun, inds in zip(funcs2, ids2)])
+        
+        keys3  = np.array(list(self._global_psv_update_fun.keys()))
+        keys4  = np.array(list(self._global_ssv_update_fun.keys()))
+        funcs3 = self._global_psv_update_fun.values()
+        ids3   = self._global_psv_update_ind.values()
             
-        def pv_dfdt_function_2(t, y:np.ndarray[float]) -> np.ndarray[float]:
+        def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
             ht = t%self._to.tcycle
-            y_temp = np.zeros((len(self._global_sv_id),))
-            y_temp[np.array(list(self._global_psv_update_fun.keys()))] = y
-            y_temp[np.array(list(self._global_ssv_update_fun.keys()))] = s_u_update_2(t, y_temp)
-            
-            funcs = self._global_psv_update_fun.values()
-            ids   = self._global_psv_update_ind.values()
-            return [func(ht,*y_temp[inds]) for func, inds in zip(funcs, ids)]
+            y_temp = np.zeros( (len(self._global_sv_id),y.shape[1]) if len(y.shape) == 2 else (len(self._global_sv_id),)) 
+            y_temp[keys3] = y
+            y_temp[keys4] = s_u_update(t, y_temp)
+            return np.array([func(t=ht, y=y_temp[inds]) for func, inds in zip(funcs3, ids3)])
            
-        self.initialize_by_function_rountine = initialize_by_function_rountine_2    
-        self.pv_dfdt_global = pv_dfdt_function_2
-        self.s_u_update     = s_u_update_2
+        self.initialize_by_function = initialize_by_function    
+        self.pv_dfdt_global = pv_dfdt_update
+        self.s_u_update     = s_u_update
     
     def solve(self):
         # initialize the solution fields
         self._asd.loc[0, self._initialize_by_function.index] = \
-            self.initialize_by_function_rountine(y=self._asd.loc[0].to_numpy())
-                    
+            self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
         t = self._to._sym_t.values 
-        
         # Solve the main system of ODEs..   
         res = solve_ivp(fun=self.pv_dfdt_global, 
                         t_span=(t[0], t[-1]), 
                         y0=self._asd.iloc[0, list(self._global_psv_update_fun.keys())].to_list(), 
                         t_eval=t,
                         max_step=self._to.dt,
-                        method='BDF'
+                        method='BDF',
+                        vectorized=True,
                         )
-
         for ind, id in enumerate(self._global_psv_update_fun.keys()):
             self._asd.iloc[:,id] = res.y[ind,:]
-        
-        # update the secondary variables...   
-        def temp_func(y:Series)->Series:
-            return pd.Series(self.s_u_update(t=0, y=y.values))
-        temp = self._asd.apply(temp_func, axis=1)
-        for ind, id in enumerate(self._global_ssv_update_fun.keys()):
-            self._asd.iloc[:,id] = temp.loc[:,ind]
+        temp = self.s_u_update(t=0.0, y=self._asd.values.T)
+        self._asd.iloc[:,self._global_ssv_update_fun.keys()] = temp.T
             
            
         

@@ -29,22 +29,23 @@ class Rc_component(ComponentBase):
         else:
             self.p0 = None
             
-    def define_functions(self):
-        def q_o_u_func(t, y):
-            return resistor_model_flow(t, p_in=y[0], p_out=y[1], r=self.R)
-        self.q_o_u_func = q_o_u_func
+    def q_o_u_func(self, t, y):
+        return resistor_model_flow(t=t, y=y, r=self.R)
+    
+    def p_i_dudt_func(self, t, y):
+        return grounded_capacitor_model_dpdt(t, y=y, c=self.C)
+    
+    def p_i_i_func(self, t, y):
+        return grounded_capacitor_model_pressure(t, y=y, v_ref=self.V_ref, c=self.C)
     
     def setup(self) -> None:
-        self.define_functions()
         # Set the dudt function for the input pressure state variable 
-        self._P_i.set_dudt_func(lambda t, q_in, q_out: grounded_capacitor_model_dpdt(t=t, q_in=q_in, q_out=q_out, c=self.C),
-                                function_name='lambda grounded_capacitor_model_dpdt')
+        self._P_i.set_dudt_func(self.p_i_dudt_func, function_name='grounded_capacitor_model_dpdt')
         # Set the mapping betwen the local input names and the global names of the state variables
         self._P_i.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                         'q_out':self._Q_o.name}))
         # Set the initialization function for the input pressure state variable
-        self._P_i.set_i_func(lambda V: grounded_capacitor_model_pressure(t=0.0, v=V, v_ref=self.V_ref, c=self.C),
-                             function_name= 'lambda grounded_capacitor_model_pressure')
+        self._P_i.set_i_func(self.p_i_i_func, function_name= 'grounded_capacitor_model_pressure')
         self._P_i.set_i_inputs(pd.Series({'V':self._V.name}))
         # Set the function for computing the flows based on the current pressure values at the nodes of the componet
         self._Q_o.set_u_func(self.q_o_u_func, function_name='resistor_model_flow')
