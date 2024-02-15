@@ -79,3 +79,10 @@ class OdeModel():
         for key in self._state_variable_dict.keys():
             out += f" - {key} \n"
         return out
+    
+    def set_v_sv(self, comp_key:str):
+        v_key = 'v_' + comp_key
+        self._state_variable_dict[v_key] = self.commponents[comp_key]._V
+        self._state_variable_dict[v_key].set_name(v_key)
+        self.all_sv_data[v_key] = self.commponents[comp_key].V     ##### test
+        self.commponents[comp_key]._V._u = self.all_sv_data[v_key]
