@@ -1,9 +1,10 @@
 from ..HelperRoutines import *
-
+from .ParametersObject import ParametersObject
 import pandas as pd
 
-class NaghaviModelParameters():
-    def __init__(self) -> None:
+class NaghaviModelParameters(ParametersObject):
+    def __init__(self, name='Naghavi Model') -> None:
+        super().__init__(name=name)
         components = ['ao', 'art', 'ven', 'av', 'mv', 'la', 'lv']
         self.components = {key : None for key in components}
         for key in ['ao', 'art', 'ven']:
@@ -22,132 +23,35 @@ class NaghaviModelParameters():
                                                     'V',
                                                     'P'], dtype=object)
                         
-        self.components['ao'].loc[:] =  [32000., 0.0025, 0.0, 100. , 0.025*5200.0, None]
-        self.components['art'].loc[:] = [150000., 0.025, 0.0, 50.  , 0.21*5200.0, None]
-        self.components['ven'].loc[:] = [1200.,   1.   , 0.0, 2800., 0.727*5200.0, None]
+        self.set_rlc_comp(key='ao', r=32000., c=0.0025, l=0.0, v_ref=100., v=0.025*5200.0, p=None)
+        self.set_rlc_comp(key='art', r=150000., c=0.025, l=0.0, v_ref=50. , v=0.025*5200.0, p=None)
+        self.set_rlc_comp(key='ven', r=1200., c=1.000, l=0.0, v_ref=2800. , v=0.727*5200.0, p=None)
         
-        self.components['av'].loc[:] = [800., relu_max]
-        self.components['mv'].loc[:] = [550., relu_max]        
+        self.set_valve_comp(key='av', r=800., max_func=relu_max)
+        self.set_valve_comp(key='mv', r=550., max_func=relu_max)     
         
         
         # original
-        self.components['la'].loc[:] = [60.,           # E_pas
-                                        0.44/0.0075,   # E_act
-                                        10.,           # V_ref
-                                        activation_function_2,
-                                        150.,          # t_max
-                                        1.5*150.,      # t_tr
-                                        175.,          # tau
-                                        100.,          # delay
-                                        0.018*5200.0,   # V
-                                        None,
-                                        ]
-        self.components['lv'].loc[:] = [400,           # E_pas
-                                        1./0.0075,     # E_act
-                                        10.,           # V_ref 
-                                        activation_function_2,
-                                        280.,          # t_max 
-                                        1.5*280.,      # t_tr 
-                                        305.,          # tau 
-                                        None,          # delay
-                                        0.02*5200.0,    # V
-                                        None,
-                                        ]
+        self.set_chamber_comp('la', E_pas=60., E_act=0.44/0.0075, V_ref=10.,
+                              activation_function=activation_function_2,
+                              t_max=150., t_tr=1.5*150., tau=175., delay=100., V=0.018*5200.0, P=None)
+
+        self.set_chamber_comp('lv', E_pas=400., E_act=1./0.0075, V_ref=10.,
+                              activation_function=activation_function_2,
+                              t_max=280., t_tr=1.5*280., tau=305., V=0.028*5200.0, P=None)
+    
+    def set_rc_comp(self, key:str, **kwargs):
+        self._set_comp(key=key, set=['ao','art', 'ven'], **kwargs)
         
-    def __repr__(self) -> str:
-        out = 'Naghavi Model parameters set: \n'
-        for comp in self.components: 
-            out += f" * Component - {bold_text(str(comp))}" + '\n'
-            for key, item in self.components[comp].items():
-                if isinstance(item, float):
-                    out += (f"  - {bold_text(str(key)):<20} : {item:.3e}") + '\n'
-                else:
-                    out += (f"  - {bold_text(str(key)):<20} : {item}") + '\n'
-            out += '\n'
-        return out
-    
-    def __getitem__(self, key):
-        return self.components[key]
-    
-    def set_rc_comp(self, key:str, 
-                    r:float=None, 
-                    c:float=None,
-                    v_ref:float=None, 
-                    v:float=None,
-                    p:float=None)->None:
-        if key not in ['ao','art', 'ven']:
-            raise Exception('Wrong key!')
-        if r is not None:
-            self.components[key].loc['r'] = r
-        if c is not None:
-            self.components[key].loc['c'] = c
-        if v_ref is not None:
-            self.components[key].loc['v_ref'] = v_ref
-        if v is not None:
-            self.components[key].loc['v'] = v
-        if p is not None:
-            self.components[key].loc['p'] = p
-        return
-    
-    def set_rlc_comp(self, key:str, 
-                    r:float=None, 
-                    c:float=None,
-                    l:float=None, 
-                    v_ref:float=None, 
-                    v:float=None,
-                    p:float=None)->None:
-        if key not in ['ao','art', 'ven']:
-            raise Exception('Wrong key!')
-        if l is not None:
-            self.components[key].loc['l'] = l
-        self.set_rc_comp(key=key, r=r,c=c, v_ref=v_ref, v=v, p=p)
-            
-    def set_valve_comp(self, key:str, r:float=None, max_func=None)->None:
-        if key not in ['av', 'mv']:
-            raise Exception('Wrong key!')
-        if r is not None:
-            self.components[key].loc['r'] = r
-        if max_func is not None:
-            self.components[key].loc['max_func'] = max_func
-        return
-    
-    def set_chamber_comp(self, 
-                         key:str, 
-                         E_pas:float=None, 
-                         E_act:float=None, 
-                         V_ref:float=None,
-                         V0:float=None,
-                         P0:float=None,
-                         t_max:float=None, 
-                         t_tr:float=None, 
-                         tau:float=None,
-                         delay:float=None,
-                         )->None:
-        if key not in ['lv', 'la']:
-            raise Exception('Wrong key!')
-        if E_pas is not None:
-            self.components[key].loc['E_pas'] = E_pas
-        if E_act is not None:
-            self.components[key].loc['E_act'] = E_act
-        if V_ref is not None:
-            self.components[key].loc['V_ref'] = V_ref
-        if V0 is not None:
-            self.components[key].loc['V'] = V0
-        if P0 is not None:
-            self.components[key].loc['P'] = P0 
-        if t_max is not None:
-            self.components[key].loc['t_max'] = t_max
-        if t_tr is not None:
-            self.components[key].loc['t_tr'] = t_tr
-        if tau is not None:
-            self.components[key].loc['tau'] = tau
-        if delay is not None:
-            self.components[key].loc['delay'] = delay
-        return
-            
-    def set_activation_function(self, key:str, activation_func=activation_function_2) -> None:
-        if key not in ['lv', 'la']:
-            raise Exception('Wrong key!')
-        if activation_func is not None:
-            self.components[key].loc['activation_function'] = activation_func
+    def set_rlc_comp(self, key:str, **kwargs):
+        self._set_comp(key=key, set=['ao','art', 'ven'], **kwargs)
         
+    def set_valve_comp(self, key:str, **kwargs):
+        self._set_comp(key=key, set=['av', 'mv'], **kwargs)
+            
+    
+    def set_chamber_comp(self, key:str, **kwargs):
+        self._set_comp(key=key, set=['lv', 'la'], **kwargs)
+         
+    def set_activation_function(self, key:str, activation_func=activation_function_2):
+        self._set_comp(key=key, set=['lv', 'la'], activation_func=activation_function_2)
