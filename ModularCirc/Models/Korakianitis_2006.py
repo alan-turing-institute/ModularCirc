@@ -99,4 +99,3 @@ class Korakianitis_2006(ParametersObject):
         
     def set_valve_comp(self, key, **kwargs):
         self._set_comp(key=key, set=VALVES, **kwargs)
-        
