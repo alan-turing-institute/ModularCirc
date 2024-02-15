@@ -26,5 +26,6 @@ class ParametersObject():
         if key not in set:
             raise Exception('Wrong key!')
         for k, val in kwargs.items():
+            if val is None: continue
             assert k in self[key].index
             self[key].loc[k] = val
