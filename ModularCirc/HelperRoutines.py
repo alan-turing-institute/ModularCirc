@@ -154,6 +154,32 @@ def non_ideal_diode_flow(t:float,
         p_in, p_out = y[:2]
     return (max_func(p_in - p_out) / r)
 
+def simple_bernoulli_diode_flow(t:float, 
+                         p_in:float=None, 
+                         p_out:float=None, 
+                         CQ:float=None, 
+                         y:np.ndarray[float]=None,
+                         ) -> float:
+    """
+    Nonideal diode model with the option to choose the re
+
+    Args:
+    -----
+        p_in (float): input pressure
+        p_out (float): output pressure
+        r (float): valve constant resistance
+        max_func (function): function that dictates when valve oppens
+
+    Returns:
+        float: q (flow rate through valve)
+    """
+    if y is not None:
+        p_in, p_out = y[:2]
+    
+    dp   = p_in - p_out
+    sigm = 1.0 / (1.0 + np.exp(- dp/10.))
+    return CQ * sigm * np.sign(dp) * np.sqrt(np.abs(dp))
+
 
 def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     """

@@ -81,7 +81,7 @@ class Solver():
 
         def initialize_by_function(y:np.ndarray[float]) -> np.ndarray[float]:
             return np.array([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)])
-        
+            
         funcs2 = self._global_ssv_update_fun.values()
         ids2   = self._global_ssv_update_ind.values()
             
@@ -90,9 +90,9 @@ class Solver():
         
         keys3  = np.array(list(self._global_psv_update_fun.keys()))
         keys4  = np.array(list(self._global_ssv_update_fun.keys()))
-        funcs3 = self._global_psv_update_fun.values()
-        ids3   = self._global_psv_update_ind.values()
-            
+        funcs3 = list(self._global_psv_update_fun.values())
+        ids3   = list(self._global_psv_update_ind.values())
+                    
         def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
             ht = t%self._to.tcycle
             y_temp = np.zeros( (len(self._global_sv_id),y.shape[1]) if len(y.shape) == 2 else (len(self._global_sv_id),)) 
@@ -116,7 +116,7 @@ class Solver():
                         t_eval=t,
                         max_step=self._to.dt,
                         method='BDF',
-                        vectorized=True,
+                        # vectorized=True,
                         )
         for ind, id in enumerate(self._global_psv_update_fun.keys()):
             self._asd.iloc[:,id] = res.y[ind,:]
