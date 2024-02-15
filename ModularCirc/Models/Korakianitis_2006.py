@@ -1,15 +1,11 @@
-from .NaghaviModelParameters import NaghaviModelParameters as nmp
 from ..HelperRoutines import activation_function_2
 
-class NMP_Korakianitis_2006(nmp):
+class Korakianitis_2006():
     """
     Intro
     -----
-    Alteration fo the Naghavi Model Parameters based on Korakianitis and Shi (2006)
+   Model Parameters based on Korakianitis and Shi (2006)
 
-    Derived  from:
-    ---
-        nmp (class): NagaviModelParameters class
     """
     def __init__(self) -> None:
         super().__init__()
