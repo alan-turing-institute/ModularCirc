@@ -8,6 +8,7 @@ class ParametersObject():
         self._vessels = []
         self._valves  = []
         self._chambers= []
+        self.timings = {}
         
         
     def __repr__(self) -> str:
@@ -33,5 +34,13 @@ class ParametersObject():
             raise Exception(f'Wrong key! {key} not in {set}.')
         for k, val in kwargs.items():
             if val is None: continue
-            assert k in self[key].index.values
+            assert k in self[key].index.values, f" {key}: {k} not in {self[key].index.values}"
+            self[key].loc[k] = val
+            
+    def set_timings(self, key:str, **kwargs):
+        if key not in self._chambers:
+            raise Exception(f'Wrong key! {key} not in {self._chambers}.')
+        for k, val in kwargs.items():
+            if val is None: continue
+            assert k in self.timings[key].index.values, f" {key}: {k} not in {self[key].index.values}"
             self[key].loc[k] = val

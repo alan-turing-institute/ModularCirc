@@ -65,16 +65,19 @@ class NaghaviModelRLC(OdeModel):
                                     )
         
         # Defining the left atrium activation function
-        def la_af(t, t_max=parobj['la']['t_max'], t_tr=parobj['la']['t_tr'], tau=parobj['la']['tau'], af=parobj['la']['activation_function']):
-            return af(time_shift(t, 100., self.time_object), t_max=t_max, t_tr=t_tr, tau=tau)
+        # def la_af(t, t_max=parobj['la']['t_max'], t_tr=parobj['la']['t_tr'], tau=parobj['la']['tau'], af=parobj['la']['activation_function']):
+        #     return af(time_shift(t, 100., self.time_object), t_max=t_max, t_tr=t_tr, tau=tau)
         # Defining the left atrium class
         self.commponents['la'] = HC_constant_elastance(name='LeftAtrium',
                                         time_object=self.time_object,
                                         E_pas=parobj['la']['E_pas'],
                                         E_act=parobj['la']['E_act'],
-                                        V_ref=parobj['la']['V_ref'],
-                                        v    =parobj['la']['V'],
-                                        af=la_af
+                                        v_ref=parobj['la']['v_ref'],
+                                        v    =parobj['la']['v'],
+                                        af   =parobj['la']['activation_function'],
+                                        tr   =parobj['la']['tr'], 
+                                        td   =parobj['la']['td'], 
+                                        delay=parobj['la']['delay']
                                         )
         self._state_variable_dict['v_la'] = self.commponents['la']._V
         self._state_variable_dict['v_la'].set_name('v_la')
@@ -82,15 +85,18 @@ class NaghaviModelRLC(OdeModel):
         self.commponents['la']._V._u = self.all_sv_data['v_la']
         
         # Defining the left ventricle activation function
-        def lv_af(t, t_max=parobj['lv']['t_max'], t_tr=parobj['lv']['t_tr'], tau=parobj['lv']['tau'], af=parobj['lv']['activation_function']):
-            return af(t, t_max=t_max, t_tr=t_tr, tau=tau)
+        # def lv_af(t, t_max=parobj['lv']['t_max'], t_tr=parobj['lv']['t_tr'], tau=parobj['lv']['tau'], af=parobj['lv']['activation_function']):
+        #     return af(t, t_max=t_max, t_tr=t_tr, tau=tau)
         self.commponents['lv'] = HC_constant_elastance(name='LeftVentricle', 
                                         time_object=self.time_object,
                                         E_pas=parobj['lv']['E_pas'],
                                         E_act=parobj['lv']['E_act'],
-                                        V_ref=parobj['lv']['V_ref'],
-                                        v    =parobj['lv']['V'],
-                                        af=lv_af
+                                        v_ref=parobj['lv']['v_ref'],
+                                        v    =parobj['lv']['v'],
+                                        af   =parobj['lv']['activation_function'],
+                                        tr   =parobj['lv']['tr'], 
+                                        td   =parobj['lv']['td'], 
+                                        delay=parobj['lv']['delay']
                                         )
         self._state_variable_dict['v_lv'] = self.commponents['lv']._V
         self._state_variable_dict['v_lv'].set_name('v_lv')

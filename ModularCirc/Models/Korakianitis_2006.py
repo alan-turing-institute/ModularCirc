@@ -3,7 +3,8 @@ from .ParametersObject import ParametersObject
 import pandas as pd
 
 
-KORAKIANITIS_2006_COMPONENTS = ['la', # left atrium
+KORAKIANITIS_2006_COMPONENTS = [
+              'la', # left atrium
               'mi', # mitral valve
               'lv', # left ventricle
               'ao', # aortic valve
@@ -25,8 +26,9 @@ VALVES  = ['mi', 'ao', 'ti', 'po']
 VALVES_PAR = ['CQ']
 
 CHAMBERS = ['la', 'lv', 'ra', 'rv']
-CHAMBERS_PAR = ['E_pas', 'E_act', 'V_ref', 'activation_function', 
-                't_max', 't_tr', 'tau','delay', 'V', 'P']
+CHAMBERS_PAR = ['E_pas', 'E_act', 'v_ref', 'af',  'v', 'p', 'tr', 'td', 'delay']
+
+# TIMINGS = []
 
 class Korakianitis_2006(ParametersObject):
     """
@@ -41,40 +43,21 @@ class Korakianitis_2006(ParametersObject):
             for key in type_:
                 self[key] = pd.Series(index=type_var, dtype=object)
                 
+        # self.timings = {key : pd.Series(index=TIMINGS) for key in CHAMBERS} 
+                
         self._vessels = VESSELS
         self._valves  = VALVES
         self._chambers= CHAMBERS
         
         mmhg = 133.32
         
+        self.set_chamber_comp('lv', E_pas=mmhg * 0.1, E_act=mmhg * 2.5, v_ref=5.0, tr = 30., td = 45.)
+        self.set_chamber_comp('la', E_pas=mmhg * 0.15, E_act=mmhg * 0.25, v_ref=4.0, tr = 9.0, td = 18.0, delay=17.0)
+        self.set_chamber_comp('rv', E_pas=mmhg * 0.1, E_act=mmhg * 1.15, v_ref=10., tr=30., td=45.)
+        self.set_chamber_comp('ra', E_pas=mmhg * 0.15, E_act=mmhg * 0.15, v_ref=4., tr=9.0, td=18.0, delay=17.0)
+        
         for chamber in CHAMBERS:
-            self.set_activation_function(chamber, activation_function=activation_function_2)
-        self.set_chamber_comp('lv',
-                              E_pas=mmhg * 0.1,
-                              E_act=mmhg * 2.5,
-                              V_ref=5.0,
-                              t_max=30.,
-                              tau=45.)
-        self.set_chamber_comp('la',
-                              E_pas=mmhg * 0.15,
-                              E_act=mmhg * 0.25,
-                              V_ref=4.0,
-                              t_max=9.0,
-                              tau=18.0,
-                              delay=17.0)
-        self.set_chamber_comp('rv',
-                              E_pas=mmhg * 0.1,
-                              E_act=mmhg * 1.15,
-                              V_ref=10.,
-                              t_max=30.,
-                              tau=45.)
-        self.set_chamber_comp('ra',
-                              E_pas=mmhg * 0.15,
-                              E_act=mmhg * 0.15,
-                              V_ref=4.,
-                              t_max=9.0,
-                              tau=18.0,
-                              delay=17.0)
+            self.set_activation_function(chamber, af=activation_function_2)
         
         # systemic circulation
         self.set_rlc_comp('sas', r=0.003*mmhg, c=1.6/mmhg, l=0.0017*mmhg)
@@ -95,8 +78,8 @@ class Korakianitis_2006(ParametersObject):
     def set_chamber_comp(self, key, **kwargs):
         self._set_comp(key=key, set=CHAMBERS, **kwargs)
         
-    def set_activation_function(self, key, activation_function):
-        self._set_comp(key, set=CHAMBERS, activation_function=activation_function)
+    def set_activation_function(self, key, af):
+        self._set_comp(key, set=CHAMBERS, af=af)
         
     def set_rlc_comp(self, key, **kwargs):
         self._set_comp(key=key, set=VESSELS, **kwargs)

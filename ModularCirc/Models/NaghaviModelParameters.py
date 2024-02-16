@@ -14,14 +14,13 @@ class NaghaviModelParameters(ParametersObject):
         for key in ['la', 'lv']:
             self.components[key] = pd.Series(index=['E_pas', 
                                                     'E_act', 
-                                                    'V_ref', 
+                                                    'v_ref', 
                                                     'activation_function', 
-                                                    't_max', 
-                                                    't_tr', 
-                                                    'tau',
+                                                    'tr', 
+                                                    'td', 
                                                     'delay',
-                                                    'V',
-                                                    'P'], dtype=object)
+                                                    'v',
+                                                    'p'], dtype=object)
                         
         self.set_rlc_comp(key='ao', r=32000., c=0.0025, l=0.0, v_ref=100., v=0.025*5200.0, p=None)
         self.set_rlc_comp(key='art', r=150000., c=0.025, l=0.0, v_ref=50. , v=0.025*5200.0, p=None)
@@ -32,13 +31,13 @@ class NaghaviModelParameters(ParametersObject):
         
         
         # original
-        self.set_chamber_comp('la', E_pas=60., E_act=0.44/0.0075, V_ref=10.,
+        self.set_chamber_comp('la', E_pas=60., E_act=0.44/0.0075, v_ref=10.,
                               activation_function=activation_function_2,
-                              t_max=150., t_tr=1.5*150., tau=175., delay=100., V=0.018*5200.0, P=None)
+                              tr=150., td=175., delay=100., v=0.018*5200.0, p=None)
 
-        self.set_chamber_comp('lv', E_pas=400., E_act=1./0.0075, V_ref=10.,
+        self.set_chamber_comp('lv', E_pas=400., E_act=1./0.0075, v_ref=10.,
                               activation_function=activation_function_2,
-                              t_max=280., t_tr=1.5*280., tau=305., V=0.028*5200.0, P=None)
+                              tr=280., td=305., delay=None, v=0.028*5200.0, p=None)
     
     def set_rc_comp(self, key:str, **kwargs):
         self._set_comp(key=key, set=['ao','art', 'ven'], **kwargs)

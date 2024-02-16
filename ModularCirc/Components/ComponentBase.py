@@ -6,6 +6,7 @@ class ComponentBase():
                  name,
                  time_object:TimeClass,
                  v:float = None,
+                 p:float = None,
                  ) -> None:
         self._name     = name
         self._to      = time_object
@@ -21,6 +22,7 @@ class ComponentBase():
             self.V.loc[0] = v
         else:
             self.v0 = None
+        self.p0 = p
         return
         
     def __repr__(self) -> str:

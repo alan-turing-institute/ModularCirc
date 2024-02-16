@@ -4,6 +4,7 @@ from .ParametersObject import ParametersObject as po
 from ..Components import Rlc_component, Valve_simple_bernoulli, HC_constant_elastance
 
 FULL_NAMES =[
+    'LeftA',
     'MiValve',
     'LeftV',
     'AoV',
@@ -39,6 +40,7 @@ class KorakianitisModel(OdeModel):
             self.commponents[key] = class_(name=name,
                                     time_object=self.time_object, 
                                     **parobj[key].to_dict())
+            if key not in parobj._valves: self.set_v_sv(key)
             self.commponents[key].setup()
             
         self.connect_modules(self.commponents['lv'],
