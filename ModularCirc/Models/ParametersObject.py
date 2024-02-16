@@ -21,11 +21,14 @@ class ParametersObject():
     
     def __getitem__(self, key):
         return self.components[key]
+    
+    def __setitem__(self, key, val):
+        self.components[key] = val
         
     def _set_comp(self, key:str, set, **kwargs):
         if key not in set:
-            raise Exception('Wrong key!')
+            raise Exception(f'Wrong key! {key} not in {set}.')
         for k, val in kwargs.items():
             if val is None: continue
-            assert k in self[key].index
+            assert k in self[key].index.values
             self[key].loc[k] = val
