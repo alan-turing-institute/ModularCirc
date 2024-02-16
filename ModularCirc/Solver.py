@@ -109,6 +109,7 @@ class Solver():
         self._asd.loc[0, self._initialize_by_function.index] = \
             self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
         t = self._to._sym_t.values 
+        print(self._asd.loc[0, self._initialize_by_function.index])
         # Solve the main system of ODEs..   
         res = solve_ivp(fun=self.pv_dfdt_global, 
                         t_span=(t[0], t[-1]), 

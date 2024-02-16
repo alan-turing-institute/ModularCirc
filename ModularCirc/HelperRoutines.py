@@ -76,6 +76,16 @@ def grounded_capacitor_model_pressure(t:float,
         v = y
     return (v - v_ref) / c
 
+def grounded_capacitor_model_volume(t:float,
+                                    p:float=None,
+                                    v_ref:float=None,
+                                    c:float=None,
+                                    y:np.ndarray[float]=None
+                                    )->float:
+    if y is not None:
+        p = y
+    return v_ref + p * c
+
 def grounded_capacitor_model_dpdt(t:float, 
                                   q_in:float=None, 
                                   q_out:float=None, 

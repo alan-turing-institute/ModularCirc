@@ -45,6 +45,12 @@ class HC_constant_elastance(ComponentBase):
             v = y
         return e * (v - self.v_ref)
     
+    def comp_v(self, t:float=None, p:float=None, y:np.ndarray[float]=None)->float:
+        e = self.comp_E(t)
+        if y is not None:
+            p = y
+        return p / e + self.v_ref
+    
     def comp_dpdt(self, t:float=None, V:float=None, q_i:float=None, q_o:float=None, y:np.ndarray[float]=None) -> float:
         if y is not None:
             V, q_i, q_o, = y[:3]
@@ -61,6 +67,12 @@ class HC_constant_elastance(ComponentBase):
         self._P_i.set_inputs(pd.Series({'V':self._V.name, 
                                         'q_i':self._Q_i.name, 
                                         'q_o':self._Q_o.name}))
-        self._P_i.set_i_func(self.comp_p,
-                             function_name='lamda chamber_pressure_function + activation_function_1 + 2xchamber_linear_elastic_law')
-        self._P_i.set_i_inputs(pd.Series({'V':self._V.name}))
+        if self.p0 is None:
+            self._P_i.set_i_func(self.comp_p, function_name='self.comp_p')
+            self._P_i.set_i_inputs(pd.Series({'V':self._V.name}))
+        else:
+            self.P_i.loc[0] = self.p0
+        if self.v0 is None:
+            self._V.set_i_func(self.comp_v, function='self.comp_v')
+            self._V.set_i_inputs(pd.Series({'p':self._P_i.name}))
+            
