@@ -37,9 +37,13 @@ class Korakianitis_2006(ParametersObject):
     def __init__(self, name='Korakianitis 2006') -> None:
         super().__init__(name=name)
         self.components = {key : None for key in KORAKIANITIS_2006_COMPONENTS}
-        for type_, type_var in [[VESSELS, VALVES_PAR], [VALVES, VALVES_PAR], [CHAMBERS, CHAMBERS_PAR]]:
+        for type_, type_var in [[VESSELS, VESSELS_PAR], [VALVES, VALVES_PAR], [CHAMBERS, CHAMBERS_PAR]]:
             for key in type_:
                 self[key] = pd.Series(index=type_var, dtype=object)
+                
+        self._vessels = VESSELS
+        self._valves  = VALVES
+        self._chambers= CHAMBERS
         
         mmhg = 133.32
         

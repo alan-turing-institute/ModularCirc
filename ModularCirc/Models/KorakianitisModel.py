@@ -28,7 +28,15 @@ class KorakianitisModel(OdeModel):
         
         # The components...
         for key, name in zip(parobj.components.keys(), FULL_NAMES):
-            self.commponents[key] = Rlc_component(name=name,
+            if key in parobj._vessels: 
+                class_ = Rlc_component
+            elif key in parobj._valves:
+                class_ = Valve_simple_bernoulli
+            elif key in parobj._chambers:
+                class_ = HC_constant_elastance
+            else:
+                raise Exception(f'Component name {key} not in the model list.')
+            self.commponents[key] = class_(name=name,
                                     time_object=self.time_object, 
                                     **parobj[key].to_dict())
             self.commponents[key].setup()

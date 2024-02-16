@@ -5,6 +5,9 @@ class ParametersObject():
     def __init__(self, name='ParametersObject') -> None:
         self.components = {}
         self._name = name
+        self._vessels = []
+        self._valves  = []
+        self._chambers= []
         
         
     def __repr__(self) -> str:
