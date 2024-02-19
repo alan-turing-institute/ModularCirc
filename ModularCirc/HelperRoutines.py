@@ -187,7 +187,7 @@ def simple_bernoulli_diode_flow(t:float,
         p_in, p_out = y[:2]
     
     dp   = p_in - p_out
-    # sigm = 1.0 / (1.0 + np.exp(- dp/.01))
+    # sigm = 1.0 / (1.0 + np.exp(- dp/.001))
     test = np.zeros(dp.shape)
     test[dp > 0.0] = CQ * np.sqrt(dp[dp>0.0])
     return test
@@ -237,6 +237,14 @@ def activation_function_2(t:float, tr:float, td:float, *args, **kwargs) -> float
         return 0.5 * (1.0 - np.cos(np.pi * t / tr))
     elif t < td:
         return 0.5 * (1.0 + np.cos(np.pi * (t - tr) / (td - tr)))   
+    else:
+        return 0.0
+    
+def activation_function_3(t:float, tpwb:float, tpww:float, *args, **kwargs) -> float:
+    if t < tpwb:
+        return 0.0
+    elif t < tpwb + tpww:
+        return 0.5 * (1 - np.cos(2.0 * np.pi * (t - tpwb) / tpww ))
     else:
         return 0.0
 
