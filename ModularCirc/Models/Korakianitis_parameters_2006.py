@@ -30,7 +30,7 @@ CHAMBERS_PAR = ['E_pas', 'E_act', 'v_ref', 'af',  'v', 'p', 'tr', 'td', 'delay']
 
 # TIMINGS = []
 
-class Korakianitis_2006(ParametersObject):
+class Korakianitis_parameters_2006(ParametersObject):
     """
     Intro
     -----
