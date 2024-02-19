@@ -14,7 +14,7 @@ class Valve_simple_bernoulli(ComponentBase):
         # allow for pressure gradient but not for flow
         self.make_unique_io_state_variable(q_flag=True, p_flag=False) 
         # setting the resistance value
-        self.max_func = CQ
+        self.CQ = CQ
         
     def q_i_u_func(self, t, y):
         return simple_bernoulli_diode_flow(t, y=y, CQ=self.CQ)

@@ -67,12 +67,14 @@ class HC_constant_elastance(ComponentBase):
         self._P_i.set_inputs(pd.Series({'V':self._V.name, 
                                         'q_i':self._Q_i.name, 
                                         'q_o':self._Q_o.name}))
-        if self.p0 is None:
+        if self.p0 is None or self.p0 is np.NaN:
             self._P_i.set_i_func(self.comp_p, function_name='self.comp_p')
             self._P_i.set_i_inputs(pd.Series({'V':self._V.name}))
         else:
             self.P_i.loc[0] = self.p0
-        if self.v0 is None:
-            self._V.set_i_func(self.comp_v, function='self.comp_v')
+        if self.v0 is None or self.v0 is np.NaN:
+            self._V.set_i_func(self.comp_v, function_name='self.comp_v')
             self._V.set_i_inputs(pd.Series({'p':self._P_i.name}))
+        if (self.v0 is None or self.v0 is np.NaN) and (self.p0 is None or self.p0 is np.NaN):
+            raise Exception("Solver needs at least the initial volume or pressure to be defined!")
             

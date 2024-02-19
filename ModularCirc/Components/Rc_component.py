@@ -7,6 +7,7 @@ from ..HelperRoutines import grounded_capacitor_model_dpdt, \
 from ..Time import TimeClass
 
 import pandas as pd
+import numpy as np
 
 class Rc_component(ComponentBase):
     def __init__(self, 
@@ -48,7 +49,7 @@ class Rc_component(ComponentBase):
         # Set the mapping betwen the local input names and the global names of the state variables
         self._P_i.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                         'q_out':self._Q_o.name}))
-        if self.p0 is None:
+        if self.p0 is None or self.p0 is np.NaN:
             # Set the initialization function for the input pressure state variable
             self._P_i.set_i_func(self.p_i_i_func, function_name='grounded_capacitor_model_pressure')
             self._P_i.set_i_inputs(pd.Series({'v':self._V.name}))
@@ -62,7 +63,7 @@ class Rc_component(ComponentBase):
         self._V.set_dudt_func(chamber_volume_rate_change, function_name='chamber_volume_rate_change')
         self._V.set_inputs(pd.Series({'q_in':self._Q_i.name, 
                                       'q_out':self._Q_o.name}))
-        if self.v0 is None:
+        if self.v0 is None or self.v0 is np.NaN:
             # Set the initialization function for the input volume state variable  
             self._V.set_i_func(self.v_i_func, function='grounded_capacitor_model_volume')     
             self._V.set_i_inputs(pd.Series({'p':self._P_i.name}))  

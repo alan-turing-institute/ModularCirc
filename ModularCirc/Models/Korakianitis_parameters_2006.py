@@ -49,25 +49,25 @@ class Korakianitis_parameters_2006(ParametersObject):
         self._valves  = VALVES
         self._chambers= CHAMBERS
         
-        mmhg = 133.32
+        mmhg = 1.0
         
-        self.set_chamber_comp('lv', E_pas=mmhg * 0.1, E_act=mmhg * 2.5, v_ref=5.0, tr = 30., td = 45.)
-        self.set_chamber_comp('la', E_pas=mmhg * 0.15, E_act=mmhg * 0.25, v_ref=4.0, tr = 9.0, td = 18.0, delay=17.0)
-        self.set_chamber_comp('rv', E_pas=mmhg * 0.1, E_act=mmhg * 1.15, v_ref=10., tr=30., td=45.)
-        self.set_chamber_comp('ra', E_pas=mmhg * 0.15, E_act=mmhg * 0.15, v_ref=4., tr=9.0, td=18.0, delay=17.0)
+        self.set_chamber_comp('lv', E_pas=mmhg * 0.1, E_act=mmhg * 2.5, v_ref=5.0, tr = 0.30, td = 0.450, v=500.)
+        self.set_chamber_comp('la', E_pas=mmhg * 0.15, E_act=mmhg * 0.25, v_ref=4.0, tr = 0.090, td = 0.180, delay=0.17, v=0.0)
+        self.set_chamber_comp('rv', E_pas=mmhg * 0.1, E_act=mmhg * 1.15, v_ref=10., tr=0.30, td=0.45, v=0.)
+        self.set_chamber_comp('ra', E_pas=mmhg * 0.15, E_act=mmhg * 0.15, v_ref=4., tr=0.090, td=0.18, delay=0.017, v=400.0)
         
         for chamber in CHAMBERS:
             self.set_activation_function(chamber, af=activation_function_2)
         
         # systemic circulation
-        self.set_rlc_comp('sas', r=0.003*mmhg, c=1.6/mmhg, l=0.0017*mmhg)
-        self.set_rlc_comp('sat', r=(0.05 + 0.5 + 0.52)*mmhg, c=1.6/mmhg, l=0.0017*mmhg)
-        self.set_rlc_comp('svn', r=0.075*mmhg, c=20.5/mmhg)
+        self.set_rlc_comp('sas', r=0.003*mmhg, c=0.08/mmhg, l=0.000062*mmhg, v=0.0, v_ref=0.0)
+        self.set_rlc_comp('sat', r=(0.05 + 0.5 + 0.52)*mmhg, c=1.6/mmhg, l=0.0017*mmhg, v=0.0, v_ref=0.0)
+        self.set_rlc_comp('svn', r=0.075*mmhg, c=20.5/mmhg,v=0.0, v_ref=0.0)
         
         # pulmonary circulation
-        self.set_rlc_comp('pas', r=0.002*mmhg, c=0.18/mmhg, l=0.000052/mmhg)
-        self.set_rlc_comp('pat', r=(0.01+0.05+0.25)*mmhg, c=3.8/mmhg, l=0.0017)
-        self.set_rlc_comp('pvn', r=0.006*mmhg, c=20.5/mmhg)
+        self.set_rlc_comp('pas', r=0.002*mmhg, c=0.18/mmhg, l=0.000052/mmhg, v=0.0, v_ref=0.0)
+        self.set_rlc_comp('pat', r=(0.01+0.05+0.25)*mmhg, c=3.8/mmhg, l=0.0017, v=0.0, v_ref=0.0)
+        self.set_rlc_comp('pvn', r=0.006*mmhg, c=20.5/mmhg, v=0.0, v_ref=0.0)
         
         # valves
         self.set_valve_comp('ao', CQ=350. / mmhg**0.5)

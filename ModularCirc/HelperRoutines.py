@@ -187,8 +187,11 @@ def simple_bernoulli_diode_flow(t:float,
         p_in, p_out = y[:2]
     
     dp   = p_in - p_out
-    sigm = 1.0 / (1.0 + np.exp(- dp/10.))
-    return CQ * sigm * np.sign(dp) * np.sqrt(np.abs(dp))
+    # sigm = 1.0 / (1.0 + np.exp(- dp/.01))
+    test = np.zeros(dp.shape)
+    test[dp > 0.0] = CQ * np.sqrt(dp[dp>0.0])
+    return test
+    # return CQ * sigm * np.sign(dp) * np.sqrt(np.abs(dp))
 
 
 def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
