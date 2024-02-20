@@ -8,16 +8,19 @@ class Valve_simple_bernoulli(ComponentBase):
     def __init__(self, 
                  name:str,
                  time_object: TimeClass,
-                 CQ:float, 
+                 CQ:float,
+                 RRA:float=0.0, 
                  ) -> None:
         super().__init__(name=name, time_object=time_object)
         # allow for pressure gradient but not for flow
         self.make_unique_io_state_variable(q_flag=True, p_flag=False) 
         # setting the resistance value
         self.CQ = CQ
+        # setting the relative regurgitant area
+        self.RRA = RRA
         
     def q_i_u_func(self, t, y):
-        return simple_bernoulli_diode_flow(t, y=y, CQ=self.CQ)
+        return simple_bernoulli_diode_flow(t, y=y, CQ=self.CQ, RRA=self.RRA)
         
     def setup(self) -> None:
         self._Q_i.set_u_func(self.q_i_u_func, function_name='simple_bernoulli_diode_flow')
