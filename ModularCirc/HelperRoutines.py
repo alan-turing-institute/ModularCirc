@@ -189,8 +189,41 @@ def simple_bernoulli_diode_flow(t:float,
     
     dp   = p_in - p_out
     test = np.zeros(dp.shape)
-    test[dp > 0.0] = CQ * np.sqrt(dp[dp>0.0])
-    test[dp < 0.0] = CQ * RRA * np.sqrt(-dp[dp<0.0])
+    test[dp > 0.0] =   CQ * np.sqrt(dp[dp>0.0])
+    test[dp < 0.0] = - CQ * RRA * np.sqrt(-dp[dp<0.0])
+    return test
+
+def maynard_valve_flow(t:float,
+                       p_in:np.ndarray[float]=None,
+                       p_out:np.ndarray[float]=None,
+                       phi:np.ndarray[float]=None,
+                       CQ:float=None,
+                       RRA:float=0.0,
+                       y:np.ndarray[float]=None
+                       )->np.ndarray[float]:
+    if y is not None:
+        p_in, p_out, phi = y[:3]
+    dp = p_in - p_out
+    aeff = (1.0 - RRA) * phi + RRA
+    test = np.zeros(dp.shape)
+    test[dp > 0.0] =   CQ * aeff[dp > 0.0] * np.sqrt( dp[dp>0.0])
+    test[dp < 0.0] = - CQ * aeff[dp < 0.0] * np.sqrt(-dp[dp<0.0])
+    return test
+    
+def maynard_phi_law(t:float,
+                    p_in:np.ndarray[float]=None,
+                    p_out:np.ndarray[float]=None,
+                    phi:np.ndarray[float]=None,
+                    Ko:float=None,
+                    Kc:float=None,
+                    y:np.ndarray[float]=None
+                    )->np.ndarray[float]:
+    if y is not None:
+        p_in, p_out, phi = y[:3]
+    dp = p_in - p_out
+    test = np.zeros(dp.shape)
+    test[dp > 0.0] = Ko * (1.0 - phi) * dp[dp > 0.0]
+    test[dp < 0.0] = Kc * phi         * dp[dp < 0.0]
     return test
 
 

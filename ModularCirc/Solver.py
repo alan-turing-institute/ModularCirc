@@ -49,6 +49,7 @@ class Solver():
             if component.dudt_func is not None:
                 print(f" -- Variable {bold_text(key)} added to the principal variable key list.")
                 print(f'    - name of update function: {bold_text(component.dudt_name)}')
+                print(f'    - inputs: {component.inputs.to_list()}')
                 self._global_psv_update_fun[mkey]   = component.dudt_func
                 self._global_psv_update_fun_n[mkey] = component.dudt_name
                 self._global_psv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
