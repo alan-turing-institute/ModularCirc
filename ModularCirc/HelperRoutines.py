@@ -226,6 +226,25 @@ def maynard_phi_law(t:float,
     test[dp < 0.0] = Kc * phi         * dp[dp < 0.0]
     return test
 
+def maynard_impedance_dqdt(t:float,
+                           p_in:np.ndarray[float]=None,
+                           p_out:np.ndarray[float]=None,
+                           q_in:np.ndarray[float]=None,
+                           phi:np.ndarray[float]=None,
+                           CQ:float=None,
+                           R :float=None,
+                           L :float=None,
+                           RRA:float=0.0,
+                           y:np.ndarray[float]=None
+                           )->np.ndarray[float]:
+    if y is not None:
+        p_in, p_out, q_in, phi = y[:4]
+    dp   = p_in - p_out
+    dqdt = np.zeros(dp.shape)
+    aeff = (1.0 - RRA) * phi + RRA
+    ind  = aeff > 1.0e-5
+    dqdt[ind] = (dp[ind] * aeff - q_in[ind] * R * aeff - q_in[ind] * np.abs(q_in[ind]) / CQ**2.0 / aeff ) / L
+    return dqdt
 
 def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     """

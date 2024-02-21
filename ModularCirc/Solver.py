@@ -35,6 +35,8 @@ class Solver():
                  
         self._initialize_by_function = pd.Series()
         
+        self._N_sv = len(self._global_sv_id)
+        
     def setup(self)->None:
         """
         Method for detecting which are the principal variables and which are the secondary ones.
@@ -63,6 +65,8 @@ class Solver():
                 self._global_ssv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
             else:
                 continue
+        self._N_psv= len(self._global_psv_update_fun)
+        self._N_ssv= len(self._global_ssv_update_fun)
         print(' ')
         self.generate_dfdt_functions()
         return
@@ -110,7 +114,7 @@ class Solver():
         self._asd.loc[0, self._initialize_by_function.index] = \
             self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
         t = self._to._sym_t.values 
-        # Solve the main system of ODEs..   
+        # Solve the main system of ODEs..
         res = solve_ivp(fun=self.pv_dfdt_global, 
                         t_span=(t[0], t[-1]), 
                         y0=self._asd.iloc[0, list(self._global_psv_update_fun.keys())].to_list(), 
@@ -118,6 +122,8 @@ class Solver():
                         max_step=self._to.dt,
                         method='BDF',
                         # vectorized=True,
+                        # rtol=1e-6,
+                        # atol=1e-6
                         )
         for ind, id in enumerate(self._global_psv_update_fun.keys()):
             self._asd.iloc[:,id] = res.y[ind,:]

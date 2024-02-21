@@ -23,7 +23,7 @@ VESSELS = ['sas', 'sat', 'svn', 'pas', 'pat', 'pvn']
 VESSELS_PAR = ['r', 'c', 'l', 'v_ref', 'v', 'p']
 
 VALVES  = ['mi', 'ao', 'ti', 'po']
-VALVES_PAR = ['CQ', 'RRA', 'Ko', 'Kc']
+VALVES_PAR = ['CQ', 'RRA', 'Ko', 'Kc', 'R', 'L']
 
 CHAMBERS = ['la', 'lv', 'ra', 'rv']
 CHAMBERS_PAR = ['E_pas', 'E_act', 'v_ref', 'af',  'v', 'p', 'tr', 'td', 'delay', 'tpww', 'tpwb']
@@ -70,10 +70,10 @@ class Korakianitis_plus_parameters(ParametersObject):
         
         # valves
         dyn = 1333.22 
-        self.set_valve_comp('ao', CQ=350., RRA=0.0, Ko = 0.012/dyn, Kc = 0.012/dyn)
-        self.set_valve_comp('mi', CQ=400., RRA=0.0, Ko = 0.03/dyn,  Kc = 0.04/dyn )
-        self.set_valve_comp('po', CQ=350., RRA=0.0, Ko = 0.02/dyn,  Kc = 0.02/dyn )
-        self.set_valve_comp('ti', CQ=400., RRA=0.0, Ko = 0.03/dyn,  Kc = 0.04/dyn )
+        self.set_valve_comp('ao', CQ=350., RRA=0.0, Ko = 0.012/dyn, Kc = 0.012/dyn, L=0.0, R=0.0)
+        self.set_valve_comp('mi', CQ=400., RRA=0.0, Ko = 0.03/dyn,  Kc = 0.04/dyn, L=0.0, R=0.0 )
+        self.set_valve_comp('po', CQ=350., RRA=0.0, Ko = 0.02/dyn,  Kc = 0.02/dyn, L=0.0, R=0.0 )
+        self.set_valve_comp('ti', CQ=400., RRA=0.0, Ko = 0.03/dyn,  Kc = 0.04/dyn, L=0.0, R=0.0 )
         
     def set_chamber_comp(self, key, **kwargs):
         self._set_comp(key=key, set=CHAMBERS, **kwargs)
