@@ -1,6 +1,8 @@
 import numpy as np  
 from .Time import TimeClass
 
+import numba as nb
+
 from numba import jit
 from collections.abc import Callable
 
@@ -96,6 +98,7 @@ def grounded_capacitor_model_dpdt(t:float,
         q_in, q_out = y[:2]
     return (q_in - q_out) / c
 
+@nb.njit(cache=True)
 def chamber_volume_rate_change(t:float, 
                                q_in:float=None, 
                                q_out:float=None,
@@ -164,6 +167,7 @@ def non_ideal_diode_flow(t:float,
         p_in, p_out = y[:2]
     return (max_func(p_in - p_out) / r)
 
+@jit(cache=True, nopython=True)
 def simple_bernoulli_diode_flow(t:float, 
                          p_in:float=None, 
                          p_out:float=None, 
@@ -186,13 +190,10 @@ def simple_bernoulli_diode_flow(t:float,
     """
     if y is not None:
         p_in, p_out = y[:2]
-    
     dp   = p_in - p_out
-    test = np.zeros(dp.shape)
-    test[dp > 0.0] =   CQ * np.sqrt(dp[dp>0.0])
-    test[dp < 0.0] = - CQ * RRA * np.sqrt(-dp[dp<0.0])
-    return test
+    return np.where(dp >= 0.0,  CQ * np.sqrt(dp), -CQ * RRA *np.sqrt(-dp))
 
+@jit(cache=True, nopython=True)
 def maynard_valve_flow(t:float,
                        p_in:np.ndarray[float]=None,
                        p_out:np.ndarray[float]=None,
@@ -205,26 +206,21 @@ def maynard_valve_flow(t:float,
         p_in, p_out, phi = y[:3]
     dp = p_in - p_out
     aeff = (1.0 - RRA) * phi + RRA
-    test = np.zeros(dp.shape)
-    test[dp > 0.0] =   CQ * aeff[dp > 0.0] * np.sqrt( dp[dp>0.0])
-    test[dp < 0.0] = - CQ * aeff[dp < 0.0] * np.sqrt(-dp[dp<0.0])
-    return test
-    
+    return np.where(dp >= 0.0, aeff, -aeff) * CQ * np.sqrt(np.abs(dp))
+
+@nb.njit(cache=True,)
 def maynard_phi_law(t:float,
-                    p_in:np.ndarray[float]=None,
-                    p_out:np.ndarray[float]=None,
-                    phi:np.ndarray[float]=None,
-                    Ko:float=None,
-                    Kc:float=None,
-                    y:np.ndarray[float]=None
-                    )->np.ndarray[float]:
+                    p_in:nb.types.Array =None,
+                    p_out:nb.types.Array=None,
+                    phi:nb.types.Array  =None,
+                    Ko:float            =None,
+                    Kc:float            =None,
+                    y:nb.types.Array    =None
+                    )->nb.types.Array:
     if y is not None:
         p_in, p_out, phi = y[:3]
     dp = p_in - p_out
-    test = np.zeros(dp.shape)
-    test[dp > 0.0] = Ko * (1.0 - phi) * dp[dp > 0.0]
-    test[dp < 0.0] = Kc * phi         * dp[dp < 0.0]
-    return test
+    return np.where(dp >= 0.0, Ko * (1.0 - phi) * dp, Kc * phi * dp)
 
 def maynard_impedance_dqdt(t:float,
                            p_in:np.ndarray[float]=None,
@@ -240,11 +236,9 @@ def maynard_impedance_dqdt(t:float,
     if y is not None:
         p_in, p_out, q_in, phi = y[:4]
     dp   = p_in - p_out
-    dqdt = np.zeros(dp.shape)
     aeff = (1.0 - RRA) * phi + RRA
-    ind  = aeff > 1.0e-5
-    dqdt[ind] = (dp[ind] * aeff - q_in[ind] * R * aeff - q_in[ind] * np.abs(q_in[ind]) / CQ**2.0 / aeff ) / L
-    return dqdt
+    return np.where(aeff > 1.0e-5, (dp * aeff - q_in * R * aeff - q_in * np.abs(q_in) / CQ**2.0 / aeff ) / L, 0.0)
+
 
 def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     """
@@ -259,10 +253,8 @@ def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     Returns:
         float: q flow rate through diode
     """
-    if p_in > p_out:
-        return (p_in - p_out) / r_o
-    else:
-        return (p_in - p_out) / r_r
+    dp = p_in - p_out
+    return np.where(dp >= 0.0, dp/r_o, dp/r_r)
 
 def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
     """
@@ -283,7 +275,8 @@ def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
     else:
         coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
         return  np.exp(-(t - t_tr)/tau) * coeff
-    
+
+nb.njit(cache=True)
 def activation_function_2(t:float, tr:float, td:float, *args, **kwargs) -> float:
     if t < tr:
         return 0.5 * (1.0 - np.cos(np.pi * t / tr))
@@ -354,13 +347,13 @@ def chamber_pressure_function(t:float, v:float, v_ref:float, E_pas:float, E_act:
     return (a * active_law(v=v, v_ref=v_ref,t=t, E=E_act, **kwargs) 
             + (1 - a) * passive_law(v=v, v_ref=v_ref, t=t, E=E_pas, **kwargs))
     
-def time_shift(t:float, shift:float, time_obj:TimeClass):
-    if shift is None or shift is np.nan:
+def time_shift(t:float, shift:float=np.nan, tcycle:float=0.0):
+    if shift is np.nan:
         return t
-    elif t < time_obj.tcycle - shift:
+    elif t < tcycle - shift:
         return t + shift
     else:
-        return t + shift - time_obj.tcycle
+        return t + shift - tcycle
 
 
 BOLD = '\033[1m'

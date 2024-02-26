@@ -26,7 +26,7 @@ class HC_constant_elastance(ComponentBase):
         self.eps = 1.0e-3
         
         def af_parameterised(t):
-            return af(time_shift(t, kwargs['delay'], time_object) , **kwargs)
+            return af(time_shift(t, kwargs['delay'], time_object.tcycle) , **kwargs)
         self._af = af_parameterised
         
         self.make_unique_io_state_variable(p_flag=True, q_flag=False)

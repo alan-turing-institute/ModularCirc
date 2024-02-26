@@ -29,7 +29,7 @@ CHAMBERS = ['la', 'lv', 'ra', 'rv']
 CHAMBERS_PAR = ['E_pas', 'E_act', 'v_ref', 'k_pas', 'af',  'v', 'p', 'tr', 'td', 'delay', 'tpww', 'tpwb']
 
 
-class Korakianitis_plus_parameters(ParametersObject):
+class KorakianitisMixedMaynardModel_parameters(ParametersObject):
     """
     Intro
     -----
@@ -46,9 +46,9 @@ class Korakianitis_plus_parameters(ParametersObject):
         self._valves  = VALVES
         self._chambers= CHAMBERS
                 
-        self.set_chamber_comp('lv', E_pas= 0.1,  E_act= 2.5,  v_ref=5.0, k_pas=0.1, tr = 0.30,  td = 0.450,              v=500.)
+        self.set_chamber_comp('lv', E_pas= 0.1,  E_act= 2.5,  v_ref=5.0, k_pas=0.1, tr = 0.30,  td = 0.450,              v=50.)
         self.set_chamber_comp('la', E_pas= 0.15, E_act= 0.25, v_ref=4.0, k_pas=0.1, tpwb = 0.0, tpww = 0.09, delay=0.08, v=0.0)
-        self.set_chamber_comp('rv', E_pas= 0.1,  E_act= 1.15, v_ref=10., k_pas=0.1, tr=0.30,    td=0.45,                 v=400.)
+        self.set_chamber_comp('rv', E_pas= 0.1,  E_act= 1.15, v_ref=10., k_pas=0.1, tr=0.30,    td=0.45,                 v=100.)
         self.set_chamber_comp('ra', E_pas= 0.15, E_act= 0.25, v_ref=4., k_pas=0.1,  tpwb=0.0,   tpww=0.09,   delay=0.08, v=0.0)
 
         self.set_activation_function('lv', af=activation_function_2)
@@ -59,12 +59,12 @@ class Korakianitis_plus_parameters(ParametersObject):
 
 
         # systemic circulation
-        self.set_rlc_comp('sas', r=0.003,               c=0.08, l=0.000062, v=0.0, v_ref=0.0)
+        self.set_rlc_comp('sas', r=0.003,               c=0.08, l=0.000062, v=450.0, v_ref=0.0)
         self.set_rlc_comp('sat', r=(0.05 + 0.5 + 0.52), c=1.6 , l=0.0017  , v=0.0, v_ref=0.0)
         self.set_rlc_comp('svn', r=0.075,               c=20.5,             v=0.0, v_ref=0.0)
         
         # pulmonary circulation
-        self.set_rlc_comp('pas', r=0.002           , c=0.18, l=0.000052, v=0.0, v_ref=0.0)
+        self.set_rlc_comp('pas', r=0.002           , c=0.18, l=0.000052, v=200.0, v_ref=0.0)
         self.set_rlc_comp('pat', r=(0.01+0.05+0.25), c=3.8 , l=0.0017  , v=0.0, v_ref=0.0)
         self.set_rlc_comp('pvn', r=0.006           , c=20.5            , v=0.0, v_ref=0.0)
         

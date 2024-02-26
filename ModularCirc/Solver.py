@@ -10,6 +10,8 @@ import numpy as np
 
 from scipy.integrate import solve_ivp
 
+import operator
+
 class Solver():
     def __init__(self, 
                 model:OdeModel=None,
@@ -97,6 +99,8 @@ class Solver():
         keys4  = np.array(list(self._global_ssv_update_fun.keys()))
         funcs3 = list(self._global_psv_update_fun.values())
         ids3   = list(self._global_psv_update_ind.values())
+        
+        print(ids3)
                     
         def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
             ht = t%self._to.tcycle

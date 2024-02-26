@@ -28,7 +28,7 @@ class HC_mixed_elastance(ComponentBase):
         self.eps = 1.0e-3
         
         def af_parameterised(t):
-            return af(time_shift(t, kwargs['delay'], time_object) , **kwargs)
+            return af(time_shift(t, kwargs['delay'], time_object.tcycle) , **kwargs)
         self._af = af_parameterised
         
         self.make_unique_io_state_variable(p_flag=True, q_flag=False)
@@ -45,7 +45,7 @@ class HC_mixed_elastance(ComponentBase):
     def passive_dpdt(self, v, q_i, q_o):
         return self.E_pas * self.k_pas * np.exp(self.k_pas * (v - self.v_ref)) * (q_i - q_o)
     
-    def total_p(self, t, v, y):
+    def total_p(self, t, v=None, y=None):
         if y is not None:
             v = y
         return self._af(t) * self.active_p(v) + (1.0 - self._af(t)) * self.passive_p(v)
