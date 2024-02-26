@@ -10,7 +10,6 @@ import numpy as np
 
 from scipy.integrate import solve_ivp
 
-import operator
 
 class Solver():
     def __init__(self, 
@@ -57,6 +56,7 @@ class Solver():
                 self._global_psv_update_fun[mkey]   = component.dudt_func
                 self._global_psv_update_fun_n[mkey] = component.dudt_name
                 self._global_psv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
+                self._global_psv_update_ind[mkey]   = np.pad(self._global_psv_update_ind[mkey], (0, self._N_sv-len(self._global_psv_update_ind[mkey])), mode='constant')
                 self._global_psv_names.append(key)
                 
             elif component.u_func is not None:
@@ -65,6 +65,7 @@ class Solver():
                 self._global_ssv_update_fun[mkey]   = component.u_func
                 self._global_ssv_update_fun_n[mkey] = component.u_name
                 self._global_ssv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
+                self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey], (0, self._N_sv-len(self._global_ssv_update_ind[mkey])), mode='constant')
             else:
                 continue
         self._N_psv= len(self._global_psv_update_fun)
@@ -90,25 +91,23 @@ class Solver():
             return np.array([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)])
             
         funcs2 = self._global_ssv_update_fun.values()
-        ids2   = self._global_ssv_update_ind.values()
+        ids2   = np.stack(list(self._global_ssv_update_ind.values()))
             
         def s_u_update(t, y:np.ndarray[float,float]) -> np.ndarray[float]:
-            return np.array([fun(t=t, y=y[inds]) for fun, inds in zip(funcs2, ids2)])
+            return np.array([fi(t=y, y=yi) for fi, yi in zip(funcs2, y[ids2])], dtype=np.float64)
         
         keys3  = np.array(list(self._global_psv_update_fun.keys()))
         keys4  = np.array(list(self._global_ssv_update_fun.keys()))
-        funcs3 = list(self._global_psv_update_fun.values())
-        ids3   = list(self._global_psv_update_ind.values())
-        
-        print(ids3)
-                    
+        funcs3 = np.array(list(self._global_psv_update_fun.values()))
+        ids3   = np.stack(list(self._global_psv_update_ind.values()))
+                            
         def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
             ht = t%self._to.tcycle
             y_temp = np.zeros( (len(self._global_sv_id),y.shape[1]) if len(y.shape) == 2 else (len(self._global_sv_id),)) 
             y_temp[keys3] = y
             y_temp[keys4] = s_u_update(t, y_temp)
-            return np.array([func(t=ht, y=y_temp[inds]) for func, inds in zip(funcs3, ids3)])
-           
+            return np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
+        
         self.initialize_by_function = initialize_by_function    
         self.pv_dfdt_global = pv_dfdt_update
         self.s_u_update     = s_u_update

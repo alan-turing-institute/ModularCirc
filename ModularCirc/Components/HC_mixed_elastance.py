@@ -55,14 +55,14 @@ class HC_mixed_elastance(ComponentBase):
     
     def total_dpdt(self, t, v=None, q_i=None, q_o=None, y=None):
         if y is not None:
-            v, q_i, q_o = y
+            v, q_i, q_o = y[:3]
         return (self.d_af_dt(t)   *(self.active_p(v) - self.passive_p(v)) + 
                      self._af(t)  * self.active_dpdt(    q_i, q_o) + 
                 (1. -self._af(t)) * self.passive_dpdt(v, q_i, q_o))
         
     def comp_v(self, t:float=None, p:float=None, y:np.ndarray[float]=None)->float:
         if y is not None:
-            p = y
+            p = y[:1]
         return self.v_ref + np.log(p / self.E_pas + 1.0) / self.k_pas
         
     def setup(self) -> None:
