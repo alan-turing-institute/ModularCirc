@@ -111,6 +111,38 @@ class Solver():
         self.initialize_by_function = initialize_by_function    
         self.pv_dfdt_global = pv_dfdt_update
         self.s_u_update     = s_u_update
+        
+    
+    def advance_cycle(self, y0, cycleID):
+        n_t = self._to.n_c - 1
+        t = self._to._sym_t.values[cycleID*n_t:(cycleID+1)*n_t+1] 
+        print(cycleID)
+        res = solve_ivp(fun=self.pv_dfdt_global, 
+                        t_span=(t[0], t[-1]), 
+                        y0=y0, 
+                        t_eval=t,
+                        max_step=self._to.dt,
+                        method='BDF',
+                        )
+        for ind, id in enumerate(self._global_psv_update_fun.keys()):
+            self._asd.iloc[cycleID*n_t:(cycleID+1)*n_t+1, id] = res.y[ind, 0:n_t+1]
+            
+        if cycleID == 0: return False
+        
+        ind = list(self._global_psv_update_fun.keys())
+        cycleP = cycleID - 1
+        cols = [col for col in self._asd.columns if 'v_' in col or 'p_' in col]
+        cs   = self._asd[cols].iloc[cycleID*n_t:(cycleID+1)*n_t, :].values
+        cp   = self._asd[cols].iloc[cycleP *n_t:(cycleP +1)*n_t, :].values
+        
+        norm = np.where(np.ptp(cp) > 1e-10 , np.abs(cs - cp) / np.ptp(cp), 0.0)
+        norm = np.sum(norm.std(axis=0)**2.0) ** 0.5
+        
+        print(f"norm {norm}")
+        print(" ")
+        
+        return norm < 0.01
+    
     
     def solve(self):
         # initialize the solution fields
@@ -118,15 +150,18 @@ class Solver():
             self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
         t = self._to._sym_t.values 
         # Solve the main system of ODEs..
-        res = solve_ivp(fun=self.pv_dfdt_global, 
-                        t_span=(t[0], t[-1]), 
-                        y0=self._asd.iloc[0, list(self._global_psv_update_fun.keys())].to_list(), 
-                        t_eval=t,
-                        max_step=self._to.dt,
-                        method='BDF',
-                        )
-        for ind, id in enumerate(self._global_psv_update_fun.keys()):
-            self._asd.iloc[:,id] = res.y[ind,:]
+        # res = solve_ivp(fun=self.pv_dfdt_global, 
+        #                 t_span=(t[0], t[-1]), 
+        #                 y0=self._asd.iloc[0, list(self._global_psv_update_fun.keys())].to_list(), 
+        #                 t_eval=t,
+        #                 max_step=self._to.dt,
+        #                 method='BDF',
+        #                 )
+        for i in range(self._to.ncycles):
+            y0 = self._asd.iloc[i * (self._to.n_c-1), list(self._global_psv_update_fun.keys())].to_list()
+            self.advance_cycle(y0=y0, cycleID=i)
+        # for ind, id in enumerate(self._global_psv_update_fun.keys()):
+        #     self._asd.iloc[:,id] = res.y[ind,:]
         temp = self.s_u_update(t=0.0, y=self._asd.values.T)
         self._asd.iloc[:,self._global_ssv_update_fun.keys()] = temp.T
             
