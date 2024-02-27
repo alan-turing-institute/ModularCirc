@@ -90,7 +90,7 @@ class Solver():
         def initialize_by_function(y:np.ndarray[float]) -> np.ndarray[float]:
             return np.array([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)])
             
-        funcs2 = self._global_ssv_update_fun.values()
+        funcs2 = np.array(list(self._global_ssv_update_fun.values()))
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
             
         def s_u_update(t, y:np.ndarray[float,float]) -> np.ndarray[float]:
@@ -124,9 +124,6 @@ class Solver():
                         t_eval=t,
                         max_step=self._to.dt,
                         method='BDF',
-                        # vectorized=True,
-                        # rtol=1e-6,
-                        # atol=1e-6
                         )
         for ind, id in enumerate(self._global_psv_update_fun.keys()):
             self._asd.iloc[:,id] = res.y[ind,:]
