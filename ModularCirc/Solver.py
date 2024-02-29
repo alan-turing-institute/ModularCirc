@@ -38,6 +38,9 @@ class Solver():
         
         self._N_sv = len(self._global_sv_id)
         
+        self._Nconv = None
+        
+                
     def setup(self)->None:
         """
         Method for detecting which are the principal variables and which are the secondary ones.
@@ -81,6 +84,10 @@ class Solver():
     @property
     def dt(self) -> float:
         return self._to.dt
+    
+    @property
+    def Nconv(self) -> float:
+        return self._Nconv
         
     def generate_dfdt_functions(self):
         
@@ -135,33 +142,30 @@ class Solver():
         cs   = self._asd[cols].iloc[cycleID*n_t:(cycleID+1)*n_t, :].values
         cp   = self._asd[cols].iloc[cycleP *n_t:(cycleP +1)*n_t, :].values
         
-        norm = np.where(np.ptp(cp) > 1e-10 , np.abs(cs - cp) / np.ptp(cp), 0.0)
+        norm = np.where(np.ptp(cp) > 1e-10 , np.abs(cs - cp) / np.ptp(cp), np.abs(cs - cp))
         norm = np.sum(norm.std(axis=0)**2.0) ** 0.5
         
-        print(f"norm {norm}")
-        print(" ")
-        
-        return norm < 0.01
+        return norm < 0.001
     
     
     def solve(self):
         # initialize the solution fields
         self._asd.loc[0, self._initialize_by_function.index] = \
             self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
-        t = self._to._sym_t.values 
-        # Solve the main system of ODEs..
-        # res = solve_ivp(fun=self.pv_dfdt_global, 
-        #                 t_span=(t[0], t[-1]), 
-        #                 y0=self._asd.iloc[0, list(self._global_psv_update_fun.keys())].to_list(), 
-        #                 t_eval=t,
-        #                 max_step=self._to.dt,
-        #                 method='BDF',
-        #                 )
+        # Solve the main system of ODEs.. 
         for i in range(self._to.ncycles):
             y0 = self._asd.iloc[i * (self._to.n_c-1), list(self._global_psv_update_fun.keys())].to_list()
-            self.advance_cycle(y0=y0, cycleID=i)
-        # for ind, id in enumerate(self._global_psv_update_fun.keys()):
-        #     self._asd.iloc[:,id] = res.y[ind,:]
+            flag = self.advance_cycle(y0=y0, cycleID=i)
+            if flag and i > self._to.export_min:
+                self._Nconv = i
+                break
+        self._asd = self._asd.iloc[:self.Nconv*(self._to.n_c-1)+1]
+        self._to._sym_t   = self._to._sym_t.head(self.Nconv*(self._to.n_c-1)+1)
+        self._to._cycle_t = self._to._cycle_t.head(self.Nconv*(self._to.n_c-1)+1)
+                
+        for key in self._vd.keys():
+            self._vd[key]._u = self._asd[key] 
+        
         temp = self.s_u_update(t=0.0, y=self._asd.values.T)
         self._asd.iloc[:,self._global_ssv_update_fun.keys()] = temp.T
             

@@ -5,7 +5,8 @@ TEMPLATE_TIME_SETUP_DICT = {
     'name'    :  'generic',
     'ncycles' :  5,
     'tcycle'  :  1.0,
-    'dt'      :  0.1
+    'dt'      :  0.1,
+    'export_min' : 1
  }
 
 class TimeClass():
@@ -32,6 +33,13 @@ class TimeClass():
     def dt(self):
         if 'dt' in self._time_setup_dict.keys():
             return self._time_setup_dict['dt']
+        else:
+            return None
+        
+    @property
+    def export_min(self):
+        if 'export_min' in self._time_setup_dict.keys():
+            return self._time_setup_dict['export_min']
         else:
             return None
     

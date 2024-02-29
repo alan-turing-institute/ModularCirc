@@ -57,12 +57,12 @@ class OdeModel():
             module1._P_o.set_name(plabel)
             self._state_variable_dict[plabel] = module1._P_o
             self.all_sv_data[plabel] = module1.P_o
-            module1._P_o._u = self.all_sv_data[plabel]
+            # module1._P_o._u = self.all_sv_data[plabel]
         if qlabel is not None:
             module1._Q_o.set_name(qlabel)
             self._state_variable_dict[qlabel] = module1._Q_o
             self.all_sv_data[qlabel] = module1.Q_o
-            module1._Q_o._u = self.all_sv_data[qlabel]
+            # module1._Q_o._u = self.all_sv_data[qlabel]
         return
         
             
@@ -85,4 +85,4 @@ class OdeModel():
         self._state_variable_dict[v_key] = self.commponents[comp_key]._V
         self._state_variable_dict[v_key].set_name(v_key)
         self.all_sv_data[v_key] = self.commponents[comp_key].V     ##### test
-        self.commponents[comp_key]._V._u = self.all_sv_data[v_key]
+        # self.commponents[comp_key]._V._u = self.all_sv_data[v_key]
