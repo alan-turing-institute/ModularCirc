@@ -123,7 +123,6 @@ class Solver():
     def advance_cycle(self, y0, cycleID):
         n_t = self._to.n_c - 1
         t = self._to._sym_t.values[cycleID*n_t:(cycleID+1)*n_t+1] 
-        print(cycleID)
         res = solve_ivp(fun=self.pv_dfdt_global, 
                         t_span=(t[0], t[-1]), 
                         y0=y0, 
