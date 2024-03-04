@@ -31,8 +31,8 @@ setup(
     description='A python package for creating and running 0D models of the cardiovascular system', 
     long_description=readme,
     packages=find_packages(),
-    install_requirements=read_requirements('requirements.txt'),
-    python_requirements='>3.8',
+    install_requires=read_requirements('requirements.txt'),
+    python_requires='>3.8',
     project_urls={
         "Bug Tracker": os.path.join(home_page, 'issues'),
         "Source Code": home_page,
