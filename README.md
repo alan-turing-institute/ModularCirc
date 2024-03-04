@@ -5,6 +5,11 @@ The scope of this package is to provide a framework for building **0D models** a
 2. **Valves**
 3. **Vessels**
 
+## Installation
+```bash
+pip install git+https://github.com/MaxBalmus/ModularCirc.git
+```
+
 ## Steps for running basic models
 1. Load the classes for the model of interest and the parameter object used to paramterise the said model:
 ```python
@@ -63,5 +68,5 @@ v_lv = solver.model.commponents['lv'].V.values
 p_lv = solver.model.commponents['lv'].P_i.values
 ```
 
-__Example values pv loops for all 4 chambers:__
+## Example values pv loops for all 4 chambers:
 ![Example PV loops!](Figures/PV_loops.png)
