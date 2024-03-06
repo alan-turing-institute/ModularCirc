@@ -75,7 +75,7 @@ class BaseAnalysis():
     def plot_t_p(self, component:str, ax=None, time_units:str='s', pressure_units:str='mmHg'):
         if ax is None:
             _, ax = plt.subplots(figsize=(5,5))
-        ax.plot(self.tsym, self.model.commponents[component].P.values[self.tind],linewidth=4,)
+        ax.plot(self.tsym, self.model.commponents[component].P.values[self.tind],linewidth=4,label=component)
         ax.set_title(component.upper() + ': Pressure trace')
         ax.set_xlabel(f'Time (${time_units}$)')
         ax.set_ylabel(f'Volume (${pressure_units}$)')
