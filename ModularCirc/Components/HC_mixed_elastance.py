@@ -33,6 +33,10 @@ class HC_mixed_elastance(ComponentBase):
         
         self.make_unique_io_state_variable(p_flag=True, q_flag=False)
         
+    @property    
+    def P(self):
+        return self._P_i._u
+        
     def active_p(self, v):
         return self.E_act * (v - self.v_ref)
     

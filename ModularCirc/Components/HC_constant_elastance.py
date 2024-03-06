@@ -31,6 +31,10 @@ class HC_constant_elastance(ComponentBase):
         
         self.make_unique_io_state_variable(p_flag=True, q_flag=False)
         
+    @property    
+    def P(self):
+        return self._P_i._u
+        
     def comp_E(self, t:float) -> float:
         return self._af(t) * self.E_act + (1.0 - self._af(t)) * self.E_pas
     

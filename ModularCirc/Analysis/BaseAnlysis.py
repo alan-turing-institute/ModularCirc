@@ -8,7 +8,7 @@ from ..Models.OdeModel import OdeModel
 import numpy as np
 import matplotlib.pyplot as plt
 
-class ValveTiming():
+class ValveData():
     def __init__(self, name) -> None:
         self._name = name 
         
@@ -18,11 +18,46 @@ class ValveTiming():
         
     def __repr__(self) -> str:
         return f"Valve {self._name}: \n" + f" - opening ind: {self._open} \n" + f" - closing ind: {self._closed} \n" 
+    
+    @property
+    def open(self):
+        return self._open
+    
+    @property
+    def closed(self):
+        return self._closed
+    
+    
+class VentricleData():
+    def __init__(self, name:str, volume_unit:str='ml') -> None:
+        self._name = name
+        self._vu   = volume_unit
+        
+    def set_volumes(self, edv, esv):
+        self._edv = edv
+        self._esv = esv
+        
+    def __repr__(self) -> str:
+        return (f"Ventricle {self._name}: \n" + 
+                f" - EDV: {self._edv:.2e} {self._vu}\n" + 
+                f" - ESV: {self._esv:.2e} {self._vu}" )
+    
+    @property
+    def edv(self):
+        return self._edv
+    
+    @property
+    def esv(self):
+        return self._esv
+    
 
 class BaseAnalysis():
     def __init__(self, model:OdeModel=None) -> None:
         self.model = model
+        
         self.valves= dict()
+        self.ventricles = dict()
+        
         self.tind  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
                                stop =self.model.time_object.n_t)
         self.tsym  = self.model.time_object._one_cycle_t.values
@@ -95,7 +130,7 @@ class BaseAnalysis():
     def compute_opening_closing_valve(self, component:str, shift:float=0.0):
         valve = self.model.commponents[component]
         nshift= int(shift/ self.model.time_object.dt)
-        self.valves[component] = ValveTiming(component)
+        self.valves[component] = ValveData(component)
         
         if not hasattr(valve, 'PHI'):
             pi    = valve.P_i.values[self.tind]
@@ -110,6 +145,25 @@ class BaseAnalysis():
         ind = np.arange(len(is_open))[is_open_shifted]
         self.valves[component].set_opening_closing(open = ind[0],
                                                    closed= ind[-1])
+        
+        
+    def compute_ventricle_volume_limits(self, component:str, vic:int, voc:int):
+        ventricle = self.model.commponents[component]
+        volume    = ventricle.V.values[self.tind]
+        
+        self.ventricles[component] = VentricleData(component)
+        self.ventricles[component].set_volumes(edv=volume[vic], esv=volume[voc])
+                
+    
+    def compute_cardiac_output(self, component:str):
+        valve = self.model.commponents[component]
+        dt    = self.model.time_object.dt
+        T     = self.model.time_object.tcycle / 60.0
+        
+        q     = valve.Q_i.values[self.tind]
+        self.CO = q[:-1].sum() * dt / T
+        
+        return self.CO
             
         
             

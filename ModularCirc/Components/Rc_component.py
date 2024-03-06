@@ -30,6 +30,10 @@ class Rc_component(ComponentBase):
             self.P_i.loc[0] = p
         else:
             self.p0 = None
+        
+    @property    
+    def P(self):
+        return self._P_i._u
             
     def q_o_u_func(self, t, y):
         return resistor_model_flow(t=t, y=y, r=self.R)
