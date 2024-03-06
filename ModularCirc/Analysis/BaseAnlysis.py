@@ -164,7 +164,19 @@ class BaseAnalysis():
         self.CO = q[:-1].sum() * dt / T
         
         return self.CO
-            
+    
+    def compute_artery_pressure_range(self, component:str):
+        c = self.model.commponents[component]
+        p = c.P_i.values[self.tind]
+        return (np.min(p), np.max(p))
+    
+    def compute_end_systolic_pressure(self, component:str, upstream:str):
+        c = self.model.commponents[component]
+        p = c.P_i.values[self.tind]
         
-            
+        uc = self.model.commponents[upstream]
+        up = uc.P_i.values[self.tind]
         
+        flag = up > p  
+        ind = np.arange(len(flag))[flag]
+        return p[ind[-1]]
