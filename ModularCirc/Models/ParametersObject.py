@@ -8,6 +8,8 @@ class ParametersObject():
         self._vessels = []
         self._valves  = []
         self._chambers= []
+        self._cap     = []
+        self._imp     = []
         self.timings = {}
         
         

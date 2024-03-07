@@ -111,4 +111,3 @@ class KorakianitisMixedMaynardModel(OdeModel):
         self._state_variable_dict[phi_key] = self.commponents[comp_key]._PHI
         self._state_variable_dict[phi_key].set_name(phi_key)
         self.all_sv_data[phi_key] = self.commponents[comp_key].PHI
-        # self.commponents[comp_key]._PHI._u = self.all_sv_data[phi_key]

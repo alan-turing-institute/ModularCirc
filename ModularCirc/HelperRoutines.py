@@ -27,6 +27,16 @@ def resistor_model_flow(t:float,
         p_in, p_out= y[:2]
     return (p_in - p_out) / r
 
+def resistor_upstream_pressure(t:float,
+                               q_in:float=None,
+                               p_out:float=None,
+                               r:float=None,
+                               y:np.ndarray[float]=None
+                               )->float:
+    if y is not None:
+        q_in, p_out = y[:2]
+    return p_out + r * q_in
+
 def resistor_model_dp(q_in:float, r:float) -> float:
     return q_in * r
 
