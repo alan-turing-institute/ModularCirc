@@ -128,6 +128,18 @@ class BaseAnalysis():
         ax.legend()    
         
     def compute_opening_closing_valve(self, component:str, shift:float=0.0):
+        """
+        Method using for computing a valve opening and closing time indexes.
+        Output values are stored in:
+            - `self.valve[component].open`
+            - `self.valve[component].closed`
+        
+        ## Inputs 
+        component : str
+            name of valve that is being measured
+        shift : float
+            a time shift value which takes into account that the contraction of the atria starts before the ventricles.
+        """
         valve = self.model.commponents[component]
         nshift= int(shift/ self.model.time_object.dt)
         self.valves[component] = ValveData(component)
@@ -147,7 +159,18 @@ class BaseAnalysis():
                                                    closed= ind[-1])
         
         
-    def compute_ventricle_volume_limits(self, component:str, vic:int, voc:int):
+    def compute_ventricle_volume_limits(self, component:str, vic:int, voc:int)->None:
+        """ Method for computing the end diastolic and systolic volumes of ventricles.
+        Results are stored in `self.ventricles[component].edv` and `self.ventricles[component].esv`.
+
+        ## Inputs
+        component : str
+            name of ventricle that is being measured
+        vic : int
+            the time index corresponding to the inflow valve closing
+        voc : int
+            the time index corresponding to the outflow valve closing
+        """
         ventricle = self.model.commponents[component]
         volume    = ventricle.V.values[self.tind]
         
@@ -155,7 +178,18 @@ class BaseAnalysis():
         self.ventricles[component].set_volumes(edv=volume[vic], esv=volume[voc])
                 
     
-    def compute_cardiac_output(self, component:str):
+    def compute_cardiac_output(self, component:str)->float:
+        """
+        Method for estimating the cardiac output.
+        
+        ## Inputs
+        component : str
+            name of the component (ideally the aortic valve) for which we are computing the cardiac outpu
+        
+        ## Outpus
+        CO : float
+            the cardiac ouput value 
+        """
         valve = self.model.commponents[component]
         dt    = self.model.time_object.dt
         T     = self.model.time_object.tcycle / 60.0
@@ -165,12 +199,34 @@ class BaseAnalysis():
         
         return self.CO
     
-    def compute_artery_pressure_range(self, component:str):
+    def compute_artery_pressure_range(self, component:str)->tuple[float]:
+        """Method for computing the range of pressures in artery
+
+        ## Inputs:
+            component (str): name of the artery
+
+        ## Outputs:
+            DP (float) : diastolic pressure
+            SP (float) : systolic pressure
+        """
         c = self.model.commponents[component]
         p = c.P_i.values[self.tind]
         return (np.min(p), np.max(p))
     
     def compute_end_systolic_pressure(self, component:str, upstream:str):
+        """"
+        Method for computing the end systolic pressure in the aorta and pulmonary artery.
+        
+        ## Inputs
+        component : str
+            name of the component for which we are computing the end systolic pressure
+        upstream : str
+            name of the upstream component which is used as reference point for when the valve in between components closes
+            
+        ## Ouputs
+        ESP : float 
+            vessel end systolic pressure
+        """
         c = self.model.commponents[component]
         p = c.P_i.values[self.tind]
         
