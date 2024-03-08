@@ -16,6 +16,10 @@ class R_component(ComponentBase):
         # setting the resistance value
         self.R = r
         
+    @property    
+    def P(self):
+        return self._P_i._u
+        
     def p_i_u_func(self, t, y):
         return resistor_upstream_pressure(t, y=y, r=self.R)
         

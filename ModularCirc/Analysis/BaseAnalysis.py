@@ -72,13 +72,17 @@ class BaseAnalysis():
         ax.set_xlim(self.tsym[0], self.tsym[-1])
         return ax
     
-    def plot_t_p(self, component:str, ax=None, time_units:str='s', pressure_units:str='mmHg'):
+    def plot_t_p(self, component:str, ax=None, time_units:str='s', pressure_units:str='mmHg', linestyle='-'):
         if ax is None:
             _, ax = plt.subplots(figsize=(5,5))
-        ax.plot(self.tsym, self.model.commponents[component].P.values[self.tind],linewidth=4,label=component)
+        ax.plot(self.tsym, 
+                self.model.commponents[component].P.values[self.tind],
+                linewidth=4,
+                label=component,
+                linestyle=linestyle)
         ax.set_title(component.upper() + ': Pressure trace')
         ax.set_xlabel(f'Time (${time_units}$)')
-        ax.set_ylabel(f'Volume (${pressure_units}$)')
+        ax.set_ylabel(f'Pressure (${pressure_units}$)')
         ax.set_xlim(self.tsym[0], self.tsym[-1])
         return ax
     
@@ -93,6 +97,20 @@ class BaseAnalysis():
         ax.set_title(component.upper() + ': PV loop')
         ax.set_xlabel(f'Volume (${volume_units}$)')
         ax.set_ylabel(f'Pressure (${pressure_units}$)')
+        return ax
+    
+    def plot_t_q_out(self, component:str, ax=None, time_units:str='s', volume_units:str='mL', linestyle='-'):
+        if ax is None:
+            _, ax = plt.subplots(figsize=(5,5))
+        ax.plot(
+            self.tsym, 
+            self.model.commponents[component].Q_o.values[self.tind],
+            linewidth=4,
+            linestyle=linestyle
+        )
+        ax.set_title(component.upper() + ': PV loop')
+        ax.set_xlabel(f'Time (${time_units}$)')
+        ax.set_ylabel(f'Flux (${volume_units}\cdot {time_units}^{-1}$)')
         return ax
 
     def plot_fluxes(self, component:str, ax=None, time_units:str='s', volume_units:str='mL'):

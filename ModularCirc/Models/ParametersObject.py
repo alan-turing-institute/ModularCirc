@@ -15,9 +15,10 @@ class ParametersObject():
         
     def __repr__(self) -> str:
         out = self._name + ' parameters set: \n'
-        for comp in self.components: 
+        for comp in self.components.keys(): 
             out += f" * Component - {bold_text(str(comp))}" + '\n'
-            for key, item in self.components[comp].items():
+            print(out)
+            for key, item in self.components[comp].to_dict().items():
                 if isinstance(item, float):
                     out += (f"  - {bold_text(str(key)):<20} : {item:.3e}") + '\n'
                 else:

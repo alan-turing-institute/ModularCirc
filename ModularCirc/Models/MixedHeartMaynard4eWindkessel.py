@@ -1,7 +1,7 @@
 from .OdeModel import OdeModel
-from .Korakianitis_parameters_2006 import Korakianitis_parameters_2006 as k2006
+from .MixedHeartMaynard4eWindkessel_parameters import MixedHeartMaynard4eWindkessel_parameters as MHM4W_parobj
 from .ParametersObject import ParametersObject as po
-from ..Components import Rlc_component, Valve_maynard, HC_mixed_elastance, R_component
+from ..Components import Rlc_component, Valve_maynard, HC_mixed_elastance, R_component, Valve_non_ideal
 
 FULL_NAMES =[
     'LeftA',
@@ -10,21 +10,20 @@ FULL_NAMES =[
     'AoV',
     'SysArtImp',
     'SysArt',
-    'SysCap'
+    'SysCap',
     'SysVen',
     'RightA',
     'TriValve',
     'RightV',
     'PulV',
-    'PulArtImp'
-    'PulArtSin',
-    'PulCap',
+    'PulArtImp',
     'PulArt',
+    'PulCap',
     'PulVen',
 ]
 
 class MixedHeartMaynard4eWindkessel(OdeModel):
-    def __init__(self, time_setup_dict, parobj:po=k2006) -> None:
+    def __init__(self, time_setup_dict, parobj:po=MHM4W_parobj) -> None:
         super().__init__(time_setup_dict)
         self.name = 'MixedHeartMaynard4eWindkessel'
         
@@ -37,7 +36,7 @@ class MixedHeartMaynard4eWindkessel(OdeModel):
             elif key in parobj._imp or key in parobj._cap:
                 class_ =  R_component
             elif key in parobj._valves:
-                class_ = Valve_maynard
+                class_ = Valve_non_ideal # Valve_maynard
             elif key in parobj._chambers:
                 class_ = HC_mixed_elastance
             else:
@@ -46,16 +45,17 @@ class MixedHeartMaynard4eWindkessel(OdeModel):
                                     time_object=self.time_object, 
                                     **parobj[key].to_dict())
             
-            if key not in parobj._valves: 
+            if key not in parobj._valves + parobj._cap + parobj._imp: 
                 self.set_v_sv(key)
-            else:
-                self.set_phi_sv(key)
+            # else:
+            #     self.set_phi_sv(key)
             self.commponents[key].setup()
             
         self.connect_modules(self.commponents['lv'],
                             self.commponents['ao'],
                             plabel='p_lv',
-                            qlabel='q_ao')
+                            qlabel='q_ao',
+                            )
         self.connect_modules(self.commponents['ao'],
                             self.commponents['sai'],
                             plabel='p_sa',
@@ -63,7 +63,8 @@ class MixedHeartMaynard4eWindkessel(OdeModel):
         self.connect_modules(self.commponents['sai'],
                             self.commponents['sa'],
                             plabel='pi_sa',
-                            qlabel='q_ao')
+                            qlabel='q_ao',
+                            qvariable=self.commponents['ao']._Q_o)
         self.connect_modules(self.commponents['sa'],
                             self.commponents['sc'],
                             plabel='p_sc',
@@ -71,7 +72,8 @@ class MixedHeartMaynard4eWindkessel(OdeModel):
         self.connect_modules(self.commponents['sc'],
                             self.commponents['sv'],
                             plabel='p_sv',
-                            qlabel='q_sa')
+                            qlabel='q_sa',
+                            qvariable=self.commponents['sa']._Q_o)
         self.connect_modules(self.commponents['sv'],
                             self.commponents['ra'],
                             plabel='p_ra',
@@ -95,15 +97,17 @@ class MixedHeartMaynard4eWindkessel(OdeModel):
         self.connect_modules(self.commponents['pai'],
                             self.commponents['pa'],
                             plabel='pi_pa',
-                            qlabel='q_po')
+                            qlabel='q_po',
+                            qvariable=self.commponents['po']._Q_o)
         self.connect_modules(self.commponents['pa'],
                             self.commponents['pc'],
-                            plabel='p_sc',
+                            plabel='p_pc',
                             qlabel='q_pa')
         self.connect_modules(self.commponents['pc'],
                             self.commponents['pv'],
                             plabel='p_pv',
-                            qlabel='q_pa')
+                            qlabel='q_pa',
+                            qvariable=self.commponents['pa']._Q_o)
         self.connect_modules(self.commponents['pv'],
                             self.commponents['la'],
                             plabel='p_la',
