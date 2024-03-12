@@ -7,6 +7,14 @@ from ..Time import TimeClass
 import pandas as pd
 import numpy as np
 
+def dvdt(t, q_in=None, q_out=None, v=None, y=None):
+    if y is not None:
+        q_in, q_out, v = y[:3]
+    if q_in - q_out > 0.0 or v > 0.0:
+        return q_in - q_out
+    else:
+        return 0.0
+
 class HC_mixed_elastance(ComponentBase):
     def __init__(self, 
                  name:str,
@@ -70,10 +78,17 @@ class HC_mixed_elastance(ComponentBase):
         return self.v_ref + np.log(p / self.E_pas + 1.0) / self.k_pas
         
     def setup(self) -> None:
-        self._V.set_dudt_func(chamber_volume_rate_change,
-                              function_name='chamber_volume_rate_change')
+        # self._V.set_dudt_func(chamber_volume_rate_change,
+        #                       function_name='chamber_volume_rate_change')
+        # self._V.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
+        #                               'q_out':self._Q_o.name}))
+        
+        self._V.set_dudt_func(dvdt,
+                              function_name='dvdt')
         self._V.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
-                                      'q_out':self._Q_o.name}))
+                                      'q_out':self._Q_o.name,
+                                      'v':self._V.name}))
+        
         self._P_i.set_dudt_func(self.total_dpdt, function_name='self.total_dpdt') 
         self._P_i.set_inputs(pd.Series({'v'  :self._V.name, 
                                         'q_i':self._Q_i.name, 

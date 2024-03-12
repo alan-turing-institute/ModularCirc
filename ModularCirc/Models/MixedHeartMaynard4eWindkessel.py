@@ -1,7 +1,9 @@
 from .OdeModel import OdeModel
 from .MixedHeartMaynard4eWindkessel_parameters import MixedHeartMaynard4eWindkessel_parameters as MHM4W_parobj
 from .ParametersObject import ParametersObject as po
-from ..Components import Rlc_component, Valve_maynard, HC_mixed_elastance, R_component, Valve_non_ideal
+from ..Components import Rlc_component, Valve_maynard,  \
+    HC_mixed_elastance, R_component, Valve_non_ideal, \
+        HC_constant_elastance, Valve_simple_bernoulli
 
 FULL_NAMES =[
     'LeftA',
@@ -36,9 +38,9 @@ class MixedHeartMaynard4eWindkessel(OdeModel):
             elif key in parobj._imp or key in parobj._cap:
                 class_ =  R_component
             elif key in parobj._valves:
-                class_ = Valve_non_ideal # Valve_maynard
+                class_ = Valve_simple_bernoulli # Valve_non_ideal # Valve_maynard
             elif key in parobj._chambers:
-                class_ = HC_mixed_elastance
+                class_ = HC_mixed_elastance # HC_mixed_elastance HC_constant_elastance
             else:
                 raise Exception(f'Component name {key} not in the model list.')
             self.commponents[key] = class_(name=name,

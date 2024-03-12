@@ -9,7 +9,8 @@ import pandas as pd
 import numpy as np
 
 from scipy.integrate import solve_ivp
-
+from scipy.linalg import solve
+from scipy.optimize import newton, approx_fprime, root
 
 class Solver():
     def __init__(self, 
@@ -39,6 +40,8 @@ class Solver():
         self._N_sv = len(self._global_sv_id)
         
         self._Nconv = None
+        
+        self._n_sub_iter = 1
         
                 
     def setup(self)->None:
@@ -89,6 +92,16 @@ class Solver():
     @property
     def Nconv(self) -> float:
         return self._Nconv
+    
+    @property
+    def n_sub_iter(self)->int:
+        return self._n_sub_iter
+    
+    @n_sub_iter.setter
+    def n_sub_iter(self, value):
+        assert isinstance(value, int)
+        assert value > 0
+        self._n_sub_iter = value
         
     def generate_dfdt_functions(self):
         
@@ -104,6 +117,20 @@ class Solver():
         def s_u_update(t, y:np.ndarray[float,float]) -> np.ndarray[float]:
             return np.array([fi(t=y, y=yi) for fi, yi in zip(funcs2, y[ids2])], dtype=np.float64)
         
+        def s_u_residual(y, yall, keys):
+            yall[keys] = y
+            return y - s_u_update(0.0, yall)
+        
+        def optimize(y, keys):
+            yk = y[keys]
+            sol = root(
+                s_u_residual, 
+                yk, 
+                args=(y, keys), 
+                # tol=1.0e-20
+                )
+            return sol.x
+        
         keys3  = np.array(list(self._global_psv_update_fun.keys()))
         keys4  = np.array(list(self._global_ssv_update_fun.keys()))
         funcs3 = np.array(list(self._global_psv_update_fun.values()))
@@ -113,13 +140,16 @@ class Solver():
             ht = t%self._to.tcycle
             y_temp = np.zeros( (len(self._global_sv_id),y.shape[1]) if len(y.shape) == 2 else (len(self._global_sv_id),)) 
             y_temp[keys3] = y
-            y_temp[keys4] = s_u_update(t, y_temp)
+            y_temp[keys4] = s_u_update(t, y_temp)  
+            y_temp[keys4] = optimize(y_temp, keys4)
             return np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
         
         self.initialize_by_function = initialize_by_function    
         self.pv_dfdt_global = pv_dfdt_update
         self.s_u_update     = s_u_update
         
+        self.optimize = optimize
+        self.s_u_residual = s_u_residual
     
     def advance_cycle(self, y0, cycleID):
         n_t = self._to.n_c - 1
@@ -154,24 +184,30 @@ class Solver():
             self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
         # Solve the main system of ODEs.. 
         for i in range(self._to.ncycles):
+            print(i)
             y0 = self._asd.iloc[i * (self._to.n_c-1), list(self._global_psv_update_fun.keys())].to_list()
             flag = self.advance_cycle(y0=y0, cycleID=i)
             if flag and i > self._to.export_min:
                 self._Nconv = i
                 break
+            if i == self._to.ncycles - 1:
+                self._Nconv = i
+        
         self._asd = self._asd.iloc[:self.Nconv*(self._to.n_c-1)+1]
         self._to._sym_t   = self._to._sym_t.head(self.Nconv*(self._to.n_c-1)+1)
         self._to._cycle_t = self._to._cycle_t.head(self.Nconv*(self._to.n_c-1)+1)
         
         self._to.n_t = self.Nconv*(self._to.n_c-1)+1
-                
+            
+        keys4  = np.array(list(self._global_ssv_update_fun.keys()))      
+        temp   = np.zeros(self._asd.iloc[:,keys4].shape)  
+        for i, line in enumerate(self._asd.values) :
+            line[keys4] = self.s_u_update(0.0, line)
+            temp[i,:] = self.optimize(line, keys4)
+        self._asd.iloc[:,keys4] = temp  
+                        
         for key in self._vd.keys():
             self._vd[key]._u = self._asd[key] 
-        
-        temp = self.s_u_update(t=0.0, y=self._asd.values.T)
-        self._asd.iloc[:,self._global_ssv_update_fun.keys()] = temp.T
-            
-           
         
 
             

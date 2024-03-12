@@ -31,10 +31,7 @@ class OdeModel():
         plabel (str) : new name for the shared pressure state variable
         qlabel (str) : new name for the shared flow state variable
         """
-        if qlabel in self._state_variable_dict.keys():
-            module2._Q_i = self._state_variable_dict[qlabel]
-            module1._Q_o = self._state_variable_dict[qlabel]
-        elif qvariable is None:
+        if qvariable is None:
             if module1._Q_o._ode_sys_mapping['u_func'] is not None or module1._Q_o._ode_sys_mapping['dudt_func'] is not None:
                 module2._Q_i = module1._Q_o
             elif module2._Q_i._ode_sys_mapping['u_func'] is not None or module2._Q_i._ode_sys_mapping['dudt_func'] is not None:
@@ -45,10 +42,7 @@ class OdeModel():
             module2._Q_i = qvariable
             module1._Q_o = qvariable
             
-        if plabel in self._state_variable_dict.keys():
-            module2._P_i = self.state_variable_dict[plabel]
-            module1._P_o = self.state_variable_dict[plabel]
-        elif pvariable is None:
+        if pvariable is None:
             if module1._P_o._ode_sys_mapping['u_func'] is not None or module1._P_o._ode_sys_mapping['dudt_func'] is not None:
                 module2._P_i = module1._P_o
             elif module2._P_i._ode_sys_mapping['u_func'] is not None or module2._P_i._ode_sys_mapping['dudt_func'] is not None:
@@ -63,12 +57,10 @@ class OdeModel():
             module1._P_o.set_name(plabel)
             self._state_variable_dict[plabel] = module1._P_o
             self.all_sv_data[plabel] = module1.P_o
-            # module1._P_o._u = self.all_sv_data[plabel]
         if qlabel is not None and qlabel not in self._state_variable_dict.keys():
             module1._Q_o.set_name(qlabel)
             self._state_variable_dict[qlabel] = module1._Q_o
             self.all_sv_data[qlabel] = module1.Q_o
-            # module1._Q_o._u = self.all_sv_data[qlabel]
         return
         
             
