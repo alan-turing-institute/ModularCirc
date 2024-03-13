@@ -38,9 +38,9 @@ class MixedHeartMaynard4eWindkessel(OdeModel):
             elif key in parobj._imp or key in parobj._cap:
                 class_ =  R_component
             elif key in parobj._valves:
-                class_ = Valve_simple_bernoulli # Valve_non_ideal # Valve_maynard
+                class_ = Valve_simple_bernoulli # Valve_non_ideal # Valve_maynard # Valve_simple_bernoulli
             elif key in parobj._chambers:
-                class_ = HC_mixed_elastance # HC_mixed_elastance HC_constant_elastance
+                class_ = HC_constant_elastance # HC_mixed_elastance HC_constant_elastance
             else:
                 raise Exception(f'Component name {key} not in the model list.')
             self.commponents[key] = class_(name=name,

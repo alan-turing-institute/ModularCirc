@@ -10,7 +10,7 @@ import numpy as np
 
 from scipy.integrate import solve_ivp
 from scipy.linalg import solve
-from scipy.optimize import newton, approx_fprime, root
+from scipy.optimize import newton, approx_fprime, root, least_squares
 
 class Solver():
     def __init__(self, 
@@ -51,6 +51,9 @@ class Solver():
         for key, component in self._vd.items():
             mkey = self._global_sv_id[key]
             if component.i_func is not None:
+                print(f" -- Variable {bold_text(key)} added to the init list.")
+                print(f'    - name of update function: {bold_text(component.i_name)}')
+                print(f'    - inputs: {component.i_inputs.to_list()}')
                 self._initialize_by_function[key] = component
                 self._global_sv_init_fun[mkey] = component.i_func
                 self._global_sv_init_ind[mkey] = [self._global_sv_id[key2] for key2 in component.i_inputs.to_list()]
@@ -119,17 +122,46 @@ class Solver():
         
         def s_u_residual(y, yall, keys):
             yall[keys] = y
-            return y - s_u_update(0.0, yall)
+            return (y - s_u_update(0.0, yall))
         
-        def optimize(y, keys):
+        def optimize(y:np.ndarray, keys):
             yk = y[keys]
-            sol = root(
+            init = np.copy(yk)
+            res0 = s_u_residual(yk, y, keys)
+            # sol = root(   # root
+            #     s_u_residual, 
+            #     yk, 
+            #     args=(y, keys), 
+            #     tol=1.0e-12,
+            #     method='lm',
+            #     options=optionslm
+            #     )
+            sol = least_squares(   # root
                 s_u_residual, 
                 yk, 
                 args=(y, keys), 
-                # tol=1.0e-20
+                ftol=1.0e-5,
+                xtol=1.0e-15,
+                loss='linear',
+                method='lm',
+                max_nfev=int(1e6)
                 )
-            return sol.x
+            y[keys] = sol.x
+            res1 = s_u_residual(sol.x, y, keys)
+            keys_mapped = [self._global_sv_id_rev[key] for key in keys]
+            j = pd.DataFrame(sol.jac, index=keys_mapped, columns=keys_mapped)
+            # print(np.linalg.norm(sol.fun))
+            # assert np.linalg.norm(res1) < 1.0e-3, f"\nRes: {np.linalg.norm(sol.fun)}" + \
+            #     "\n" + f"Success: {sol.success}" + \
+            #     "\n" + f"Message: {sol.message}" + \
+            #     "\n" + f"Res start norm: {np.linalg.norm(res0)}" + \
+            #     "\n" + f"Res start:      {res0}" + \
+            #     "\n" + f"Res fin norm:   {np.linalg.norm(res1)}" + \
+            #     "\n" + f"Res fin:        {res1}" \
+            #     "\n" + f"Sol0:           {init}" \
+            #     "\n" + f"Sol:            {sol.x}" \
+            #     "\n" + f"J:            \n{np.round(j,4)}"  # np.round(j,4)
+            return sol.x  # sol.x
         
         keys3  = np.array(list(self._global_psv_update_fun.keys()))
         keys4  = np.array(list(self._global_ssv_update_fun.keys()))
@@ -140,7 +172,8 @@ class Solver():
             ht = t%self._to.tcycle
             y_temp = np.zeros( (len(self._global_sv_id),y.shape[1]) if len(y.shape) == 2 else (len(self._global_sv_id),)) 
             y_temp[keys3] = y
-            y_temp[keys4] = s_u_update(t, y_temp)  
+            for _ in range(self._n_sub_iter):
+                y_temp[keys4] = s_u_update(t, y_temp)  
             y_temp[keys4] = optimize(y_temp, keys4)
             return np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
         
@@ -205,7 +238,7 @@ class Solver():
             line[keys4] = self.s_u_update(0.0, line)
             temp[i,:] = self.optimize(line, keys4)
         self._asd.iloc[:,keys4] = temp  
-                        
+        
         for key in self._vd.keys():
             self._vd[key]._u = self._asd[key] 
         

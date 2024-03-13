@@ -1,4 +1,4 @@
-from ..HelperRoutines import activation_function_2, activation_function_3, relu_max
+from ..HelperRoutines import activation_function_2, activation_function_3, relu_max, softplus
 from .ParametersObject import ParametersObject
 import pandas as pd
 
@@ -78,14 +78,14 @@ class MixedHeartMaynard4eWindkessel_parameters(ParametersObject):
 
         # systemic circulation
         self.set_rlc_comp('sa', r=0.05,   c=1.6 , l=0.0017  , v=450.0, v_ref=0.0)
-        self.set_rlc_comp('sv', r=0.075,  c=20.5,             v=250.0,   v_ref=0.0)
+        self.set_rlc_comp('sv', r=0.075,  c=20.5,             v=0.0,   v_ref=0.0)
         
         # set impedances
         self.set_resistance('sai', r = 0.003)
         self.set_resistance('pai', r = 0.002)
         
         # pulmonary circulation
-        self.set_rlc_comp('pa', r=0.01, c=3.8 , l=0.0017   , v=0.0, v_ref=0.0)
+        self.set_rlc_comp('pa', r=0.01, c=3.8 , l=0.0017   , v=250.0, v_ref=0.0)
         self.set_rlc_comp('pv', r=0.006, c=20.5            , v=0.0,   v_ref=0.0)
         
         # set capilary resistances
@@ -98,6 +98,11 @@ class MixedHeartMaynard4eWindkessel_parameters(ParametersObject):
         # self.set_valve_comp('mi', r=0.01, max_func=relu_max)
         # self.set_valve_comp('po', r=0.01, max_func=relu_max)
         # self.set_valve_comp('ti', r=0.01, max_func=relu_max)
+        #####################################################
+        # self.set_valve_comp('ao', r=0.01, max_func=softplus)
+        # self.set_valve_comp('mi', r=0.01, max_func=softplus)
+        # self.set_valve_comp('po', r=0.01, max_func=softplus)
+        # self.set_valve_comp('ti', r=0.01, max_func=softplus)
         #####################################################
         # self.set_valve_comp('ao', CQ=350., RRA=0.0, Ko = 26., Kc = 2e3,  L=0.0, R=0.0)
         # self.set_valve_comp('mi', CQ=400., RRA=0.0, Ko = 40.,  Kc = 2e3, L=0.0, R=0.0 )

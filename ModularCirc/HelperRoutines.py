@@ -175,7 +175,7 @@ def non_ideal_diode_flow(t:float,
     """
     if y is not None:
         p_in, p_out = y[:2]
-    return (max_func(p_in - p_out) / r)
+    return (max_func(p_in - p_out/ r))
 
 @jit(cache=True, nopython=True)
 def simple_bernoulli_diode_flow(t:float, 
