@@ -126,16 +126,6 @@ class Solver():
         
         def optimize(y:np.ndarray, keys):
             yk = y[keys]
-            init = np.copy(yk)
-            res0 = s_u_residual(yk, y, keys)
-            # sol = root(   # root
-            #     s_u_residual, 
-            #     yk, 
-            #     args=(y, keys), 
-            #     tol=1.0e-12,
-            #     method='lm',
-            #     options=optionslm
-            #     )
             sol = least_squares(   # root
                 s_u_residual, 
                 yk, 
@@ -147,20 +137,6 @@ class Solver():
                 max_nfev=int(1e6)
                 )
             y[keys] = sol.x
-            res1 = s_u_residual(sol.x, y, keys)
-            keys_mapped = [self._global_sv_id_rev[key] for key in keys]
-            j = pd.DataFrame(sol.jac, index=keys_mapped, columns=keys_mapped)
-            # print(np.linalg.norm(sol.fun))
-            # assert np.linalg.norm(res1) < 1.0e-3, f"\nRes: {np.linalg.norm(sol.fun)}" + \
-            #     "\n" + f"Success: {sol.success}" + \
-            #     "\n" + f"Message: {sol.message}" + \
-            #     "\n" + f"Res start norm: {np.linalg.norm(res0)}" + \
-            #     "\n" + f"Res start:      {res0}" + \
-            #     "\n" + f"Res fin norm:   {np.linalg.norm(res1)}" + \
-            #     "\n" + f"Res fin:        {res1}" \
-            #     "\n" + f"Sol0:           {init}" \
-            #     "\n" + f"Sol:            {sol.x}" \
-            #     "\n" + f"J:            \n{np.round(j,4)}"  # np.round(j,4)
             return sol.x  # sol.x
         
         keys3  = np.array(list(self._global_psv_update_fun.keys()))
