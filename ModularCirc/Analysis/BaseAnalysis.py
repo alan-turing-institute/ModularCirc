@@ -110,7 +110,7 @@ class BaseAnalysis():
         )
         ax.set_title(component.upper() + ': PV loop')
         ax.set_xlabel(f'Time (${time_units}$)')
-        ax.set_ylabel(f'Flux (${volume_units}\cdot {time_units}^{-1}$)')
+        ax.set_ylabel(f'Flux (${volume_units}\cdot {time_units}^' + "{-1}$)")
         return ax
 
     def plot_fluxes(self, component:str, ax=None, time_units:str='s', volume_units:str='mL'):
