@@ -44,10 +44,19 @@ class Solver():
         self._n_sub_iter = 1
         
                 
-    def setup(self)->None:
+    def setup(self, 
+              optimize_secondary_sv:bool=False
+              )->None:
         """
         Method for detecting which are the principal variables and which are the secondary ones.
+        
+        ## Inputs
+        optimize_secondary_sv : boolean
+            flag used to switch on the optimization for secondary variable computations, this flag needs to be
+            true when not all of the secondary variables can be expressed in terms of primary variables.
         """
+        self._optimize_secondary_sv = optimize_secondary_sv
+        
         for key, component in self._vd.items():
             mkey = self._global_sv_id[key]
             if component.i_func is not None:
@@ -100,6 +109,10 @@ class Solver():
     def n_sub_iter(self)->int:
         return self._n_sub_iter
     
+    @property
+    def optimize_secondary_sv(self)->bool:
+        return self._optimize_secondary_sv
+    
     @n_sub_iter.setter
     def n_sub_iter(self, value):
         assert isinstance(value, int)
@@ -150,7 +163,8 @@ class Solver():
             y_temp[keys3] = y
             for _ in range(self._n_sub_iter):
                 y_temp[keys4] = s_u_update(t, y_temp)  
-            y_temp[keys4] = optimize(y_temp, keys4)
+            if self._optimize_secondary_sv:
+                y_temp[keys4] = optimize(y_temp, keys4)
             return np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
         
         self.initialize_by_function = initialize_by_function    
