@@ -23,7 +23,7 @@ with open(os.path.join(here, 'README.md')) as f:
 
 setup(
     name='ModularCirc', 
-    version='0.1.0', 
+    version='0.1.1', 
     url=here,
     author='Maximilian Balmus',
     author_email='mbalmus@turing.ac.uk',
