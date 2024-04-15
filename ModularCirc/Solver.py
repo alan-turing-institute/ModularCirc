@@ -12,6 +12,8 @@ from scipy.integrate import solve_ivp
 from scipy.linalg import solve
 from scipy.optimize import newton, approx_fprime, root, least_squares
 
+import warnings
+
 class Solver():
     def __init__(self, 
                 model:OdeModel=None,
@@ -180,13 +182,16 @@ class Solver():
     def advance_cycle(self, y0, cycleID):
         n_t = self._to.n_c - 1
         t = self._to._sym_t.values[cycleID*n_t:(cycleID+1)*n_t+1] 
-        res = solve_ivp(fun=self.pv_dfdt_global, 
-                        t_span=(t[0], t[-1]), 
-                        y0=y0, 
-                        t_eval=t,
-                        max_step=self._to.dt,
-                        method='BDF',
-                        )
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            res = solve_ivp(fun=self.pv_dfdt_global, 
+                            t_span=(t[0], t[-1]), 
+                            y0=y0, 
+                            t_eval=t,
+                            max_step=self._to.dt,
+                            method='BDF',
+                            )
         for ind, id in enumerate(self._global_psv_update_fun.keys()):
             self._asd.iloc[cycleID*n_t:(cycleID+1)*n_t+1, id] = res.y[ind, 0:n_t+1]
             
