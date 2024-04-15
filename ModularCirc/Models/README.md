@@ -42,12 +42,12 @@ This model is comprised of the following components:
 - aortic valve: simple Bernoulli model
     - **2 parameters**
 - aortic sinus (RLC 3 component windkessel)
-    - **3 parameters**
+    - **4 parameters**
 - arteries (RLC 3 component windkessel) + arteriole (R) + capilary (R)
     - for practical reasons the 3 resistors are summed up into one parameter
-    - **3 parameters**
+    - **4 parameters**
 -  systemic venous system (RLC 3 component windkessel)
-    - **2 parameters** (assume that venous impedance is zero)
+    - **3 parameters** (assume that venous impedance is zero)
 - right atrium: linear time-varying elastance model
     - **6 parameters**
 - tricuspid valve: simple Bernoulli model
@@ -57,13 +57,13 @@ This model is comprised of the following components:
 - pulmonary valve: simple Bernoulli model
     - **2 parameters**
 - pulmonary artery sinus (RLC 3 component windkessel)
-    - **3 parameters**
+    - **4 parameters**
 - pulmonary arteries (RLC 3 component windkessel) + pulmonary arteriole (R) + pulmonary capilary (R)
-    - **3 parameters**
+    - **4 parameters**
 - pulmonary venous system (RLC 3 component windessel)
-    - **2 parameters** (assume that venous impedance is zero)
+    - **3 parameters** (assume that venous impedance is zero)
 
-**Total set of parameters sums up to 46.**
+**Total set of parameters sums up to 55.**
 
 [<img src=Figures/KorakianitisModel_circuit.png>]()
 
@@ -74,8 +74,39 @@ Relevant files and classes:
 - `ModularCirc/Models/KorakianitisMaynardModel_parameters.py`, where the `KorakianitisMaynardModel_parameters` class is defined
 
 This model follow the same strucutre as **Korakianitis and Shi model (V1)**, however the valves are replaced with Maynard type valves which are more similar to the ones used in the original paper.
-**This introduces 2 additional parameters per valve (1 for the valve closing rate and one for the opening rate).**
+**This introduces 2 additional parameters per valve (one for the valve closing rate and one for the opening rate).**
 
-**Total set of parameters sums up to 54.**
+Components used:
+- arteries: RLC with sinuses being represented as a separate RLC component. (3/4 components)
+- valves: **Maynard** valves (4 parameters)
+- chambers: **linear models** (5/6 parameters of ventricles/arteries)
+
+**Total set of parameters sums up to 60.**
 
 
+## 4. Korakianitis and Shi model (V3)
+Relevant files and classes:
+- `ModularCirc/Models/KorakianitisMixedMaynardModel.py`, where the `KorakianitisMixedMaynardModel` class is defined
+- `ModularCirc/Models/KorakianitisMixedMaynardModel_parameters.py`, where the `KorakianitisMixedMaynardModel_parameters` class is defined.
+
+This model is again based on the orinal structure of **Korakianitis and Shi model (V1)**.
+Here, the following components were used:
+- chambers: **mixed models** (6/7 parameters of ventricles/arteries)
+- valves: **Maynard** valves (4 parameters)
+- arteries: RLC with sinuses being represented as a separate RLC component. (3/4 parameters)
+
+**Total parameter count: 64**
+
+
+## 5. Simplified Korakianitis and Shi model (V1)
+Relevant files and classes:
+- `ModularCirc/Models/MixedHeartMaynard4eWindkessel.py`, where the `MixedHeartMaynard4eWindkessel` class is defined
+- `ModularCirc/Models/MixedHeartMaynard4eWindkessel_parameters.py`, where the `MixedHeartMaynard4eWindkessel` class is defined.
+
+This model is again based on the orinal structure of **Korakianitis and Shi model (V1)**.
+Here, the following components were used:
+- chambers: **mixed models** (6/7 parameters of ventricles/arteries)
+- valves: **Maynard** valves (4 parameters)
+- arteries: RLC with sinuses represented as a separate R component and capilaries similarly by R. This equivalent to the systemic and pulmonary arterial system being simulated as 2 4-component Windkessels in series with one another.  (7/8 parameters systemic + 7/8 parameters pulmonary)
+
+**Total parameter count: 58 or 56 (if you choose to add the capilary resistance to the resistance of the previous component)**
