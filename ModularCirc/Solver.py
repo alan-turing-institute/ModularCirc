@@ -43,6 +43,9 @@ class Solver():
         
         self._n_sub_iter = 1
         
+        # flag for checking if the model is converged or not...
+        self.converged = False
+        
                 
     def setup(self, 
               optimize_secondary_sv:bool=False
@@ -212,9 +215,11 @@ class Solver():
             flag = self.advance_cycle(y0=y0, cycleID=i)
             if flag and i > self._to.export_min:
                 self._Nconv = i
+                self.converged = True
                 break
             if i == self._to.ncycles - 1:
                 self._Nconv = i
+                self.converged = False
         
         self._asd = self._asd.iloc[:self.Nconv*(self._to.n_c-1)+1]
         self._to._sym_t   = self._to._sym_t.head(self.Nconv*(self._to.n_c-1)+1)
