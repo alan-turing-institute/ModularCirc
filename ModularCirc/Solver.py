@@ -215,7 +215,7 @@ class Solver():
             self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
         # Solve the main system of ODEs.. 
         for i in range(self._to.ncycles):
-            print(i)
+            # print(i)
             y0 = self._asd.iloc[i * (self._to.n_c-1), list(self._global_psv_update_fun.keys())].to_list()
             flag = self.advance_cycle(y0=y0, cycleID=i)
             if flag and i > self._to.export_min:
