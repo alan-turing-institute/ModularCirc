@@ -23,18 +23,17 @@ VESSELS = ['sas', 'sat', 'svn', 'pas', 'pat', 'pvn']
 VESSELS_PAR = ['r', 'c', 'l', 'v_ref', 'v', 'p']
 
 VALVES  = ['mi', 'ao', 'ti', 'po']
-VALVES_PAR = ['CQ', 'RRA']
+VALVES_PAR = ['CQ', 'RRA', 'Ko', 'Kc', 'R', 'L']
 
 CHAMBERS = ['la', 'lv', 'ra', 'rv']
-CHAMBERS_PAR = ['E_pas', 'E_act', 'v_ref', 'af',  'v', 'p', 'tr', 'td', 'delay', 'tpww', 'tpwb']
+CHAMBERS_PAR = ['E_pas', 'E_act', 'v_ref', 'k_pas', 'af',  'v', 'p', 'tr', 'td', 'delay', 'tpww', 'tpwb']
 
-# TIMINGS = []
 
-class Korakianitis_parameters_2006(ParametersObject):
+class KorakianitisMaynardModel_parameters(ParametersObject):
     """
     Intro
     -----
-   Model Parameters based on Korakianitis and Shi (2006)
+   Model Parameters based on Korakianitis and Shi (2006) with Maynard (2012) valves
     """
     def __init__(self, name='Korakianitis 2006') -> None:
         super().__init__(name=name)
@@ -42,17 +41,15 @@ class Korakianitis_parameters_2006(ParametersObject):
         for type_, type_var in [[VESSELS, VESSELS_PAR], [VALVES, VALVES_PAR], [CHAMBERS, CHAMBERS_PAR]]:
             for key in type_:
                 self[key] = pd.Series(index=type_var, dtype=object)
-                
-        # self.timings = {key : pd.Series(index=TIMINGS) for key in CHAMBERS} 
-                
+                                
         self._vessels = VESSELS
         self._valves  = VALVES
         self._chambers= CHAMBERS
                 
-        self.set_chamber_comp('lv', E_pas= 0.1, E_act= 2.5, v_ref=5.0, tr = 0.30, td = 0.450, v=500.)
-        self.set_chamber_comp('la', E_pas= 0.15, E_act= 0.25, v_ref=4.0, tpwb = 0.0, tpww = 0.09, delay=0.08, v=0.0)
-        self.set_chamber_comp('rv', E_pas= 0.1, E_act= 1.15, v_ref=10., tr=0.30, td=0.45, v=400.)
-        self.set_chamber_comp('ra', E_pas= 0.15, E_act= 0.25, v_ref=4., tpwb=0.0, tpww=0.09, delay=0.08, v=0.0)
+        self.set_chamber_comp('lv', E_pas= 0.1,  E_act= 2.5,  v_ref=5.0, k_pas=0.1, tr = 0.30,  td = 0.450,              v=500.)
+        self.set_chamber_comp('la', E_pas= 0.15, E_act= 0.25, v_ref=4.0, k_pas=0.1, tpwb = 0.0, tpww = 0.09, delay=0.08, v=0.0)
+        self.set_chamber_comp('rv', E_pas= 0.1,  E_act= 1.15, v_ref=10., k_pas=0.1, tr=0.30,    td=0.45,                 v=400.)
+        self.set_chamber_comp('ra', E_pas= 0.15, E_act= 0.25, v_ref=4., k_pas=0.1,  tpwb=0.0,   tpww=0.09,   delay=0.08, v=0.0)
 
         self.set_activation_function('lv', af=activation_function_2)
         self.set_activation_function('rv', af=activation_function_2)
@@ -72,10 +69,11 @@ class Korakianitis_parameters_2006(ParametersObject):
         self.set_rlc_comp('pvn', r=0.006           , c=20.5            , v=0.0, v_ref=0.0)
         
         # valves
-        self.set_valve_comp('ao', CQ=350., RRA=0.0)
-        self.set_valve_comp('mi', CQ=400., RRA=0.0)
-        self.set_valve_comp('po', CQ=350., RRA=0.0)
-        self.set_valve_comp('ti', CQ=400., RRA=0.0)
+        dyn = 1333.22 
+        self.set_valve_comp('ao', CQ=350., RRA=0.0, Ko = 0.012/dyn, Kc = 0.012/dyn, L=0.0, R=0.0)
+        self.set_valve_comp('mi', CQ=400., RRA=0.0, Ko = 0.03/dyn,  Kc = 0.04/dyn, L=0.0, R=0.0 )
+        self.set_valve_comp('po', CQ=350., RRA=0.0, Ko = 0.02/dyn,  Kc = 0.02/dyn, L=0.0, R=0.0 )
+        self.set_valve_comp('ti', CQ=400., RRA=0.0, Ko = 0.03/dyn,  Kc = 0.04/dyn, L=0.0, R=0.0 )
         
     def set_chamber_comp(self, key, **kwargs):
         self._set_comp(key=key, set=CHAMBERS, **kwargs)

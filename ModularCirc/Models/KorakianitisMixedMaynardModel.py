@@ -1,5 +1,5 @@
 from .OdeModel import OdeModel
-from .Korakianitis_parameters_2006 import Korakianitis_parameters_2006 as k2006
+from .KorakianitisModel_parameters import KorakianitisModel_parameters as k2006
 from .ParametersObject import ParametersObject as po
 from ..Components import Rlc_component, Valve_maynard, HC_mixed_elastance
 
