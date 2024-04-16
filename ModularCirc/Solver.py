@@ -218,7 +218,12 @@ class Solver():
         for i in range(self._to.ncycles):
             # print(i)
             y0 = self._asd.iloc[i * (self._to.n_c-1), list(self._global_psv_update_fun.keys())].to_list()
-            flag = self.advance_cycle(y0=y0, cycleID=i)
+            try:
+                flag = self.advance_cycle(y0=y0, cycleID=i)
+            except ValueError:
+                self._Nconv = i-1
+                self.converged = False
+                break
             if flag and i > self._to.export_min:
                 self._Nconv = i
                 self.converged = True
