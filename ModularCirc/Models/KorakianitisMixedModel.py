@@ -20,7 +20,7 @@ FULL_NAMES =[
     'PulVen',
 ]
 
-class KorakianitisMixedMaynardModel(OdeModel):
+class KorakianitisMixedModel(OdeModel):
     def __init__(self, time_setup_dict, parobj:po=k2006) -> None:
         super().__init__(time_setup_dict)
         self.name = 'KorakianitisModel'

@@ -29,7 +29,7 @@ CHAMBERS = ['la', 'lv', 'ra', 'rv']
 CHAMBERS_PAR = ['E_pas', 'E_act', 'v_ref', 'k_pas', 'af',  'v', 'p', 'tr', 'td', 'delay', 'tpww', 'tpwb']
 
 
-class KorakianitisMixedMaynardModel_parameters(ParametersObject):
+class KorakianitisMixedModel_parameters(ParametersObject):
     """
     Intro
     -----
