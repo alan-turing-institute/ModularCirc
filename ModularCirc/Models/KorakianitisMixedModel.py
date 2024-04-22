@@ -21,11 +21,11 @@ FULL_NAMES =[
 ]
 
 class KorakianitisMixedModel(OdeModel):
-    def __init__(self, time_setup_dict, parobj:po=k2006) -> None:
+    def __init__(self, time_setup_dict, parobj:po=k2006, supress_printing:bool=False) -> None:
         super().__init__(time_setup_dict)
         self.name = 'KorakianitisModel'
         
-        print(parobj)
+        if not supress_printing: print(parobj)
         
         # The components...
         for key, name in zip(parobj.components.keys(), FULL_NAMES):
