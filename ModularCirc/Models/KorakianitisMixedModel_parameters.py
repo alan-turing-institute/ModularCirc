@@ -23,7 +23,7 @@ VESSELS = ['sas', 'sat', 'svn', 'pas', 'pat', 'pvn']
 VESSELS_PAR = ['r', 'c', 'l', 'v_ref', 'v', 'p']
 
 VALVES  = ['mi', 'ao', 'ti', 'po']
-VALVES_PAR = ['CQ', 'RRA', 'Ko', 'Kc', 'R', 'L']
+VALVES_PAR = ['CQ', 'RRA']
 
 CHAMBERS = ['la', 'lv', 'ra', 'rv']
 CHAMBERS_PAR = ['E_pas', 'E_act', 'v_ref', 'k_pas', 'af',  'v', 'p', 'tr', 'td', 'delay', 'tpww', 'tpwb']
