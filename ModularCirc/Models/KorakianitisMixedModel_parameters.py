@@ -86,3 +86,11 @@ class KorakianitisMixedModel_parameters(ParametersObject):
         
     def set_valve_comp(self, key, **kwargs):
         self._set_comp(key=key, set=VALVES, **kwargs)
+        
+    def set(self, key, **kwargs):
+        if key in CHAMBERS:
+            self._set_comp(key=key, set=CHAMBERS, **kwargs)
+        if key in VESSELS:
+            self._set_comp(key=key, set=VESSELS, **kwargs)
+        if key in VALVES:
+            self._set_comp(key=key, set=VALVES, **kwargs)
