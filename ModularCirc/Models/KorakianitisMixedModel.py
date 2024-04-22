@@ -42,8 +42,8 @@ class KorakianitisMixedModel(OdeModel):
                                     **parobj[key].to_dict())
             if key not in parobj._valves: 
                 self.set_v_sv(key)
-            else:
-                self.set_phi_sv(key)
+            # else:
+            #     self.set_phi_sv(key)
             self.commponents[key].setup()
             
         self.connect_modules(self.commponents['lv'],
@@ -106,8 +106,8 @@ class KorakianitisMixedModel(OdeModel):
         for component in self.commponents.values():
             component.setup()
             
-    def set_phi_sv(self, comp_key:str) -> None:
-        phi_key = 'phi_' + comp_key
-        self._state_variable_dict[phi_key] = self.commponents[comp_key]._PHI
-        self._state_variable_dict[phi_key].set_name(phi_key)
-        self.all_sv_data[phi_key] = self.commponents[comp_key].PHI
+    # def set_phi_sv(self, comp_key:str) -> None:
+    #     phi_key = 'phi_' + comp_key
+    #     self._state_variable_dict[phi_key] = self.commponents[comp_key]._PHI
+    #     self._state_variable_dict[phi_key].set_name(phi_key)
+    #     self.all_sv_data[phi_key] = self.commponents[comp_key].PHI
