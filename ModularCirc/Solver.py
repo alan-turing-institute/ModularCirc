@@ -53,6 +53,7 @@ class Solver():
               optimize_secondary_sv:bool=False,
               supress_output:bool=False,
               step_tol:float=1e-2,
+              conv_cols:list=None
               )->None:
         """
         Method for detecting which are the principal variables and which are the secondary ones.
@@ -63,7 +64,8 @@ class Solver():
             true when not all of the secondary variables can be expressed in terms of primary variables.
         """
         self._optimize_secondary_sv = optimize_secondary_sv
-        self._step_tol = step_tol
+        self._step_tol  = step_tol
+        self._conv_cols = conv_cols
         
         for key, component in self._vd.items():
             mkey = self._global_sv_id[key]
@@ -202,7 +204,10 @@ class Solver():
         
         ind = list(self._global_psv_update_fun.keys())
         cycleP = cycleID - 1
-        cols = [col for col in self._asd.columns if 'v_' in col or 'p_' in col]
+        if self._conv_cols is None:
+            cols = [col for col in self._asd.columns if 'v_' in col or 'p_' in col]
+        else:
+            cols = self._conv_cols
         cs   = self._asd[cols].iloc[cycleID*n_t:(cycleID+1)*n_t, :].values
         cp   = self._asd[cols].iloc[cycleP *n_t:(cycleP +1)*n_t, :].values
         
