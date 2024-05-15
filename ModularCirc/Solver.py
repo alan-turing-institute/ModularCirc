@@ -239,9 +239,9 @@ class Solver():
                 self._Nconv = i
                 self.converged = False
         
-        self._asd = self._asd.iloc[:self.Nconv*(self._to.n_c-1)+1]
-        self._to._sym_t   = self._to._sym_t.head(self.Nconv*(self._to.n_c-1)+1)
-        self._to._cycle_t = self._to._cycle_t.head(self.Nconv*(self._to.n_c-1)+1)
+        self._asd = self._asd.iloc[:self.Nconv*(self._to.n_c)+1]
+        self._to._sym_t   = self._to._sym_t.head(self.Nconv*(self._to.n_c)+1)
+        self._to._cycle_t = self._to._cycle_t.head(self.Nconv*(self._to.n_c)+1)
         
         self._to.n_t = self.Nconv*(self._to.n_c-1)+1
             
