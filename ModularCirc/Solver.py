@@ -51,7 +51,8 @@ class Solver():
                 
     def setup(self, 
               optimize_secondary_sv:bool=False,
-              supress_output:bool=False
+              supress_output:bool=False,
+              step_tol:float=1e-2,
               )->None:
         """
         Method for detecting which are the principal variables and which are the secondary ones.
@@ -62,6 +63,7 @@ class Solver():
             true when not all of the secondary variables can be expressed in terms of primary variables.
         """
         self._optimize_secondary_sv = optimize_secondary_sv
+        self._step_tol = step_tol
         
         for key, component in self._vd.items():
             mkey = self._global_sv_id[key]
@@ -204,10 +206,15 @@ class Solver():
         cs   = self._asd[cols].iloc[cycleID*n_t:(cycleID+1)*n_t, :].values
         cp   = self._asd[cols].iloc[cycleP *n_t:(cycleP +1)*n_t, :].values
         
-        norm = np.where(np.ptp(cp) > 1e-10 , np.abs(cs - cp) / np.ptp(cp), np.abs(cs - cp))
-        norm = np.sum(norm.std(axis=0)**2.0) ** 0.5
+        cp_ptp = np.ptp(cp, axis=0)
+        cp_r   = np.max(np.abs(cs - cp), axis=0)
         
-        return norm < 0.001
+        for val, nval in zip(cp_r, cp_ptp):
+            if nval > 1e-10:
+                if val / nval > self._step_tol: return False
+            else:
+                if val > self._step_tol: return False
+        return True
     
     
     def solve(self):
