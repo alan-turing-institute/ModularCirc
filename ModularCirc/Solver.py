@@ -197,6 +197,8 @@ class Solver():
                             max_step=self._to.dt,
                             method='BDF',
                             )
+        if res.status == -1:
+            return False
         for ind, id in enumerate(self._global_psv_update_fun.keys()):
             self._asd.iloc[cycleID*n_t:(cycleID+1)*n_t+1, id] = res.y[ind, 0:n_t+1]
             
