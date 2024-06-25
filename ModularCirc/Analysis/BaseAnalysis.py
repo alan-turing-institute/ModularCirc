@@ -58,9 +58,10 @@ class BaseAnalysis():
         self.valves= dict()
         self.ventricles = dict()
         
-        self.tind  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
+        self.tind  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * self.model.time_object.export_min,
                                stop =self.model.time_object.n_t)
-        self.tsym  = self.model.time_object._one_cycle_t.values
+        self.tsym  = self.model.time_object._sym_t.values[self.tind]
+        self.tsym  = self.tsym - self.tsym[0]
         
     def plot_t_v(self, component:str, ax=None, time_units:str='s', volume_units:str='mL'):
         if ax is None:
