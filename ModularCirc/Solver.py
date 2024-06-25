@@ -213,7 +213,7 @@ class Solver():
         cs   = self._asd[cols].iloc[cycleID*n_t:(cycleID+1)*n_t, :].values
         cp   = self._asd[cols].iloc[cycleP *n_t:(cycleP +1)*n_t, :].values
         
-        cp_ptp = np.ptp(cp, axis=0)
+        cp_ptp = np.max(np.abs(cp), axis=0)
         cp_r   = np.max(np.abs(cs - cp), axis=0)
         
         for val, nval in zip(cp_r, cp_ptp):
