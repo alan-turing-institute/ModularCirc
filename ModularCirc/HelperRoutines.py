@@ -175,7 +175,7 @@ def non_ideal_diode_flow(t:float,
     """
     if y is not None:
         p_in, p_out = y[:2]
-    return (max_func(p_in - p_out/ r))
+    return (max_func((p_in - p_out)/ r))
 
 @jit(cache=True, nopython=True)
 def simple_bernoulli_diode_flow(t:float, 
@@ -266,7 +266,7 @@ def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     dp = p_in - p_out
     return np.where(dp >= 0.0, dp/r_o, dp/r_r)
 
-def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
+def activation_function_1(t:float, t_max:float, t_tr:float, tau:float, *args, **kwargs) -> float:
     """
     Activation function that dictates the transition between the passive and active behaviors.
     Based on the definition used in Naghavi et al (2024).
@@ -300,6 +300,28 @@ def activation_function_3(t:float, tpwb:float, tpww:float, *args, **kwargs) -> f
         return 0.0
     elif t < tpwb + tpww:
         return 0.5 * (1 - np.cos(2.0 * np.pi * (t - tpwb) / tpww ))
+    else:
+        return 0.0
+    
+def activation_function_4(t:float, t_max:float, t_tr:float, tau:float, *args, **kwargs) -> float:
+    """
+    Activation function that dictates the transition between the passive and active behaviors.
+    Based on the definition used in Naghavi et al (2024).
+
+    Args:
+        t (float):     current time within the cardiac cycle
+        t_max (float): time to peak tension
+        t_tr (float):  transition time
+        tau (float):   the relaxation time constant
+
+    Returns:
+        float: activation function value
+    """
+    if t <= t_tr and t >=0:
+        return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
+    elif t >= 0:
+    # else:
+        return np.exp(-(t - t_tr)/tau)
     else:
         return 0.0
 
