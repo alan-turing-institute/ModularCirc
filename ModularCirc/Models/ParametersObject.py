@@ -46,3 +46,6 @@ class ParametersObject():
             if val is None: continue
             assert k in self.timings[key].index.values, f" {key}: {k} not in {self[key].index.values}"
             self[key].loc[k] = val
+            
+    def add_parameter_to_component(self, key:str, par:str, val=0.0):
+        self.components[key][par] = val

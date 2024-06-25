@@ -22,7 +22,8 @@ class NaghaviModelParameters(ParametersObject):
                                                     'tau', 
                                                     'delay',
                                                     'v',
-                                                    'p'], dtype=object)
+                                                    'p',
+                                                    'activation_func'], dtype=object)
                         
         self.set_rlc_comp(key='ao',  r=240.,  c=0.3,  l=0.0, v_ref=100.,  v=0.025*5200.0, p=None)
         self.set_rlc_comp(key='art', r=1125., c=3.0,  l=0.0, v_ref=900.,  v=0.21 *5200.0, p=None)
