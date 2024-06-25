@@ -88,12 +88,6 @@ class HC_mixed_elastance(ComponentBase):
         self._V.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                       'q_out':self._Q_o.name}))
         
-        # self._V.set_dudt_func(self.comp_dvdt,
-        #                       function_name='dvdt')
-        # self._V.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
-        #                               'q_out':self._Q_o.name,
-        #                               'v':self._V.name}))
-        
         self._P_i.set_dudt_func(self.total_dpdt, function_name='self.total_dpdt') 
         self._P_i.set_inputs(pd.Series({'v'  :self._V.name, 
                                         'q_i':self._Q_i.name, 
