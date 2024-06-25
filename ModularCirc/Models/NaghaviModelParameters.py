@@ -15,29 +15,31 @@ class NaghaviModelParameters(ParametersObject):
             self.components[key] = pd.Series(index=['E_pas', 
                                                     'E_act', 
                                                     'v_ref', 
+                                                    'k_pas',
                                                     'activation_function', 
-                                                    'tr', 
-                                                    'td', 
+                                                    't_tr', 
+                                                    't_max',
+                                                    'tau', 
                                                     'delay',
                                                     'v',
                                                     'p'], dtype=object)
                         
-        self.set_rlc_comp(key='ao', r=32000., c=0.0025, l=0.0, v_ref=100., v=0.025*5200.0, p=None)
-        self.set_rlc_comp(key='art', r=150000., c=0.025, l=0.0, v_ref=50. , v=0.025*5200.0, p=None)
-        self.set_rlc_comp(key='ven', r=1200., c=1.000, l=0.0, v_ref=2800. , v=0.727*5200.0, p=None)
+        self.set_rlc_comp(key='ao',  r=240.,  c=0.3,  l=0.0, v_ref=100.,  v=0.025*5200.0, p=None)
+        self.set_rlc_comp(key='art', r=1125., c=3.0,  l=0.0, v_ref=900.,  v=0.21 *5200.0, p=None)
+        self.set_rlc_comp(key='ven', r=9.0 ,  c=133.3,l=0.0, v_ref=2800., v=0.727*5200.0, p=None)
         
-        self.set_valve_comp(key='av', r=800., max_func=relu_max)
-        self.set_valve_comp(key='mv', r=550., max_func=relu_max)     
+        self.set_valve_comp(key='av', r=6.  , max_func=relu_max)
+        self.set_valve_comp(key='mv', r=4.1,  max_func=relu_max)     
         
         
         # original
-        self.set_chamber_comp('la', E_pas=60., E_act=0.44/0.0075, v_ref=10.,
-                              activation_function=activation_function_2,
-                              tr=150., td=175., delay=100., v=0.018*5200.0, p=None)
+        self.set_chamber_comp('la', E_pas=0.44, E_act=0.45, v_ref=10., k_pas=0.05, # 0.05
+                              activation_function=activation_function_1,
+                              t_tr=225., t_max=150., tau=25., delay=100., v=0.018*5200.0, p=None)
 
-        self.set_chamber_comp('lv', E_pas=400., E_act=1./0.0075, v_ref=10.,
-                              activation_function=activation_function_2,
-                              tr=280., td=305., delay=None, v=0.028*5200.0, p=None)
+        self.set_chamber_comp('lv', E_pas=1.0/0.0075, E_act=3.0, v_ref=10., k_pas=0.001, # 0.027
+                              activation_function=activation_function_1,
+                              t_tr=420., t_max=280., tau=25., delay=None, v=0.02*5200.0, p=None)
     
     def set_rc_comp(self, key:str, **kwargs):
         self._set_comp(key=key, set=['ao','art', 'ven'], **kwargs)

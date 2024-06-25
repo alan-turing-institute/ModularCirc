@@ -1,6 +1,6 @@
 from .OdeModel import OdeModel
 from .NaghaviModelParameters import NaghaviModelParameters
-from ..Components import Rc_component, Valve_non_ideal, HC_constant_elastance
+from ..Components import Rlc_component, Valve_non_ideal, HC_mixed_elastance
 from ..HelperRoutines import *
 
 class NaghaviModel(OdeModel):
@@ -11,32 +11,35 @@ class NaghaviModel(OdeModel):
         print(parobj)
                 
         # Defining the aorta object
-        self.commponents['ao'] = Rc_component( name='Aorta',
+        self.commponents['ao'] = Rlc_component( name='Aorta',
                                 time_object=self.time_object, 
                                 r     = parobj['ao']['r'],
                                 c     = parobj['ao']['c'], 
                                 v_ref = parobj['ao']['v_ref'],
-                                v     = parobj['ao']['v']
+                                v     = parobj['ao']['v'],
+                                l     = 0.0
                                   )
         self.set_v_sv('ao')
         
         # Defining the arterial system object
-        self.commponents['art'] = Rc_component(name='Arteries',
+        self.commponents['art'] = Rlc_component(name='Arteries',
                                 time_object=self.time_object,
                                 r     = parobj['art']['r'],
                                 c     = parobj['art']['c'], 
                                 v_ref = parobj['art']['v_ref'],
-                                v     = parobj['art']['v']
+                                v     = parobj['art']['v'],
+                                l     = 0.0
                                 )
         self.set_v_sv('art')
         
         # Defining the venous system object
-        self.commponents['ven'] = Rc_component(name='VenaCava',
+        self.commponents['ven'] = Rlc_component(name='VenaCava',
                                 time_object=self.time_object,
                                 r     = parobj['ven']['r'],
                                 c     = parobj['ven']['c'], 
                                 v_ref = parobj['ven']['v_ref'],
-                                v     = parobj['ven']['v']
+                                v     = parobj['ven']['v'],
+                                l     = 0.0
                                 )
         self.set_v_sv('ven')
                 
@@ -58,15 +61,17 @@ class NaghaviModel(OdeModel):
         # def la_af(t, t_max=parobj['la']['t_max'], t_tr=parobj['la']['t_tr'], tau=parobj['la']['tau'], af=parobj['la']['activation_function']):
         #     return af(time_shift(t, 100., self.time_object), t_max=t_max, t_tr=t_tr, tau=tau)
         # Defining the left atrium class
-        self.commponents['la'] = HC_constant_elastance(name='LeftAtrium',
+        self.commponents['la'] = HC_mixed_elastance(name='LeftAtrium',
                                         time_object=self.time_object,
                                         E_pas=parobj['la']['E_pas'],
                                         E_act=parobj['la']['E_act'],
                                         v_ref=parobj['la']['v_ref'],
+                                        k_pas=parobj['la']['k_pas'],
                                         v    =parobj['la']['v'],
                                         af   =parobj['la']['activation_function'],
-                                        tr   =parobj['la']['tr'], 
-                                        td   =parobj['la']['td'], 
+                                        t_tr =parobj['la']['t_tr'], 
+                                        t_max=parobj['la']['t_max'],
+                                        tau  =parobj['la']['tau'], 
                                         delay=parobj['la']['delay']
                                         )
         self._state_variable_dict['v_la'] = self.commponents['la']._V
@@ -75,17 +80,17 @@ class NaghaviModel(OdeModel):
         self.commponents['la']._V._u = self.all_sv_data['v_la']
         
         # Defining the left ventricle activation function
-        # def lv_af(t, t_max=parobj['lv']['t_max'], t_tr=parobj['lv']['t_tr'], tau=parobj['lv']['tau'], af=parobj['lv']['activation_function']):
-        #     return af(t, t_max=t_max, t_tr=t_tr, tau=tau)
-        self.commponents['lv'] = HC_constant_elastance(name='LeftVentricle', 
+        self.commponents['lv'] = HC_mixed_elastance(name='LeftVentricle', 
                                         time_object=self.time_object,
                                         E_pas=parobj['lv']['E_pas'],
                                         E_act=parobj['lv']['E_act'],
+                                        k_pas=parobj['lv']['k_pas'],
                                         v_ref=parobj['lv']['v_ref'],
                                         v    =parobj['lv']['v'],
                                         af   =parobj['lv']['activation_function'],
-                                        tr   =parobj['lv']['tr'], 
-                                        td   =parobj['lv']['td'], 
+                                        t_tr =parobj['la']['t_tr'], 
+                                        t_max=parobj['la']['t_max'],
+                                        tau  =parobj['la']['tau'],
                                         delay=parobj['lv']['delay']
                                         )
         self._state_variable_dict['v_lv'] = self.commponents['lv']._V
