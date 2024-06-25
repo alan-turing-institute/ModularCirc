@@ -256,7 +256,10 @@ class Solver():
         temp   = np.zeros(self._asd.iloc[:,keys4].shape)  
         for i, line in enumerate(self._asd.values) :
             line[keys4] = self.s_u_update(0.0, line)
-            temp[i,:] = self.optimize(line, keys4)
+            if self._optimize_secondary_sv:
+                temp[i,:] = self.optimize(line, keys4)
+            else:
+                temp[i,:] = line[keys4] 
         self._asd.iloc[:,keys4] = temp  
         
         for key in self._vd.keys():
