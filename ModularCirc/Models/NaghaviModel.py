@@ -15,9 +15,9 @@ class NaghaviModel(OdeModel):
                                 time_object=self.time_object, 
                                 r     = parobj['ao']['r'],
                                 c     = parobj['ao']['c'], 
+                                l     = parobj['ao']['l'],
                                 v_ref = parobj['ao']['v_ref'],
                                 v     = parobj['ao']['v'],
-                                l     = 0.0
                                   )
         self.set_v_sv('ao')
         
@@ -26,9 +26,9 @@ class NaghaviModel(OdeModel):
                                 time_object=self.time_object,
                                 r     = parobj['art']['r'],
                                 c     = parobj['art']['c'], 
+                                l     = parobj['art']['l'],
                                 v_ref = parobj['art']['v_ref'],
                                 v     = parobj['art']['v'],
-                                l     = 0.0
                                 )
         self.set_v_sv('art')
         
@@ -37,9 +37,9 @@ class NaghaviModel(OdeModel):
                                 time_object=self.time_object,
                                 r     = parobj['ven']['r'],
                                 c     = parobj['ven']['c'], 
+                                l     = parobj['ven']['l'],
                                 v_ref = parobj['ven']['v_ref'],
                                 v     = parobj['ven']['v'],
-                                l     = 0.0
                                 )
         self.set_v_sv('ven')
                 

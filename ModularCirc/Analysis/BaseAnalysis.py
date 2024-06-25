@@ -63,10 +63,14 @@ class BaseAnalysis():
         self.tsym  = self.model.time_object._sym_t.values[self.tind]
         self.tsym  = self.tsym - self.tsym[0]
         
-    def plot_t_v(self, component:str, ax=None, time_units:str='s', volume_units:str='mL'):
+    def plot_t_v(self, component:str, ax=None, time_units:str='s', volume_units:str='mL', linestyle='-'):
         if ax is None:
             _, ax = plt.subplots(figsize=(5,5))
-        ax.plot(self.tsym, self.model.commponents[component].V.values[self.tind],linewidth=4,)
+        ax.plot(self.tsym, 
+                self.model.commponents[component].V.values[self.tind],
+                linewidth=4,
+                label=component,
+                linestyle=linestyle)
         ax.set_title(component.upper() + ': Volume trace')
         ax.set_xlabel(f'Time (${time_units}$)')
         ax.set_ylabel(f'Volume (${volume_units}$)')
@@ -145,6 +149,24 @@ class BaseAnalysis():
         ax.set_ylabel(f'Flux (${volume_units}\cdot {time_units}$)')   
         ax.set_xlim(self.tsym[0], self.tsym[-1])
         ax.legend()    
+        return ax
+    
+    def plot_valve_opening(self, component:str, ax=None, time_units:str='s'):
+        if ax is None:
+            _, ax = plt.subplots(figsize=(5,5))
+        ax.plot(
+            self.tsym,
+            self.model.commponents[component].PHI.values[self.tind],
+            linestyle='-',
+            linewidth=4,
+            label=f'{component} $\phi$'
+        )
+        ax.set_title(f"{component.upper()}: $\Phi$")   
+        ax.set_xlabel(f'Time (${time_units}$)')
+        ax.set_ylabel(f'$\phi$')   
+        ax.set_xlim(self.tsym[0], self.tsym[-1])
+        ax.legend()    
+        return ax
         
     def compute_opening_closing_valve(self, component:str, shift:float=0.0):
         """
@@ -176,7 +198,8 @@ class BaseAnalysis():
         ind = np.arange(len(is_open))[is_open_shifted]
         self.valves[component].set_opening_closing(open = ind[0],
                                                    closed= ind[-1])
-        
+        return
+            
         
     def compute_ventricle_volume_limits(self, component:str, vic:int, voc:int)->None:
         """ Method for computing the end diastolic and systolic volumes of ventricles.
@@ -195,6 +218,7 @@ class BaseAnalysis():
         
         self.ventricles[component] = VentricleData(component)
         self.ventricles[component].set_volumes(edv=volume[vic], esv=volume[voc])
+        return
                 
     
     def compute_cardiac_output(self, component:str)->float:
