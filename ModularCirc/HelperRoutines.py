@@ -161,14 +161,14 @@ def non_ideal_diode_flow(t:float,
                          y:np.ndarray[float]=None,
                          ) -> float:
     """
-    Nonideal diode model with the option to choose the re
+    Non-ideal diode model with the option to choose the re
 
     Args:
     -----
         p_in (float): input pressure
         p_out (float): output pressure
         r (float): valve constant resistance
-        max_func (function): function that dictates when valve oppens
+        max_func (function): function that dictates when valve opens
 
     Returns:
         float: q (flow rate through valve)
@@ -186,7 +186,7 @@ def simple_bernoulli_diode_flow(t:float,
                          y:np.ndarray[float]=None,
                          ) -> float:
     """
-    Nonideal diode model with the option to choose the re
+    Non-ideal diode model with the option to choose the re
 
     Args:
     -----
