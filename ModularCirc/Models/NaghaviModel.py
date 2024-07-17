@@ -4,11 +4,11 @@ from ..Components import Rlc_component, Valve_non_ideal, HC_mixed_elastance
 from ..HelperRoutines import *
 
 class NaghaviModel(OdeModel):
-    def __init__(self, time_setup_dict, parobj:NaghaviModelParameters=NaghaviModelParameters()) -> None:
+    def __init__(self, time_setup_dict, parobj:NaghaviModelParameters=NaghaviModelParameters(), supress_printing:bool=False) -> None:
         super().__init__(time_setup_dict)
         self.name = 'NaghaviModel'
         
-        print(parobj)
+        if not supress_printing: print(parobj)
                 
         # Defining the aorta object
         self.commponents['ao'] = Rlc_component( name='Aorta',
