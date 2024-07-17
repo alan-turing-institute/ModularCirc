@@ -40,7 +40,6 @@ If the units used are different, ensure this is done consistently in line with o
 4. Create an instance of the parameter object and used it to change the default values:
 ```python
 parobj = NaghaviModelParameters()
-parobj.set_chamber_comp('la', td=200.)
 ```
 **Note 4.1**: the model and parameter object classes are usually defined in pairs and, as such using mismatched types may cause the simulation to behave unexpectedly or may result in a crash.
 
