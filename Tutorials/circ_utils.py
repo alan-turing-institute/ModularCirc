@@ -199,3 +199,20 @@ def get_component(X, component_matrix, component_id, scaler):
         @ component_matrix[component_id, :].T.reshape((-1, 1))
         * component_matrix[component_id, :].reshape((1, -1))
     )
+
+def scale_time_parameters_and_asign_to_components(df):
+
+# Scale the time parameters down based on specific pulse duration
+# 800 ms in this case
+
+    df['la.delay'] = df['la.delay'] * df['T'] / 800.
+    
+    df['la.t_tr'] = df['la.t_tr'] * df['T'] / 800.
+    df['lv.t_tr'] = df['lv.t_tr'] * df['T'] / 800.
+    
+    df['la.tau'] = df['la.tau'] * df['T'] / 800.
+    df['lv.tau'] = df['lv.tau'] * df['T'] / 800.
+
+    df['la.t_max'] = df['la.t_max']  * df['T'] / 800.
+    df['lv.t_max'] = df['lv.t_max']  * df['T'] / 800.
+    return 
