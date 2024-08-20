@@ -38,7 +38,7 @@ class NaghaviModelParameters(ParametersObject):
                               activation_function=activation_function_1,
                               t_tr=225., t_max=150., tau=25., delay=100., v=0.018*5200.0, p=None)
 
-        self.set_chamber_comp('lv', E_pas=1.0/0.0075, E_act=3.0, v_ref=10., k_pas=0.001, # 0.027
+        self.set_chamber_comp('lv', E_pas=1.0, E_act=3.0, v_ref=10., k_pas=0.027, # 0.027
                               activation_function=activation_function_1,
                               t_tr=420., t_max=280., tau=25., delay=None, v=0.02*5200.0, p=None)
     
