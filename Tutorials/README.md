@@ -12,6 +12,7 @@ The sensitivity analysis aims to focus in on the parameters from the model that 
 
 Using a reduced set of parameters, you can more efficiently fit the model to patient data, improving the performance of the fitting process.
 
+
  ## Prerequisites
  * For running this code we need to install [ModularCirc](https://github.com/MaxBalmus/ModularCirc) 
 
@@ -22,5 +23,13 @@ Using a reduced set of parameters, you can more efficiently fit the model to pat
  * Or install autoemulate using this link: https://github.com/alan-turing-institute/autoemulate.git@remove-lightgbm
 
 ## Steps to run
+
+![alt text](image-1.png)
+
  1) First step is within the "step1" notebook, to create a CSV containing randomised parameters to use in the emulator training.
- 2) Next step is to use the newly created CSV file to generate the corresponding target variables.
+ 2) Next step is to run these input parameters through ModularCirc simulations to create pressure pulse dataset (corresponding variables).
+ 3) Use the pressure pulse dataset and completing PCA - to reduce the dataset.
+ 4) Complete K fold cross validation.
+ 5) Retrain model on all the data with the new reduced number of components.
+ 6) Use the reduced PCA results as output and the original parameter set you created as input for emulation - use Autoemulate to find the best emulator for the data.
+ 7) Conduct a sensitivity analysis using the results from emulation using SAlib.

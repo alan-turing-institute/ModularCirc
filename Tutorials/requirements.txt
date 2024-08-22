@@ -1,0 +1,5 @@
+modularcirc @ git+https://github.com/MaxBalmus/ModularCirc.git
+joblib
+tqdm
+ipykernel
+jupyter
