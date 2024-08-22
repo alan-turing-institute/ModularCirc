@@ -238,7 +238,7 @@ class BaseAnalysis():
         T     = self.model.time_object.tcycle / 60.0
         
         q     = valve.Q_i.values[self.tind]
-        self.CO = q[:-1].sum() * dt / T
+        self.CO = q.sum() * dt / T / self.model.time_object.export_min
         
         return self.CO
     
