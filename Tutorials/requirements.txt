@@ -3,3 +3,4 @@ joblib
 tqdm
 ipykernel
 jupyter
+autoemulate
