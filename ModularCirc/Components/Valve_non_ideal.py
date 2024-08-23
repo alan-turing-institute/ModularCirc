@@ -22,7 +22,10 @@ class Valve_non_ideal(ComponentBase):
         return non_ideal_diode_flow(t, y=y, r=self.R, max_func=self.max_func)
         
     def setup(self) -> None:
-        self._Q_i.set_u_func(self.q_i_u_func, function_name='non_ideal_diode_flow + max_func')
+        r        = self.R
+        max_func = self.max_func
+        q_i_u_func = lambda t, y: non_ideal_diode_flow(t, y=y, r=r, max_func=max_func)
+        self._Q_i.set_u_func(q_i_u_func, function_name='non_ideal_diode_flow + max_func')
         self._Q_i.set_inputs(pd.Series({'p_in':self._P_i.name, 
                                         'p_out':self._P_o.name}))
         
