@@ -14,13 +14,9 @@ Using a reduced set of parameters, you can more efficiently fit the model to pat
 
 
  ## Prerequisites
- * For running this code we need to install [ModularCirc](https://github.com/MaxBalmus/ModularCirc) 
+ * For using [Autoemulate](https://github.com/alan-turing-institute/autoemulate) on an M1 mac, we need to install lightGBM via conda: `conda install lightgbm`
 
- * Please run the following command: `pip install git+https://github.com/MaxBalmus/ModularCirc.git`
-
- * For using autoemulate on an M1 mac, we need to install lightGBM via conda: `conda install lightgbm`
-
- * Or install autoemulate using this link: https://github.com/alan-turing-institute/autoemulate.git@remove-lightgbm
+ * Or install [Autoemulate](https://github.com/alan-turing-institute/autoemulate) using this link: https://github.com/alan-turing-institute/autoemulate.git@remove-lightgbm
 
 ## Steps to run
 
@@ -31,5 +27,5 @@ Using a reduced set of parameters, you can more efficiently fit the model to pat
  3) Use the pressure pulse dataset and completing PCA - to reduce the dataset.
  4) Complete K fold cross validation.
  5) Retrain model on all the data with the new reduced number of components.
- 6) Use the reduced PCA results as output and the original parameter set you created as input for emulation - use Autoemulate to find the best emulator for the data.
+ 6) Use the reduced PCA results as output and the original parameter set you created as input for emulation - use [Autoemulate](https://github.com/alan-turing-institute/autoemulate)  to find the best emulator for the data.
  7) Conduct a sensitivity analysis using the results from emulation using SAlib.
