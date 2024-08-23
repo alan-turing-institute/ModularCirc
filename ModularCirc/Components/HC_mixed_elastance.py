@@ -35,9 +35,7 @@ class HC_mixed_elastance(ComponentBase):
         self.v_ref = v_ref
         self.eps = 1.0e-3
         
-        def af_parameterised(t):
-            return af(time_shift(t, kwargs['delay'], time_object.tcycle) , **kwargs)
-        self._af = af_parameterised
+        self._af = lambda t : af(time_shift(t, kwargs['delay'], time_object.tcycle) , **kwargs)
         
         self.make_unique_io_state_variable(p_flag=True, q_flag=False)
         
@@ -83,23 +81,43 @@ class HC_mixed_elastance(ComponentBase):
         return dvdt(t, q_in=q_in, q_out=q_out, v=v, v_ref=self.v_ref)
         
     def setup(self) -> None:
+        E_pas = self.E_pas
+        k_pas = self.k_pas
+        E_act = self.E_act
+        v_ref = self.v_ref
+        eps   = self.eps
+        _af   = self._af
+        
+        active_p     = lambda v : E_act * (v - v_ref)
+        active_dpdt  = lambda q_i, q_o : E_act * (q_i - q_o)
+        passive_p    = lambda v : E_pas * (np.exp(k_pas * (v - v_ref)) - 1.0)
+        passive_dpdt = lambda v, q_i, q_o : E_pas * k_pas * np.exp(k_pas * (v - v_ref)) * (q_i - q_o)
+        total_p      = lambda t, y : _af(t) * active_p(y) + (1.0 - _af(t)) * passive_p(y)
+        d_af_dt      = lambda t : (_af(t+eps) - _af(t-eps)) / 2.0 / eps
+        total_dpdt   = lambda t, y : (d_af_dt(t)  * (active_p(y[0]) - passive_p(y[0])) + 
+                                      _af(t)      * active_dpdt(       y[1], y[2]) + 
+                                     (1. -_af(t)) * passive_dpdt(y[0], y[1], y[2]))
+        comp_v       = lambda t, y : v_ref + np.log(y[0] / E_pas + 1.0) / k_pas
+        
         self._V.set_dudt_func(chamber_volume_rate_change,
                               function_name='chamber_volume_rate_change')
         self._V.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                       'q_out':self._Q_o.name}))
         
-        self._P_i.set_dudt_func(self.total_dpdt, function_name='self.total_dpdt') 
+        # self._P_i.set_dudt_func(self.total_dpdt, function_name='self.total_dpdt') 
+        self._P_i.set_dudt_func(total_dpdt, function_name='lambda.total_dpdt') 
         self._P_i.set_inputs(pd.Series({'v'  :self._V.name, 
                                         'q_i':self._Q_i.name, 
                                         'q_o':self._Q_o.name}))
         if self.p0 is None or self.p0 is np.NaN:
-            self._P_i.set_i_func(self.total_p, function_name='self.total_p')
+            # self._P_i.set_i_func(self.total_p, function_name='self.total_p')
+            self._P_i.set_i_func(total_p, function_name='lambda.total_p')
             self._P_i.set_i_inputs(pd.Series({'v':self._V.name}))
         else:
             self.P_i.loc[0] = self.p0
         if self.v0 is None or self.v0 is np.NaN:
-            self._V.set_i_func(self.comp_v, function_name='self.comp_v')
+            # self._V.set_i_func(self.comp_v, function_name='self.comp_v')
+            self._V.set_i_func(comp_v, function_name='lambda.comp_v')
             self._V.set_i_inputs(pd.Series({'p':self._P_i.name}))
         if (self.v0 is None or self.v0 is np.NaN) and (self.p0 is None or self.p0 is np.NaN):
-            raise Exception("Solver needs at least the initial volume or pressure to be defined!")
-            
+            raise Exception("Solver needs at least the initial volume or pressure to be defined!")                                    
