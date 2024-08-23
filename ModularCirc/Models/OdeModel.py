@@ -84,3 +84,18 @@ class OdeModel():
         self._state_variable_dict[v_key].set_name(v_key)
         self.all_sv_data[v_key] = self.commponents[comp_key].V     ##### test
         # self.commponents[comp_key]._V._u = self.all_sv_data[v_key]
+        
+        
+    def __del__(self):
+        if hasattr(self, 'name'):
+            del self.name
+        if hasattr(self, 'all_sv_data'):
+            del self.all_sv_data
+        for comp in self.commponents.values():
+            del comp
+        del self.commponents
+        for sv in self._state_variable_dict.values:
+            del sv
+        del self._state_variable_dict
+        del self.time_object
+        return
