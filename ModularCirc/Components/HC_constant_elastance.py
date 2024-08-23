@@ -61,21 +61,33 @@ class HC_constant_elastance(ComponentBase):
         return dEdt * (V - self.v_ref) + e * (q_i - q_o)
         
     def setup(self) -> None:
+        E_pas = self.E_pas
+        E_act = self.E_act
+        v_ref = self.v_ref
+        eps   = self.eps
+        af    = self._af
+        
+        comp_E    = lambda t:  af(t) * E_act + (1.0 - af(t)) * E_pas
+        comp_dEdt = lambda t: (comp_E(t + eps) - comp_E(t - eps)) / 2.0 / eps
+        comp_p    = lambda t, y: comp_E(t) * (y - v_ref)
+        comp_v    = lambda t, y: y / comp_E(t) + v_ref
+        comp_dpdt = lambda t, y: comp_dEdt(t) * (y[0] - v_ref) + comp_E(t) * (y[1] - y[2])
+        
         self._V.set_dudt_func(chamber_volume_rate_change,
                               function_name='chamber_volume_rate_change')
         self._V.set_inputs(pd.Series({'q_in':self._Q_i.name, 
                                       'q_out':self._Q_o.name}))
-        self._P_i.set_dudt_func(self.comp_dpdt, function_name='self.comp_dpdt') 
+        self._P_i.set_dudt_func(comp_dpdt, function_name='self.comp_dpdt') 
         self._P_i.set_inputs(pd.Series({'V':self._V.name, 
                                         'q_i':self._Q_i.name, 
                                         'q_o':self._Q_o.name}))
         if self.p0 is None or self.p0 is np.NaN:
-            self._P_i.set_i_func(self.comp_p, function_name='self.comp_p')
+            self._P_i.set_i_func(comp_p, function_name='self.comp_p')
             self._P_i.set_i_inputs(pd.Series({'V':self._V.name}))
         else:
             self.P_i.loc[0] = self.p0
         if self.v0 is None or self.v0 is np.NaN:
-            self._V.set_i_func(self.comp_v, function_name='self.comp_v')
+            self._V.set_i_func(comp_v, function_name='self.comp_v')
             self._V.set_i_inputs(pd.Series({'p':self._P_i.name}))
         if (self.v0 is None or self.v0 is np.NaN) and (self.p0 is None or self.p0 is np.NaN):
             raise Exception("Solver needs at least the initial volume or pressure to be defined!")
