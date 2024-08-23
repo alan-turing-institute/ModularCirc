@@ -4,3 +4,4 @@ tqdm
 ipykernel
 jupyter
 autoemulate
+SALib
