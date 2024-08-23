@@ -24,8 +24,8 @@ Using a reduced set of parameters, you can more efficiently fit the model to pat
 
  1) First step is within the "step1" notebook, to create a CSV containing randomised parameters to use in the emulator training.
  2) Next step is to run these input parameters through ModularCirc simulations to create pressure pulse dataset (corresponding variables).
- 3) Use the pressure pulse dataset and completing PCA - to reduce the dataset.
+ 3) Use the pressure pulse dataset and completing PCA - to reduce the dataset, this uses the "step2" notebook.
  4) Complete K fold cross validation.
  5) Retrain model on all the data with the new reduced number of components.
- 6) Use the reduced PCA results as output and the original parameter set you created as input for emulation - use [Autoemulate](https://github.com/alan-turing-institute/autoemulate)  to find the best emulator for the data.
+ 6) Use the reduced PCA results as output and the original parameter set you created as input for emulation - use [Autoemulate](https://github.com/alan-turing-institute/autoemulate)  to find the best emulator for the data, this uses the "step3" notebook.
  7) Conduct a sensitivity analysis using the results from emulation using SAlib.
