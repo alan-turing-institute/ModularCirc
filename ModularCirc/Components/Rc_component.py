@@ -52,22 +52,26 @@ class Rc_component(ComponentBase):
         v_ref = self.V_ref
         c = self.C
         # Set the dudt function for the input pressure state variable 
-        self._P_i.set_dudt_func(lambda t, y: grounded_capacitor_model_dpdt(t, y=y, c=c), function_name='grounded_capacitor_model_dpdt')
+        self._P_i.set_dudt_func(lambda t, y: grounded_capacitor_model_dpdt(t, y=y, c=c), 
+                                function_name='grounded_capacitor_model_dpdt')
         # Set the mapping betwen the local input names and the global names of the state variables
         self._P_i.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                         'q_out':self._Q_o.name}))
         if self.p0 is None or self.p0 is np.NaN:
             # Set the initialization function for the input pressure state variable
-            self._P_i.set_i_func(lambda t, y: grounded_capacitor_model_pressure(t, y=y, v_ref=v_ref, c=c), function_name='grounded_capacitor_model_pressure')
+            self._P_i.set_i_func(lambda t, y: grounded_capacitor_model_pressure(t, y=y, v_ref=v_ref, c=c), 
+                                 function_name='grounded_capacitor_model_pressure')
             self._P_i.set_i_inputs(pd.Series({'v':self._V.name}))
         else:
             self.P_i.loc[0] = self.p0
         # Set the function for computing the flows based on the current pressure values at the nodes of the componet
-        self._Q_o.set_u_func(lambda t,y : grounded_capacitor_model_pressure(t, y, r=r), function_name='resistor_model_flow' )
+        self._Q_o.set_u_func(lambda t,y : resistor_model_flow(t, y=y, r=r), 
+                             function_name='resistor_model_flow' )
         self._Q_o.set_inputs(pd.Series({'p_in':self._P_i.name, 
                                         'p_out':self._P_o.name}))
         # Set the dudt function for the compartment volume
-        self._V.set_dudt_func(chamber_volume_rate_change, function_name='chamber_volume_rate_change')
+        self._V.set_dudt_func(chamber_volume_rate_change, 
+                              function_name='chamber_volume_rate_change')
         self._V.set_inputs(pd.Series({'q_in':self._Q_i.name, 
                                       'q_out':self._Q_o.name}))
         if self.v0 is None or self.v0 is np.NaN:

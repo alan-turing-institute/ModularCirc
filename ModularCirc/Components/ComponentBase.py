@@ -67,7 +67,7 @@ class ComponentBase():
         raise Exception("This is a template class only.")
     
     def __del__(self):
-        print('Blah')
+        # print('Blah')
         if hasattr(self, '_P_i'):
             del self._P_i
         if hasattr(self, '_P_o'):
