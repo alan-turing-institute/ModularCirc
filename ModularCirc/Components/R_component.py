@@ -24,7 +24,9 @@ class R_component(ComponentBase):
         return resistor_upstream_pressure(t, y=y, r=self.R)
         
     def setup(self) -> None:
-        self._P_i.set_u_func(self.p_i_u_func, function_name='resistor_upstream_pressure')
+        r=self.R
+        # self._P_i.set_u_func(self.p_i_u_func, function_name='resistor_upstream_pressure')
+        self._P_i.set_u_func(lambda t, y: resistor_upstream_pressure(t, y, r=r), function_name='resistor_upstream_pressure')
         self._P_i.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                         'p_out':self._P_o.name}))
         

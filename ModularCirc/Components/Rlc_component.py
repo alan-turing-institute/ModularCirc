@@ -25,8 +25,13 @@ class Rlc_component(Rc_component):
     def setup(self) -> None:
         Rc_component.setup(self)
         if (np.abs(self.L) > 1e-11):
-            self._Q_o.set_dudt_func(self.q_o_dudt_func, function_name='resistor_impedance_flux_rate')
+            L = self.L
+            R = self.R
+            self._Q_o.set_dudt_func(lambda t, y: resistor_impedance_flux_rate(t, y, r=R, l=L), function_name='resistor_impedance_flux_rate')
             self._Q_o.set_inputs(pd.Series({'p_in':self._P_i.name, 
                                             'p_out':self._P_o.name,
                                             'q_out':self._Q_o.name}))
             self._Q_o.set_u_func(None,None)
+            
+    def __del__(self):
+        super().__del__()
