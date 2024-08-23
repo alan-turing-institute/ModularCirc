@@ -23,7 +23,10 @@ class Valve_simple_bernoulli(ComponentBase):
         return simple_bernoulli_diode_flow(t, y=y, CQ=self.CQ, RRA=self.RRA)
         
     def setup(self) -> None:
-        self._Q_i.set_u_func(self.q_i_u_func, function_name='simple_bernoulli_diode_flow')
+        CQ  = self.CQ
+        RRA = self.RRA
+        q_i_u_func = lambda t, y: simple_bernoulli_diode_flow(t, y=y, CQ=CQ, RRA=RRA)
+        self._Q_i.set_u_func(q_i_u_func, function_name='simple_bernoulli_diode_flow')
         self._Q_i.set_inputs(pd.Series({'p_in':self._P_i.name, 
                                         'p_out':self._P_o.name}))
         

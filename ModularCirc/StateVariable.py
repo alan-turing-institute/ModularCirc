@@ -88,5 +88,23 @@ class StateVariable():
     def i_inputs(self):
         return self._ode_sys_mapping['i_inputs']
     
+    def __del__(self):
+        if hasattr(self, '_name'):
+            del self._name
+        if hasattr(self, '_to'):
+            del self._to
+        if hasattr(self, '_u'):
+            del self._u
+        if hasattr(self, '_cv'):
+            del self._cv
+        if hasattr(self, '_ode_sys_mapping'):
+            # print(self._ode_sys_mapping)
+            for item in self._ode_sys_mapping.values:
+                if isinstance(item, pd.Series):
+                    for subitem in item.values:
+                        del subitem
+                del item
+            # print(self._ode_sys_mapping)
+            del self._ode_sys_mapping    
             
          

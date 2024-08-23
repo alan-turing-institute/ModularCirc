@@ -47,19 +47,28 @@ class Valve_maynard(ComponentBase):
         return maynard_phi_law(t, y=y, Ko=self.Ko, Kc=self.Kc)
         
     def setup(self) -> None:
+        CQ  = self.CQ
+        RRA = self.RRA
         if self.L < 1.0e-6:
-            self._Q_i.set_u_func(self.q_i_u_func, function_name='maynard_valve_flow')
+            q_i_u_func = lambda t, y: maynard_valve_flow(t, y=y, CQ=CQ, RRA=RRA)
+            self._Q_i.set_u_func(q_i_u_func, function_name='maynard_valve_flow')
             self._Q_i.set_inputs(pd.Series({'p_in' : self._P_i.name, 
                                             'p_out': self._P_o.name,
                                             'phi'  : self._PHI.name}))
         else:
-            self._Q_i.set_dudt_func(self.q_i_dudt_func, function_name='maynard_impedance_dqdt')
+            R = self.R
+            L = self.L
+            q_i_dudt_func = lambda t, y: maynard_impedance_dqdt(t, y=y, CQ=CQ, RRA=RRA, L=L, R=R)
+            self._Q_i.set_dudt_func(q_i_dudt_func, function_name='maynard_impedance_dqdt')
             self._Q_i.set_inputs(pd.Series({'p_in' : self._P_i.name, 
                                             'p_out': self._P_o.name,
                                             'q_in' : self._Q_i.name,
                                             'phi'  : self._PHI.name}))
         
-        self._PHI.set_dudt_func(self.phi_dudt_func, function_name='maynard_phi_law')
+        Ko = self.Ko
+        Kc = self.Kc
+        phi_dudt_func = lambda t, y: maynard_phi_law(t, y=y, Ko=Ko, Kc=Kc)
+        self._PHI.set_dudt_func(phi_dudt_func, function_name='maynard_phi_law')
         self._PHI.set_inputs(pd.Series({'p_in' : self._P_i.name,
                                         'p_out': self._P_o.name,
                                         'phi'  : self._PHI.name}))
