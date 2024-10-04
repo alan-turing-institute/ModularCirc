@@ -53,7 +53,10 @@ class Solver():
               optimize_secondary_sv:bool=False,
               supress_output:bool=False,
               step_tol:float=1e-2,
-              conv_cols:list=None
+              conv_cols:list=None,
+              method:str='BDF',
+              atol=1e-6,
+              rtol=1e-6,
               )->None:
         """
         Method for detecting which are the principal variables and which are the secondary ones.
@@ -66,6 +69,9 @@ class Solver():
         self._optimize_secondary_sv = optimize_secondary_sv
         self._step_tol  = step_tol
         self._conv_cols = conv_cols
+        self._method    = method
+        self._atol      = atol
+        self._rtol      = rtol
         
         for key, component in self._vd.items():
             mkey = self._global_sv_id[key]
@@ -195,7 +201,9 @@ class Solver():
                             y0=y0, 
                             t_eval=t,
                             max_step=self._to.dt,
-                            method='BDF',
+                            method=self._method,
+                            atol=self._atol,
+                            rtol=self._rtol,
                             )
         if res.status == -1:
             return False
