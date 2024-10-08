@@ -111,7 +111,8 @@ class BaseAnalysis():
             self.tsym, 
             self.model.commponents[component].Q_o.values[self.tind],
             linewidth=4,
-            linestyle=linestyle
+            linestyle=linestyle,
+            label=component,
         )
         ax.set_title(component.upper() + ': PV loop')
         ax.set_xlabel(f'Time (${time_units}$)')
