@@ -56,4 +56,4 @@ class NaghaviModelParameters(ParametersObject):
         self._set_comp(key=key, set=['lv', 'la'], **kwargs)
          
     def set_activation_function(self, key:str, activation_func=activation_function_2):
-        self._set_comp(key=key, set=['lv', 'la'], activation_func=activation_function_2)
+        self._set_comp(key=key, set=['lv', 'la'], activation_func=activation_func)
