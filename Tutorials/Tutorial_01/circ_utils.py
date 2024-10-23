@@ -71,7 +71,7 @@ def run_case(row, output_path, N_cycles, dt):
 
     # Define the model instance..
     model = NaghaviModel(
-        time_setup_dict=TEMPLATE_TIME_SETUP_DICT, parobj=parobj, supress_printing=True
+        time_setup_dict=TEMPLATE_TIME_SETUP_DICT, parobj=parobj, suppress_printing=True
     )  # replace the ... with the correct Class and inputs if applicable
 
     ## Define the solver instance..
@@ -80,9 +80,10 @@ def run_case(row, output_path, N_cycles, dt):
     )  # replace the .. with the correct Class and inputs if applicable
 
     solver.setup(
-        supress_output=True, 
+        suppress_output=True, 
         optimize_secondary_sv=False, 
-        conv_cols=["p_ao"]
+        conv_cols=["p_ao"],
+        method='LSODA'
         )
     solver.solve()
 

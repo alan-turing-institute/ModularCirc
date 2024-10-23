@@ -128,6 +128,7 @@ def chamber_volume_rate_change(t:float,
         q_in, q_out = y[:2]
     return q_in - q_out
 
+@nb.njit(cache=True)
 def relu_max(val:float) -> float: 
     return np.maximum(val, 0.0)
 
@@ -266,7 +267,8 @@ def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     dp = p_in - p_out
     return np.where(dp >= 0.0, dp/r_o, dp/r_r)
 
-def activation_function_1(t:float, t_max:float, t_tr:float, tau:float, *args, **kwargs) -> float:
+@nb.njit(cache=True)
+def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
     """
     Activation function that dictates the transition between the passive and active behaviors.
     Based on the definition used in Naghavi et al (2024).
@@ -286,8 +288,8 @@ def activation_function_1(t:float, t_max:float, t_tr:float, tau:float, *args, **
         coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
         return  np.exp(-(t - t_tr)/tau) * coeff
 
-nb.njit(cache=True)
-def activation_function_2(t:float, tr:float, td:float, *args, **kwargs) -> float:
+@nb.njit(cache=True)
+def activation_function_2(t:float, tr:float, td:float) -> float:
     if t < tr:
         return 0.5 * (1.0 - np.cos(np.pi * t / tr))
     elif t < td:
@@ -295,7 +297,8 @@ def activation_function_2(t:float, tr:float, td:float, *args, **kwargs) -> float
     else:
         return 0.0
     
-def activation_function_3(t:float, tpwb:float, tpww:float, *args, **kwargs) -> float:
+@nb.njit(cache=True)
+def activation_function_3(t:float, tpwb:float, tpww:float) -> float:
     if t < tpwb:
         return 0.0
     elif t < tpwb + tpww:
@@ -303,7 +306,8 @@ def activation_function_3(t:float, tpwb:float, tpww:float, *args, **kwargs) -> f
     else:
         return 0.0
     
-def activation_function_4(t:float, t_max:float, t_tr:float, tau:float, *args, **kwargs) -> float:
+@nb.njit(cache=True)    
+def activation_function_4(t:float, t_max:float, t_tr:float, tau:float) -> float:
     """
     Activation function that dictates the transition between the passive and active behaviors.
     Based on the definition used in Naghavi et al (2024).

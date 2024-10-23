@@ -7,6 +7,8 @@ from ..Time import TimeClass
 import pandas as pd
 import numpy as np
 
+import numba as nb
+
 def dvdt(t, q_in=None, q_out=None, v=None, v_ref=0.0, y=None):
     if y is not None:
         q_in, q_out, v = y[:3]
@@ -14,6 +16,61 @@ def dvdt(t, q_in=None, q_out=None, v=None, v_ref=0.0, y=None):
         return q_in - q_out
     else:
         return 0.0
+
+def gen_active_p(E_act, v_ref):
+    def active_p(v):
+        return E_act * (v - v_ref)
+    return active_p
+
+def gen_active_dpdt(E_act):
+    def active_dpdt(q_i, q_o):
+        return E_act * (q_i - q_o)
+    return active_dpdt
+
+def gen_passive_p(E_pas, k_pas, v_ref):
+    def passive_p(v):
+        return E_pas * (np.exp(k_pas * (v - v_ref)) - 1.0)
+    return passive_p
+
+def gen_passive_dpdt(E_pas, k_pas, v_ref):
+    def passive_dpdt(v, q_i, q_o):
+        return  E_pas * k_pas * np.exp(k_pas * (v - v_ref)) * (q_i - q_o)
+    return passive_dpdt
+
+def gen_total_p(_af, active_p, passive_p):
+    def total_p(t, y):
+        return _af(t) * active_p(y) + (1.0 - _af(t)) * passive_p(y)
+    return total_p
+
+def gen_d_af_dt(_af, eps,):
+    def d_af_dt(t):
+        return (_af(t+eps) - _af(t-eps)) / 2.0 / eps
+    return d_af_dt
+
+def gen_total_dpdt(d_af_dt, active_p, passive_p, _af, active_dpdt, passive_dpdt):
+    def total_dpdt(t, y):
+        return (d_af_dt(t)  * (active_p(y[0]) - passive_p(y[0])) + 
+                _af(t)      * active_dpdt(       y[1], y[2]) + 
+               (1. -_af(t)) * passive_dpdt(y[0], y[1], y[2]))
+    return total_dpdt
+
+def gen_comp_v(E_pas, v_ref, k_pas):
+    @nb.njit(cache=True)
+    def comp_v(t, y): 
+        return v_ref + np.log(y[0] / E_pas + 1.0) / k_pas
+    return comp_v
+
+def gen_time_shifter(delay_, T):
+    def time_shifter(t):
+        return  time_shift(t, delay_, T)
+    return time_shifter
+
+def gen__af(af, time_shifter, **kwargs):
+    varnames = [name for name in af.__code__.co_varnames if name != 'coeff' and name != 't']
+    kwargs2  = {key: val for key,val in kwargs.items() if key in varnames}    
+    def _af(t):
+        return af(time_shifter(t), **kwargs2)
+    return _af
 
 class HC_mixed_elastance(ComponentBase):
     def __init__(self, 
@@ -34,8 +91,8 @@ class HC_mixed_elastance(ComponentBase):
         self.E_act = E_act
         self.v_ref = v_ref
         self.eps = 1.0e-3
-        
-        self._af = lambda t : af(time_shift(t, kwargs['delay'], time_object.tcycle) , **kwargs)
+        self.kwargs = kwargs
+        self.af = af
         
         self.make_unique_io_state_variable(p_flag=True, q_flag=False)
         
@@ -86,25 +143,28 @@ class HC_mixed_elastance(ComponentBase):
         E_act = self.E_act
         v_ref = self.v_ref
         eps   = self.eps
-        _af   = self._af
+        kwargs= self.kwargs
+        T     = self._to.tcycle
+        af    = self.af
         
-        active_p     = lambda v : E_act * (v - v_ref)
-        active_dpdt  = lambda q_i, q_o : E_act * (q_i - q_o)
-        passive_p    = lambda v : E_pas * (np.exp(k_pas * (v - v_ref)) - 1.0)
-        passive_dpdt = lambda v, q_i, q_o : E_pas * k_pas * np.exp(k_pas * (v - v_ref)) * (q_i - q_o)
-        total_p      = lambda t, y : _af(t) * active_p(y) + (1.0 - _af(t)) * passive_p(y)
-        d_af_dt      = lambda t : (_af(t+eps) - _af(t-eps)) / 2.0 / eps
-        total_dpdt   = lambda t, y : (d_af_dt(t)  * (active_p(y[0]) - passive_p(y[0])) + 
-                                      _af(t)      * active_dpdt(       y[1], y[2]) + 
-                                     (1. -_af(t)) * passive_dpdt(y[0], y[1], y[2]))
-        comp_v       = lambda t, y : v_ref + np.log(y[0] / E_pas + 1.0) / k_pas
+        time_shifter = gen_time_shifter(delay_=kwargs['delay'], T=T)
+        _af          = gen__af(af=af, time_shifter=time_shifter, **kwargs)
+        
+        active_p     = gen_active_p(E_act=E_act, v_ref=v_ref)
+        active_dpdt  = gen_active_dpdt(E_act=E_act)
+        passive_p    = gen_passive_p(E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
+        passive_dpdt = gen_passive_dpdt(E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
+        total_p      = gen_total_p(_af=_af, active_p=active_p, passive_p=passive_p)
+        d_af_dt      = gen_d_af_dt(_af=_af, eps=eps)
+        total_dpdt   = gen_total_dpdt(d_af_dt=d_af_dt, active_p=active_p, passive_p=passive_p, 
+                                      _af=_af, active_dpdt=active_dpdt, passive_dpdt=passive_dpdt)
+        comp_v       = gen_comp_v(E_pas=E_pas, v_ref=v_ref, k_pas=k_pas)
         
         self._V.set_dudt_func(chamber_volume_rate_change,
                               function_name='chamber_volume_rate_change')
         self._V.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                       'q_out':self._Q_o.name}))
         
-        # self._P_i.set_dudt_func(self.total_dpdt, function_name='self.total_dpdt') 
         self._P_i.set_dudt_func(total_dpdt, function_name='lambda.total_dpdt') 
         self._P_i.set_inputs(pd.Series({'v'  :self._V.name, 
                                         'q_i':self._Q_i.name, 

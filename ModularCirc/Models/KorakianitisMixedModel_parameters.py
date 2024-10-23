@@ -33,7 +33,7 @@ class KorakianitisMixedModel_parameters(ParametersObject):
     """
     Intro
     -----
-   Model Parameters based on Korakianitis and Shi (2006) with Maynard (2012) valves
+    Model Parameters based on Korakianitis and Shi (2006) with Maynard (2012) valves
     """
     def __init__(self, name='Korakianitis 2006') -> None:
         super().__init__(name=name)
@@ -46,10 +46,10 @@ class KorakianitisMixedModel_parameters(ParametersObject):
         self._valves  = VALVES
         self._chambers= CHAMBERS
                 
-        self.set_chamber_comp('lv', E_pas= 0.1,  E_act= 2.5,  v_ref=5.0, k_pas=0.1, tr = 0.30,  td = 0.450,              v=50.)
-        self.set_chamber_comp('la', E_pas= 0.15, E_act= 0.25, v_ref=4.0, k_pas=0.1, tpwb = 0.0, tpww = 0.09, delay=0.08, v=0.0)
-        self.set_chamber_comp('rv', E_pas= 0.1,  E_act= 1.15, v_ref=10., k_pas=0.1, tr=0.30,    td=0.45,                 v=100.)
-        self.set_chamber_comp('ra', E_pas= 0.15, E_act= 0.25, v_ref=4., k_pas=0.1,  tpwb=0.0,   tpww=0.09,   delay=0.08, v=0.0)
+        self.set_chamber_comp('lv', E_pas= 0.1,  E_act= 2.5,  v_ref=5.0, k_pas=0.01, tr = 0.30,  td = 0.450,              v=50.)
+        self.set_chamber_comp('la', E_pas= 0.15, E_act= 0.25, v_ref=4.0, k_pas=0.01, tpwb = 0.0, tpww = 0.09, delay=0.08, v=0.0)
+        self.set_chamber_comp('rv', E_pas= 0.1,  E_act= 1.15, v_ref=10., k_pas=0.01, tr=0.30,    td=0.45,                 v=100.)
+        self.set_chamber_comp('ra', E_pas= 0.15, E_act= 0.25, v_ref=4.,  k_pas=0.01, tpwb=0.0,   tpww=0.09,   delay=0.08, v=0.0)
 
         self.set_activation_function('lv', af=activation_function_2)
         self.set_activation_function('rv', af=activation_function_2)

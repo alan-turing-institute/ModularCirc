@@ -7,6 +7,7 @@ from .Models.OdeModel import OdeModel
 
 import pandas as pd
 import numpy as np
+import numba as nb
 
 from scipy.integrate import solve_ivp
 from scipy.linalg import solve
@@ -145,7 +146,8 @@ class Solver():
             
         funcs2 = np.array(list(self._global_ssv_update_fun.values()))
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
-            
+        
+        # @nb.njit(cache=True) 
         def s_u_update(t, y:np.ndarray[float,float]) -> np.ndarray[float]:
             return np.array([fi(t=y, y=yi) for fi, yi in zip(funcs2, y[ids2])], dtype=np.float64)
         
@@ -172,14 +174,22 @@ class Solver():
         keys4  = np.array(list(self._global_ssv_update_fun.keys()))
         funcs3 = np.array(list(self._global_psv_update_fun.values()))
         ids3   = np.stack(list(self._global_psv_update_ind.values()))
-                            
+        
+        T = self._to.tcycle
+        N_zeros_0 = len(self._global_sv_id)
+        _n_sub_iter = self._n_sub_iter
+        _optimize_secondary_sv = self._optimize_secondary_sv
+        
         def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
-            ht = t%self._to.tcycle
-            y_temp = np.zeros( (len(self._global_sv_id),y.shape[1]) if len(y.shape) == 2 else (len(self._global_sv_id),)) 
+            ht = t%T
+            if len(y.shape) == 2:
+                y_temp = np.zeros((N_zeros_0,y.shape[1]))
+            else:
+                y_temp = np.zeros((N_zeros_0))
             y_temp[keys3] = y
-            for _ in range(self._n_sub_iter):
+            for _ in range(_n_sub_iter):
                 y_temp[keys4] = s_u_update(t, y_temp)  
-            if self._optimize_secondary_sv:
+            if _optimize_secondary_sv:
                 y_temp[keys4] = optimize(y_temp, keys4)
             return np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
         
