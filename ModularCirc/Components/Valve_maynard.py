@@ -5,6 +5,21 @@ from ..StateVariable import StateVariable
 
 import pandas as pd
 
+def gen_q_i_u_func(CQ, RRA):
+    def q_i_u_func(t, y):
+        return maynard_valve_flow(t, y=y, CQ=CQ, RRA=RRA)
+    return q_i_u_func
+
+def gen_q_i_dudt_func(CQ, RRA, L, R):
+    def q_i_dudt_func(t, y):
+        return maynard_impedance_dqdt(t, y=y, CQ=CQ, RRA=RRA, L=L, R=R)
+    return q_i_dudt_func
+
+def gen_phi_dudt_func(Ko, Kc):
+    def phi_dudt_func(t, y):
+        return maynard_phi_law(t, y=y, Ko=Ko, Kc=Kc)
+    return phi_dudt_func
+
 class Valve_maynard(ComponentBase):
     def __init__(self, 
                  name:str,
@@ -50,7 +65,7 @@ class Valve_maynard(ComponentBase):
         CQ  = self.CQ
         RRA = self.RRA
         if self.L < 1.0e-6:
-            q_i_u_func = lambda t, y: maynard_valve_flow(t, y=y, CQ=CQ, RRA=RRA)
+            q_i_u_func = gen_q_i_u_func(CQ=CQ, RRA=RRA)
             self._Q_i.set_u_func(q_i_u_func, function_name='maynard_valve_flow')
             self._Q_i.set_inputs(pd.Series({'p_in' : self._P_i.name, 
                                             'p_out': self._P_o.name,
@@ -58,7 +73,7 @@ class Valve_maynard(ComponentBase):
         else:
             R = self.R
             L = self.L
-            q_i_dudt_func = lambda t, y: maynard_impedance_dqdt(t, y=y, CQ=CQ, RRA=RRA, L=L, R=R)
+            q_i_dudt_func = gen_q_i_dudt_func(CQ=CQ, RRA=RRA, L=L, R=R)
             self._Q_i.set_dudt_func(q_i_dudt_func, function_name='maynard_impedance_dqdt')
             self._Q_i.set_inputs(pd.Series({'p_in' : self._P_i.name, 
                                             'p_out': self._P_o.name,
@@ -67,7 +82,7 @@ class Valve_maynard(ComponentBase):
         
         Ko = self.Ko
         Kc = self.Kc
-        phi_dudt_func = lambda t, y: maynard_phi_law(t, y=y, Ko=Ko, Kc=Kc)
+        phi_dudt_func = gen_phi_dudt_func(Ko=Ko, Kc=Kc)
         self._PHI.set_dudt_func(phi_dudt_func, function_name='maynard_phi_law')
         self._PHI.set_inputs(pd.Series({'p_in' : self._P_i.name,
                                         'p_out': self._P_o.name,
