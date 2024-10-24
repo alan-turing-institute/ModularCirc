@@ -5,6 +5,11 @@ from ..Time import TimeClass
 import pandas as pd
 import numpy as np
 
+def gen_q_o_dudt_func(r, l):
+    def q_o_dudt_func(t, y):
+        return resistor_impedance_flux_rate(t, y=y, r=r, l=l)
+    return q_o_dudt_func
+
 class Rlc_component(Rc_component):
     def __init__(self, 
                  name:str, 
@@ -27,7 +32,7 @@ class Rlc_component(Rc_component):
         if (np.abs(self.L) > 1e-11):
             L = self.L
             R = self.R
-            self._Q_o.set_dudt_func(lambda t, y: resistor_impedance_flux_rate(t, y=y, r=R, l=L), 
+            self._Q_o.set_dudt_func(gen_q_o_dudt_func(r=R, l=L), 
                                     function_name='resistor_impedance_flux_rate')
             self._Q_o.set_inputs(pd.Series({'p_in':self._P_i.name, 
                                             'p_out':self._P_o.name,

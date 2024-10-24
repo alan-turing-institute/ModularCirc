@@ -175,7 +175,7 @@ class HC_mixed_elastance(ComponentBase):
         else:
             self.P_i.loc[0] = self.p0
         if self.v0 is None or self.v0 is np.NaN:
-            self._V.set_i_func(comp_v, function_name='lambda.comp_v')
+            self._V.set_i_func(comp_v, function_name='comp_v')
             self._V.set_i_inputs(pd.Series({'p':self._P_i.name}))
         if (self.v0 is None or self.v0 is np.NaN) and (self.p0 is None or self.p0 is np.NaN):
             raise Exception("Solver needs at least the initial volume or pressure to be defined!")                                    

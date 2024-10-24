@@ -9,6 +9,21 @@ from ..Time import TimeClass
 import pandas as pd
 import numpy as np
 
+def gen_p_i_dudt_func(C):
+    def p_i_dudt_func(t, y):
+        return grounded_capacitor_model_dpdt(t, y=y, c=C)
+    return p_i_dudt_func
+
+def gen_p_i_i_func(v_ref, c):
+    def p_i_i_func(t,y):
+        return grounded_capacitor_model_pressure(t, y=y, v_ref=v_ref, c=c)
+    return p_i_i_func
+
+def gen_q_o_u_func(r):
+    def q_o_u_func(t, y):
+        return resistor_model_flow(t=t, y=y, r=r)
+    return q_o_u_func
+
 class Rc_component(ComponentBase):
     def __init__(self, 
                  name:str, 
@@ -52,20 +67,20 @@ class Rc_component(ComponentBase):
         v_ref = self.V_ref
         c = self.C
         # Set the dudt function for the input pressure state variable 
-        self._P_i.set_dudt_func(lambda t, y: grounded_capacitor_model_dpdt(t, y=y, c=c), 
+        self._P_i.set_dudt_func(gen_p_i_dudt_func(C=c), 
                                 function_name='grounded_capacitor_model_dpdt')
         # Set the mapping betwen the local input names and the global names of the state variables
         self._P_i.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                         'q_out':self._Q_o.name}))
         if self.p0 is None or self.p0 is np.NaN:
             # Set the initialization function for the input pressure state variable
-            self._P_i.set_i_func(lambda t, y: grounded_capacitor_model_pressure(t, y=y, v_ref=v_ref, c=c), 
+            self._P_i.set_i_func(gen_p_i_i_func(v_ref=v_ref, c=c), 
                                  function_name='grounded_capacitor_model_pressure')
             self._P_i.set_i_inputs(pd.Series({'v':self._V.name}))
         else:
             self.P_i.loc[0] = self.p0
         # Set the function for computing the flows based on the current pressure values at the nodes of the componet
-        self._Q_o.set_u_func(lambda t,y : resistor_model_flow(t, y=y, r=r), 
+        self._Q_o.set_u_func(gen_q_o_u_func(r=r), 
                              function_name='resistor_model_flow' )
         self._Q_o.set_inputs(pd.Series({'p_in':self._P_i.name, 
                                         'p_out':self._P_o.name}))
