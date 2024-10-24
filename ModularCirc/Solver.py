@@ -13,6 +13,11 @@ from scipy.integrate import solve_ivp
 from scipy.linalg import solve
 from scipy.optimize import newton, approx_fprime, root, least_squares
 
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import reverse_cuthill_mckee
+from scipy.linalg import bandwidth
+from scipy.integrate import LSODA
+
 import warnings
 
 class Solver():
@@ -91,7 +96,7 @@ class Solver():
                 self._global_psv_update_fun[mkey]   = component.dudt_func
                 self._global_psv_update_fun_n[mkey] = component.dudt_name
                 self._global_psv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
-                self._global_psv_update_ind[mkey]   = np.pad(self._global_psv_update_ind[mkey], (0, self._N_sv-len(self._global_psv_update_ind[mkey])), mode='constant')
+                self._global_psv_update_ind[mkey]   = np.pad(self._global_psv_update_ind[mkey], (0, self._N_sv-len(self._global_psv_update_ind[mkey])), mode='constant', constant_values=-1)
                 self._global_psv_names.append(key)
                 
             elif component.u_func is not None:
@@ -101,7 +106,7 @@ class Solver():
                 self._global_ssv_update_fun[mkey]   = component.u_func
                 self._global_ssv_update_fun_n[mkey] = component.u_name
                 self._global_ssv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
-                self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey], (0, self._N_sv-len(self._global_ssv_update_ind[mkey])), mode='constant')
+                self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey], (0, self._N_sv-len(self._global_ssv_update_ind[mkey])), mode='constant', constant_values=-1)
             else:
                 continue
         self._N_psv= len(self._global_psv_update_fun)
@@ -180,22 +185,95 @@ class Solver():
         _n_sub_iter = self._n_sub_iter
         _optimize_secondary_sv = self._optimize_secondary_sv
         
+        keys3_dict = dict()
+        for key, line in zip(keys3,ids3):
+            line2= [val for val in np.unique(line) if val != -1]
+            keys3_dict[key] = set(line2)
+        
+        keys3_back_dict = dict()
+        for key, val in enumerate(keys3_dict):
+            keys3_back_dict[val] = key
+            
+        keys4_dict = dict()
+        for key, line in zip(keys4,ids2):
+            line2= [val for val in np.unique(line) if val != -1]
+            keys4_dict[key] = set(line2)
+        
+        keys3_dict2 = dict()
+        for key in keys3_dict.keys():
+            keys3_dict2[key] = set()
+            for val in keys3_dict[key]:
+                if val in keys3:
+                    keys3_dict2[key].update({val,})
+                else:
+                    keys3_dict2[key].update(keys4_dict[val])
+        
+        sparsity_map = dict()
+        
+        for i, key in enumerate(keys3):
+            sparsity_map[i] = set()
+            for val in keys3_dict2[key]:
+                sparsity_map[i].add(keys3_back_dict[val])
+        
+        mat = np.zeros((len(sparsity_map),len(sparsity_map)))
+        for key, rows in sparsity_map.items():
+            mat[key, np.array(list(rows), dtype=np.int64)] = 1
+        
+        sparse_mat = csr_matrix(mat)
+        perm = reverse_cuthill_mckee(sparse_mat, symmetric_mode=False)
+        perm_mat = np.zeros((len(perm), len(perm)))
+        for i,j in enumerate(perm):
+            perm_mat[i,j] = 1
+            
+        self.perm_mat = perm_mat
+        
+        sparse_mat_reordered = sparse_mat[perm, :][:, perm]
+
+        sparse_mat_reordered_indexes = np.argwhere(sparse_mat_reordered.toarray())
+        temp = sparse_mat_reordered_indexes[:,0] - sparse_mat_reordered_indexes[:,1]
+        uband = np.abs(np.min(temp))
+        lband = np.max(temp)
+
+        self.lband = lband
+        self.uband = uband
+        
         def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
             ht = t%T
+            y2 = perm_mat.T @ y
             if len(y.shape) == 2:
                 y_temp = np.zeros((N_zeros_0,y.shape[1]))
             else:
                 y_temp = np.zeros((N_zeros_0))
-            y_temp[keys3] = y
+            y_temp[keys3] = y2
             for _ in range(_n_sub_iter):
                 y_temp[keys4] = s_u_update(t, y_temp)  
             if _optimize_secondary_sv:
                 y_temp[keys4] = optimize(y_temp, keys4)
-            return np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
+            return perm_mat @ np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
+        
+        def pv_jac_packed(t, y:np.ndarray[float]) -> np.ndarray[float]:
+            ht = t%T
+            funcs3_reordered = funcs3[perm]
+            jac_packed = np.zeros((lband+uband+1,len(keys3)))
+            eps = 1e-3
+            y2 = y.copy()
+            
+            for i, j in sparse_mat_reordered_indexes:
+                y2[j] += eps
+                f_plus = funcs3_reordered[i](t=ht, y=y2)
+                y2[j] -= 2*eps
+                f_min  = funcs3_reordered[i](t=ht, y=y2)
+                y2[j] += eps
+                jac_packed[uband+i-j,j] = (f_plus - f_min) / 2. / eps
+            
+            return jac_packed
+            
         
         self.initialize_by_function = initialize_by_function    
         self.pv_dfdt_global = pv_dfdt_update
         self.s_u_update     = s_u_update
+        
+        self.pv_jac_packed = pv_jac_packed
         
         self.optimize = optimize
         self.s_u_residual = s_u_residual
@@ -206,19 +284,37 @@ class Solver():
         
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            res = solve_ivp(fun=self.pv_dfdt_global, 
-                            t_span=(t[0], t[-1]), 
-                            y0=y0, 
-                            t_eval=t,
-                            max_step=self._to.dt,
-                            method=self._method,
-                            atol=self._atol,
-                            rtol=self._rtol,
-                            )
+            if self._method != 'LSODA':
+                res = solve_ivp(fun=self.pv_dfdt_global, 
+                                t_span=(t[0], t[-1]), 
+                                y0=self.perm_mat @ y0, 
+                                t_eval=t,
+                                max_step=self._to.dt,
+                                method=self._method,
+                                atol=self._atol,
+                                rtol=self._rtol,
+                                )
+            else:
+                # print('bands', self.lband, self.uband)
+                res = solve_ivp(fun=self.pv_dfdt_global, 
+                                t_span=(t[0], t[-1]), 
+                                y0=self.perm_mat @ y0, 
+                                t_eval=t,
+                                max_step=self._to.dt,
+                                method=self._method,
+                                atol=self._atol,
+                                rtol=self._rtol,
+                                lband=self.lband,
+                                uband=self.uband,
+                                # jac=self.pv_jac_packed
+                                )
+
         if res.status == -1:
             return False
+        y = res.y
+        y = self.perm_mat.T @ y
         for ind, id in enumerate(self._global_psv_update_fun.keys()):
-            self._asd.iloc[cycleID*n_t:(cycleID+1)*n_t+1, id] = res.y[ind, 0:n_t+1]
+            self._asd.iloc[cycleID*n_t:(cycleID+1)*n_t+1, id] = y[ind, 0:n_t+1]
             
         if cycleID == 0: return False
         
