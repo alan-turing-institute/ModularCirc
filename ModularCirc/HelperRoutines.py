@@ -40,6 +40,7 @@ def resistor_upstream_pressure(t:float,
 def resistor_model_dp(q_in:float, r:float) -> float:
     return q_in * r
 
+@nb.njit(cache=True)
 def resistor_impedance_flux_rate(t:float, 
                                  p_in:float=None,
                                  p_out:float=None,
@@ -98,6 +99,7 @@ def grounded_capacitor_model_volume(t:float,
         p = y
     return v_ref + p * c
 
+@nb.njit(cache=True)
 def grounded_capacitor_model_dpdt(t:float, 
                                   q_in:float=None, 
                                   q_out:float=None, 
@@ -233,23 +235,23 @@ def maynard_phi_law(t:float,
     dp = p_in - p_out
     return np.where(dp >= 0.0, Ko * (1.0 - phi) * dp, Kc * phi * dp)
 
+@nb.njit(cache=True)
 def maynard_impedance_dqdt(t:float,
-                           p_in:np.ndarray[float]=None,
-                           p_out:np.ndarray[float]=None,
-                           q_in:np.ndarray[float]=None,
-                           phi:np.ndarray[float]=None,
+                           p_in:nb.types.Array =None,
+                           p_out:nb.types.Array =None,
+                           q_in:nb.types.Array =None,
+                           phi:nb.types.Array =None,
                            CQ:float=None,
                            R :float=None,
                            L :float=None,
                            RRA:float=0.0,
-                           y:np.ndarray[float]=None
-                           )->np.ndarray[float]:
+                           y:nb.types.Array =None
+                           )->nb.types.Array:
     if y is not None:
         p_in, p_out, q_in, phi = y[:4]
     dp   = p_in - p_out
     aeff = (1.0 - RRA) * phi + RRA
-    return np.where(aeff > 1.0e-5, (dp * aeff - q_in * R * aeff - q_in * np.abs(q_in) / CQ**2.0 / aeff ) / L, 0.0)
-
+    return np.where(aeff > 1.0e-5, (dp * aeff - q_in * R * aeff  - q_in * np.abs(q_in) / CQ**2.0 * aeff**(-1.0)  ) / L, 0.0)
 
 def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     """
@@ -290,22 +292,22 @@ def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
 
 @nb.njit(cache=True)
 def activation_function_2(t:float, tr:float, td:float) -> float:
-    if t < tr:
-        return 0.5 * (1.0 - np.cos(np.pi * t / tr))
-    elif t < td:
-        return 0.5 * (1.0 + np.cos(np.pi * (t - tr) / (td - tr)))   
-    else:
-        return 0.0
+    result = (
+        0.5 * (1.0 - np.cos(np.pi * t / tr)) if t < tr else
+        0.5 * (1.0 + np.cos(np.pi * (t - tr) / (td - tr))) if t < td else
+        0.0
+    )
+    return result
     
 @nb.njit(cache=True)
 def activation_function_3(t:float, tpwb:float, tpww:float) -> float:
-    if t < tpwb:
-        return 0.0
-    elif t < tpwb + tpww:
-        return 0.5 * (1 - np.cos(2.0 * np.pi * (t - tpwb) / tpww ))
-    else:
-        return 0.0
-    
+    result = (
+        0.0 if t < tpwb else
+        0.5 * (1 - np.cos(2.0 * np.pi * (t - tpwb) / tpww)) if t < tpwb + tpww else
+        0.0
+    )
+    return result
+
 @nb.njit(cache=True)    
 def activation_function_4(t:float, t_max:float, t_tr:float, tau:float) -> float:
     """
