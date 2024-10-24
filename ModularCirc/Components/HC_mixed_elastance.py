@@ -165,18 +165,16 @@ class HC_mixed_elastance(ComponentBase):
         self._V.set_inputs(pd.Series({'q_in' :self._Q_i.name, 
                                       'q_out':self._Q_o.name}))
         
-        self._P_i.set_dudt_func(total_dpdt, function_name='lambda.total_dpdt') 
+        self._P_i.set_dudt_func(total_dpdt, function_name='total_dpdt') 
         self._P_i.set_inputs(pd.Series({'v'  :self._V.name, 
                                         'q_i':self._Q_i.name, 
                                         'q_o':self._Q_o.name}))
         if self.p0 is None or self.p0 is np.NaN:
-            # self._P_i.set_i_func(self.total_p, function_name='self.total_p')
-            self._P_i.set_i_func(total_p, function_name='lambda.total_p')
+            self._P_i.set_i_func(total_p, function_name='total_p')
             self._P_i.set_i_inputs(pd.Series({'v':self._V.name}))
         else:
             self.P_i.loc[0] = self.p0
         if self.v0 is None or self.v0 is np.NaN:
-            # self._V.set_i_func(self.comp_v, function_name='self.comp_v')
             self._V.set_i_func(comp_v, function_name='lambda.comp_v')
             self._V.set_i_inputs(pd.Series({'p':self._P_i.name}))
         if (self.v0 is None or self.v0 is np.NaN) and (self.p0 is None or self.p0 is np.NaN):
