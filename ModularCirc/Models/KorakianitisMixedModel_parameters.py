@@ -28,6 +28,14 @@ VALVES_PAR = ['CQ', 'RRA']
 CHAMBERS = ['la', 'lv', 'ra', 'rv']
 CHAMBERS_PAR = ['E_pas', 'E_act', 'v_ref', 'k_pas', 'af',  'v', 'p', 'tr', 'td', 'delay', 'tpww', 'tpwb']
 
+TIME_SETUP_DICT = {
+        'name'       :  'TimeTest', # the name asssociated with the temporal discretization (not super important.. names internat variable)
+        'ncycles'    :  30,         # the maximum number of cycles for which we run the simulation
+        'tcycle'     :  1.0,      # the duration of a heart beat (here in ms)
+        'dt'         :  0.001,        # the duration of a discrete time step
+        'export_min' :  2           # number of time steps for which we export the simulation (can also be used as a way to impose a minimum number of pulses)
+    }
+
 
 class KorakianitisMixedModel_parameters(ParametersObject):
     """
@@ -46,10 +54,10 @@ class KorakianitisMixedModel_parameters(ParametersObject):
         self._valves  = VALVES
         self._chambers= CHAMBERS
                 
-        self.set_chamber_comp('lv', E_pas= 0.1,  E_act= 2.5,  v_ref=5.0, k_pas=0.01, tr = 0.30,  td = 0.450,              v=50.)
-        self.set_chamber_comp('la', E_pas= 0.15, E_act= 0.25, v_ref=4.0, k_pas=0.01, tpwb = 0.0, tpww = 0.09, delay=0.08, v=0.0)
-        self.set_chamber_comp('rv', E_pas= 0.1,  E_act= 1.15, v_ref=10., k_pas=0.01, tr=0.30,    td=0.45,                 v=100.)
-        self.set_chamber_comp('ra', E_pas= 0.15, E_act= 0.25, v_ref=4.,  k_pas=0.01, tpwb=0.0,   tpww=0.09,   delay=0.08, v=0.0)
+        self.set_chamber_comp('lv', E_pas= 1.7,  E_act= 2.5,  v_ref=5.0, k_pas=0.01, tr = 0.30,  td = 0.450,              v=50.)
+        self.set_chamber_comp('la', E_pas= 0.5, E_act= 0.25, v_ref=4.0, k_pas=0.01, tpwb = 0.0, tpww = 0.09, delay=0.08, v=0.0)
+        self.set_chamber_comp('rv', E_pas= 0.67,  E_act= 1.15, v_ref=10., k_pas=0.01, tr=0.30,    td=0.45,                 v=100.)
+        self.set_chamber_comp('ra', E_pas= 0.5, E_act= 0.25, v_ref=4.,  k_pas=0.01, tpwb=0.0,   tpww=0.09,   delay=0.08, v=0.0)
 
         self.set_activation_function('lv', af=activation_function_2)
         self.set_activation_function('rv', af=activation_function_2)
