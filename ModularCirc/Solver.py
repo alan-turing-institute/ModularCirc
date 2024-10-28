@@ -113,6 +113,11 @@ class Solver():
         self._N_ssv= len(self._global_ssv_update_fun)
         if not suppress_output: print(' ')
         self.generate_dfdt_functions()
+        
+        if self._conv_cols is None:
+            self._cols = [col for col in self._asd.columns if 'v_' in col or 'p_' in col]
+        else:
+            self._cols = self._conv_cols
         return
     
     @property
@@ -147,14 +152,14 @@ class Solver():
         ids1   = self._global_sv_init_ind.values()
 
         def initialize_by_function(y:np.ndarray[float]) -> np.ndarray[float]:
-            return np.array([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)])
+            return np.fromiter([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)], dtype=np.float64)
             
         funcs2 = np.array(list(self._global_ssv_update_fun.values()))
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
         
         # @nb.njit(cache=True) 
         def s_u_update(t, y:np.ndarray[float,float]) -> np.ndarray[float]:
-            return np.array([fi(t=y, y=yi) for fi, yi in zip(funcs2, y[ids2])], dtype=np.float64)
+            return np.fromiter([fi(t=t, y=yi) for fi, yi in zip(funcs2, y[ids2])], dtype=np.float64)
         
         def s_u_residual(y, yall, keys):
             yall[keys] = y
@@ -250,31 +255,12 @@ class Solver():
             if _optimize_secondary_sv:
                 y_temp[keys4] = optimize(y_temp, keys4)
             return perm_mat @ np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
-        
-        def pv_jac_packed(t, y:np.ndarray[float]) -> np.ndarray[float]:
-            ht = t%T
-            funcs3_reordered = funcs3[perm]
-            jac_packed = np.zeros((2*lband+uband+1,len(keys3)))
-            eps = 1e-3
-            y2 = y.copy()
-            
-            for i, j in sparse_mat_reordered_indexes:
-                y2[j] += eps
-                f_plus = funcs3_reordered[i](t=ht, y=y2)
-                y2[j] -= 2*eps
-                f_min  = funcs3_reordered[i](t=ht, y=y2)
-                y2[j] += eps
-                jac_packed[uband+i-j,j] = (f_plus - f_min) / 2. / eps
-            
-            return jac_packed
             
         
         self.initialize_by_function = initialize_by_function    
         self.pv_dfdt_global = pv_dfdt_update
         self.s_u_update     = s_u_update
-        
-        self.pv_jac_packed = pv_jac_packed
-        
+                
         self.optimize = optimize
         self.s_u_residual = s_u_residual
     
@@ -289,7 +275,7 @@ class Solver():
                                 t_span=(t[0], t[-1]), 
                                 y0=self.perm_mat @ y0, 
                                 t_eval=t,
-                                max_step=self._to.dt,
+                                max_step=self.dt,
                                 method=self._method,
                                 atol=self._atol,
                                 rtol=self._rtol,
@@ -299,41 +285,35 @@ class Solver():
                                 t_span=(t[0], t[-1]), 
                                 y0=self.perm_mat @ y0, 
                                 t_eval=t,
-                                max_step=self._to.dt,
                                 method=self._method,
                                 atol=self._atol,
                                 rtol=self._rtol,
                                 lband=self.lband,
                                 uband=self.uband,
-                                # jac=self.pv_jac_packed
                                 )
 
         if res.status == -1:
             return False
         y = res.y
         y = self.perm_mat.T @ y
-        for ind, id in enumerate(self._global_psv_update_fun.keys()):
-            self._asd.iloc[cycleID*n_t:(cycleID+1)*n_t+1, id] = y[ind, 0:n_t+1]
+        ids = list(self._global_psv_update_fun.keys())
+        inds= list(range(len(ids)))
+        self._asd.iloc[cycleID*n_t:(cycleID+1)*n_t+1, ids] = y[inds, 0:n_t+1].T
             
         if cycleID == 0: return False
         
         ind = list(self._global_psv_update_fun.keys())
         cycleP = cycleID - 1
-        if self._conv_cols is None:
-            cols = [col for col in self._asd.columns if 'v_' in col or 'p_' in col]
-        else:
-            cols = self._conv_cols
-        cs   = self._asd[cols].iloc[cycleID*n_t:(cycleID+1)*n_t, :].values
-        cp   = self._asd[cols].iloc[cycleP *n_t:(cycleP +1)*n_t, :].values
+        
+        cs   = self._asd[self._cols].iloc[cycleID*n_t:(cycleID+1)*n_t, :].values
+        cp   = self._asd[self._cols].iloc[cycleP *n_t:(cycleP +1)*n_t, :].values
         
         cp_ptp = np.max(np.abs(cp), axis=0)
         cp_r   = np.max(np.abs(cs - cp), axis=0)
         
-        for val, nval in zip(cp_r, cp_ptp):
-            if nval > 1e-10:
-                if val / nval > self._step_tol: return False
-            else:
-                if val > self._step_tol: return False
+        test = cp_r / cp_ptp
+        test[cp_ptp <= 1e-10] = cp_r[cp_ptp <= 1e-10]
+        if np.max(test) > self._step_tol : return False
         return True
     
     

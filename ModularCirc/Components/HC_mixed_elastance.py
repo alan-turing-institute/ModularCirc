@@ -18,21 +18,25 @@ def dvdt(t, q_in=None, q_out=None, v=None, v_ref=0.0, y=None):
         return 0.0
 
 def gen_active_p(E_act, v_ref):
+    @nb.njit(cache=True)
     def active_p(v):
         return E_act * (v - v_ref)
     return active_p
 
 def gen_active_dpdt(E_act):
+    @nb.njit(cache=True)
     def active_dpdt(q_i, q_o):
         return E_act * (q_i - q_o)
     return active_dpdt
 
 def gen_passive_p(E_pas, k_pas, v_ref):
+    @nb.njit(cache=True)
     def passive_p(v):
         return E_pas * (np.exp(k_pas * (v - v_ref)) - 1.0)
     return passive_p
 
 def gen_passive_dpdt(E_pas, k_pas, v_ref):
+    @nb.njit(cache=True)
     def passive_dpdt(v, q_i, q_o):
         return  E_pas * k_pas * np.exp(k_pas * (v - v_ref)) * (q_i - q_o)
     return passive_dpdt
