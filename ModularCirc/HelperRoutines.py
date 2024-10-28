@@ -270,7 +270,7 @@ def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     return np.where(dp >= 0.0, dp/r_o, dp/r_r)
 
 @nb.njit(cache=True)
-def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
+def activation_function_1(t:float, t_max:float, t_tr:float, tau:float, dt: bool=False) -> float:
     """
     Activation function that dictates the transition between the passive and active behaviors.
     Based on the definition used in Naghavi et al (2024).
@@ -284,32 +284,53 @@ def activation_function_1(t:float, t_max:float, t_tr:float, tau:float) -> float:
     Returns:
         float: activation function value
     """
-    if t <= t_tr:
-        return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
+    if not dt:
+        if t <= t_tr:
+            return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
+        else:
+            coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
+            return  np.exp(-(t - t_tr)/tau) * coeff
     else:
-        coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
-        return  np.exp(-(t - t_tr)/tau) * coeff
+        if t <= t_tr:
+            return 0.5 * np.pi / t_max * np.sin(np.pi * t / t_max)
+        else:
+            coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
+            return - np.exp(-(t - t_tr)/tau) * coeff / tau
 
 @nb.njit(cache=True)
-def activation_function_2(t:float, tr:float, td:float) -> float:
-    result = (
-        0.5 * (1.0 - np.cos(np.pi * t / tr)) if t < tr else
-        0.5 * (1.0 + np.cos(np.pi * (t - tr) / (td - tr))) if t < td else
-        0.0
-    )
+def activation_function_2(t:float, tr:float, td:float, dt: bool=True) -> float:
+    if not dt:
+        result = (
+            0.5 * (1.0 - np.cos(np.pi * t / tr)) if t < tr else
+            0.5 * (1.0 + np.cos(np.pi * (t - tr) / (td - tr))) if t < td else
+            0.0
+        )
+    else:
+        result = (
+            0.5 * np.pi / tr * np.sin(np.pi * t / tr) if t < tr else
+           -0.5 * np.pi /(td - tr) * np.sin(np.pi * (t - tr) / (td - tr)) if t < td else
+            0.0
+        )
     return result
     
 @nb.njit(cache=True)
-def activation_function_3(t:float, tpwb:float, tpww:float) -> float:
-    result = (
-        0.0 if t < tpwb else
-        0.5 * (1 - np.cos(2.0 * np.pi * (t - tpwb) / tpww)) if t < tpwb + tpww else
-        0.0
-    )
+def activation_function_3(t:float, tpwb:float, tpww:float, dt: bool=True) -> float:
+    if not dt:
+        result = (
+            0.0 if t < tpwb else
+            0.5 * (1 - np.cos(2.0 * np.pi * (t - tpwb) / tpww)) if t < tpwb + tpww else
+            0.0
+        )
+    else:
+        result = (
+            0.0 if t < tpwb else
+            np.pi /tpww * np.sin(2.0 * np.pi * (t - tpwb) / tpww) if t < tpwb + tpww else
+            0.0
+        )
     return result
 
 @nb.njit(cache=True)    
-def activation_function_4(t:float, t_max:float, t_tr:float, tau:float) -> float:
+def activation_function_4(t:float, t_max:float, t_tr:float, tau:float, dt: bool=True) -> float:
     """
     Activation function that dictates the transition between the passive and active behaviors.
     Based on the definition used in Naghavi et al (2024).
@@ -323,13 +344,18 @@ def activation_function_4(t:float, t_max:float, t_tr:float, tau:float) -> float:
     Returns:
         float: activation function value
     """
-    if t <= t_tr and t >=0:
-        return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
-    elif t >= 0:
-    # else:
-        return np.exp(-(t - t_tr)/tau)
+    if not dt:
+        return (
+            0.5 * (1.0 - np.cos(np.pi * t / t_max)) if 0 <= t <= t_tr else
+            np.exp(-(t - t_tr) / tau) if t >= 0 else
+            0.0
+        )
     else:
-        return 0.0
+        return (
+            0.5 * np.sin(np.pi * t / t_max) / t_max if 0 <= t <= t_tr else
+            - np.exp(-(t - t_tr) / tau) / tau if t >= 0 else
+            0.0
+        )
 
 def chamber_linear_elastic_law(v:float, E:float, v_ref:float, *args, **kwargs) -> float:
     """

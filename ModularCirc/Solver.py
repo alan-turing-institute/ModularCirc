@@ -254,7 +254,7 @@ class Solver():
         def pv_jac_packed(t, y:np.ndarray[float]) -> np.ndarray[float]:
             ht = t%T
             funcs3_reordered = funcs3[perm]
-            jac_packed = np.zeros((lband+uband+1,len(keys3)))
+            jac_packed = np.zeros((2*lband+uband+1,len(keys3)))
             eps = 1e-3
             y2 = y.copy()
             
@@ -295,7 +295,6 @@ class Solver():
                                 rtol=self._rtol,
                                 )
             else:
-                # print('bands', self.lband, self.uband)
                 res = solve_ivp(fun=self.pv_dfdt_global, 
                                 t_span=(t[0], t[-1]), 
                                 y0=self.perm_mat @ y0, 

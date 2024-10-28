@@ -39,19 +39,17 @@ def gen_passive_dpdt(E_pas, k_pas, v_ref):
 
 def gen_total_p(_af, active_p, passive_p):
     def total_p(t, y):
-        return _af(t) * active_p(y) + (1.0 - _af(t)) * passive_p(y)
+        _af_t = _af(t)
+        return _af_t * active_p(y) + (1.0 - _af_t) * passive_p(y)
     return total_p
 
-def gen_d_af_dt(_af, eps,):
-    def d_af_dt(t):
-        return (_af(t+eps) - _af(t-eps)) / 2.0 / eps
-    return d_af_dt
-
-def gen_total_dpdt(d_af_dt, active_p, passive_p, _af, active_dpdt, passive_dpdt):
+def gen_total_dpdt(active_p, passive_p, _af, active_dpdt, passive_dpdt):
     def total_dpdt(t, y):
-        return (d_af_dt(t)  * (active_p(y[0]) - passive_p(y[0])) + 
-                _af(t)      * active_dpdt(       y[1], y[2]) + 
-               (1. -_af(t)) * passive_dpdt(y[0], y[1], y[2]))
+        _af_t = _af(t)
+        _d_af_dt = _af(t, dt=True)
+        return (_d_af_dt *(active_p(y[0]) - passive_p(y[0])) + 
+                _af_t      * active_dpdt(       y[1], y[2]) + 
+               (1. -_af_t) * passive_dpdt(y[0], y[1], y[2]))
     return total_dpdt
 
 def gen_comp_v(E_pas, v_ref, k_pas):
@@ -65,11 +63,11 @@ def gen_time_shifter(delay_, T):
         return  time_shift(t, delay_, T)
     return time_shifter
 
-def gen__af(af, time_shifter, **kwargs):
+def gen__af(af, time_shifter, kwargs):
     varnames = [name for name in af.__code__.co_varnames if name != 'coeff' and name != 't']
     kwargs2  = {key: val for key,val in kwargs.items() if key in varnames}    
-    def _af(t):
-        return af(time_shifter(t), **kwargs2)
+    def _af(t, dt=False):
+        return af(time_shifter(t), dt=dt, **kwargs2)
     return _af
 
 class HC_mixed_elastance(ComponentBase):
@@ -99,44 +97,7 @@ class HC_mixed_elastance(ComponentBase):
     @property    
     def P(self):
         return self._P_i._u
-        
-    def active_p(self, v):
-        return self.E_act * (v - self.v_ref)
     
-    def active_dpdt(self, q_i, q_o):
-        return self.E_act * (q_i - q_o)
-    
-    def passive_p(self, v):
-        return self.E_pas * (np.exp(self.k_pas * (v - self.v_ref)) - 1.0)
-    
-    def passive_dpdt(self, v, q_i, q_o):
-        return self.E_pas * self.k_pas * np.exp(self.k_pas * (v - self.v_ref)) * (q_i - q_o)
-    
-    def total_p(self, t, v=None, y=None):
-        if y is not None:
-            v = y
-        return self._af(t) * self.active_p(v) + (1.0 - self._af(t)) * self.passive_p(v)
-    
-    def d_af_dt(self, t):
-        return (self._af(t+self.eps) - self._af(t-self.eps)) / 2.0 / self.eps
-    
-    def total_dpdt(self, t, v=None, q_i=None, q_o=None, y=None):
-        if y is not None:
-            v, q_i, q_o = y[:3]
-        return (self.d_af_dt(t)   *(self.active_p(v) - self.passive_p(v)) + 
-                     self._af(t)  * self.active_dpdt(    q_i, q_o) + 
-                (1. -self._af(t)) * self.passive_dpdt(v, q_i, q_o))
-        
-    def comp_v(self, t:float=None, p:float=None, y:np.ndarray[float]=None)->float:
-        if y is not None:
-            p = y[:1]
-        return self.v_ref + np.log(p / self.E_pas + 1.0) / self.k_pas
-    
-    def comp_dvdt(self, t, q_in=None, q_out=None, v=None, y=None):
-        if y is not None:
-            q_in, q_out, v = y[:3]
-        return dvdt(t, q_in=q_in, q_out=q_out, v=v, v_ref=self.v_ref)
-        
     def setup(self) -> None:
         E_pas = self.E_pas
         k_pas = self.k_pas
@@ -148,15 +109,14 @@ class HC_mixed_elastance(ComponentBase):
         af    = self.af
         
         time_shifter = gen_time_shifter(delay_=kwargs['delay'], T=T)
-        _af          = gen__af(af=af, time_shifter=time_shifter, **kwargs)
+        _af          = gen__af(af=af, time_shifter=time_shifter, kwargs=kwargs)
         
         active_p     = gen_active_p(E_act=E_act, v_ref=v_ref)
         active_dpdt  = gen_active_dpdt(E_act=E_act)
         passive_p    = gen_passive_p(E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
         passive_dpdt = gen_passive_dpdt(E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
         total_p      = gen_total_p(_af=_af, active_p=active_p, passive_p=passive_p)
-        d_af_dt      = gen_d_af_dt(_af=_af, eps=eps)
-        total_dpdt   = gen_total_dpdt(d_af_dt=d_af_dt, active_p=active_p, passive_p=passive_p, 
+        total_dpdt   = gen_total_dpdt(active_p=active_p, passive_p=passive_p, 
                                       _af=_af, active_dpdt=active_dpdt, passive_dpdt=passive_dpdt)
         comp_v       = gen_comp_v(E_pas=E_pas, v_ref=v_ref, k_pas=k_pas)
         
