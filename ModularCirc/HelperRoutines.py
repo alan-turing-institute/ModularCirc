@@ -204,9 +204,15 @@ def simple_bernoulli_diode_flow(t:float,
     if y is not None:
         p_in, p_out = y[:2]
     dp   = p_in - p_out
-    return np.where(dp >= 0.0,  
-                    CQ * np.sqrt(np.where(dp >= 0, dp, 0)), 
-                   -CQ * RRA *np.sqrt(np.where(dp < 0, -dp, 0.0)))
+    if dp >= 0:
+        return CQ * np.sqrt(dp), 
+    elif RRA > 1e-14: 
+        return -CQ * RRA *np.sqrt(-dp)
+    else:
+        return 0.0
+    # return np.where(dp >= 0.0,  
+    #                 CQ * np.sqrt(np.where(dp >= 0, dp, 0)), 
+    #                -CQ * RRA *np.sqrt(np.where(dp < 0, -dp, 0.0)))
 
 # @jit(cache=True, nopython=True)
 def maynard_valve_flow(t:float,
