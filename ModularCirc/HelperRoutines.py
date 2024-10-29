@@ -3,7 +3,7 @@ from .Time import TimeClass
 
 import numba as nb
 
-from numba import jit
+# from numba import jit
 from collections.abc import Callable
 
 def resistor_model_flow(t:float, 
@@ -40,7 +40,7 @@ def resistor_upstream_pressure(t:float,
 def resistor_model_dp(q_in:float, r:float) -> float:
     return q_in * r
 
-@nb.njit(cache=True)
+# @nb.njit(cache=True)
 def resistor_impedance_flux_rate(t:float, 
                                  p_in:float=None,
                                  p_out:float=None,
@@ -99,7 +99,7 @@ def grounded_capacitor_model_volume(t:float,
         p = y
     return v_ref + p * c
 
-@nb.njit(cache=True)
+# @nb.njit(cache=True)
 def grounded_capacitor_model_dpdt(t:float, 
                                   q_in:float=None, 
                                   q_out:float=None, 
@@ -110,7 +110,7 @@ def grounded_capacitor_model_dpdt(t:float,
         q_in, q_out = y[:2]
     return (q_in - q_out) / c
 
-@nb.njit(cache=True)
+# @nb.njit(cache=True)
 def chamber_volume_rate_change(t:float, 
                                q_in:float=None, 
                                q_out:float=None,
@@ -130,7 +130,7 @@ def chamber_volume_rate_change(t:float,
         q_in, q_out = y[:2]
     return q_in - q_out
 
-@nb.njit(cache=True)
+# @nb.njit(cache=True)
 def relu_max(val:float) -> float: 
     return np.maximum(val, 0.0)
 
@@ -180,7 +180,7 @@ def non_ideal_diode_flow(t:float,
         p_in, p_out = y[:2]
     return (max_func((p_in - p_out)/ r))
 
-@jit(cache=True, nopython=True)
+# @jit(cache=True, nopython=True)
 def simple_bernoulli_diode_flow(t:float, 
                          p_in:float=None, 
                          p_out:float=None, 
@@ -206,7 +206,7 @@ def simple_bernoulli_diode_flow(t:float,
     dp   = p_in - p_out
     return np.where(dp >= 0.0,  CQ * np.sqrt(dp), -CQ * RRA *np.sqrt(-dp))
 
-@jit(cache=True, nopython=True)
+# @jit(cache=True, nopython=True)
 def maynard_valve_flow(t:float,
                        p_in:np.ndarray[float]=None,
                        p_out:np.ndarray[float]=None,
@@ -221,7 +221,7 @@ def maynard_valve_flow(t:float,
     aeff = (1.0 - RRA) * phi + RRA
     return np.where(dp >= 0.0, aeff, -aeff) * CQ * np.sqrt(np.abs(dp))
 
-@nb.njit(cache=True,)
+# @nb.njit(cache=True,)
 def maynard_phi_law(t:float,
                     p_in:nb.types.Array =None,
                     p_out:nb.types.Array=None,
@@ -235,7 +235,7 @@ def maynard_phi_law(t:float,
     dp = p_in - p_out
     return np.where(dp >= 0.0, Ko * (1.0 - phi) * dp, Kc * phi * dp)
 
-@nb.njit(cache=True)
+# @nb.njit(cache=True)
 def maynard_impedance_dqdt(t:float,
                            p_in:nb.types.Array =None,
                            p_out:nb.types.Array =None,
@@ -269,7 +269,6 @@ def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     dp = p_in - p_out
     return np.where(dp >= 0.0, dp/r_o, dp/r_r)
 
-@nb.njit(cache=True)
 def activation_function_1(t:float, t_max:float, t_tr:float, tau:float, dt: bool=False) -> float:
     """
     Activation function that dictates the transition between the passive and active behaviors.
@@ -297,7 +296,6 @@ def activation_function_1(t:float, t_max:float, t_tr:float, tau:float, dt: bool=
             coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
             return - np.exp(-(t - t_tr)/tau) * coeff / tau
 
-@nb.njit(cache=True)
 def activation_function_2(t:float, tr:float, td:float, dt: bool=True) -> float:
     if not dt:
         result = (
@@ -313,7 +311,6 @@ def activation_function_2(t:float, tr:float, td:float, dt: bool=True) -> float:
         )
     return result
     
-@nb.njit(cache=True)
 def activation_function_3(t:float, tpwb:float, tpww:float, dt: bool=True) -> float:
     if not dt:
         result = (
@@ -329,7 +326,6 @@ def activation_function_3(t:float, tpwb:float, tpww:float, dt: bool=True) -> flo
         )
     return result
 
-@nb.njit(cache=True)    
 def activation_function_4(t:float, t_max:float, t_tr:float, tau:float, dt: bool=True) -> float:
     """
     Activation function that dictates the transition between the passive and active behaviors.
