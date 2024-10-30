@@ -1,5 +1,6 @@
 from .OdeModel import OdeModel
 from .KorakianitisMixedModel_parameters import KorakianitisMixedModel_parameters, TIME_SETUP_DICT
+from .KorakianitisMixedModel_parameters import TIME_SETUP_DICT as TEMPLATE_TIME_SETUP_DICT
 from .ParametersObject import ParametersObject as po
 from ..Components import Rlc_component, Valve_simple_bernoulli, HC_mixed_elastance
 
