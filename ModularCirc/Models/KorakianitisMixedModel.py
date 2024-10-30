@@ -21,7 +21,7 @@ FULL_NAMES =[
 ]
 
 class KorakianitisMixedModel(OdeModel):
-    def __init__(self, time_setup_dict, parobj:po=KorakianitisModel_parameters, suppress_printing:bool=False) -> None:
+    def __init__(self, time_setup_dict, parobj:po=KorakianitisMixedModel_parameters, suppress_printing:bool=False) -> None:
         super().__init__(time_setup_dict)
         self.name = 'KorakianitisModel'
         
