@@ -2,6 +2,14 @@ from ..HelperRoutines import *
 from .ParametersObject import ParametersObject
 import pandas as pd
 
+TEMPLATE_TIME_SETUP_DICT = {
+        "name": "TimeTest",
+        "ncycles": 30,  
+        "tcycle": 1000.,
+        "dt": 1.,
+        "export_min": 1,
+    }
+
 class NaghaviModelParameters(ParametersObject):
     def __init__(self, name='Naghavi Model') -> None:
         super().__init__(name=name)

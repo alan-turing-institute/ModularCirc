@@ -1,5 +1,5 @@
 from .OdeModel import OdeModel
-from .NaghaviModelParameters import NaghaviModelParameters
+from .NaghaviModelParameters import NaghaviModelParameters, TEMPLATE_TIME_SETUP_DICT
 from ..Components import Rlc_component, Valve_non_ideal, HC_mixed_elastance
 from ..HelperRoutines import *
 

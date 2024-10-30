@@ -1,5 +1,5 @@
 from .OdeModel import OdeModel
-from .KorakianitisModel_parameters import KorakianitisModel_parameters as k2006
+from .KorakianitisMixedModel_parameters import KorakianitisMixedModel_parameters, TIME_SETUP_DICT
 from .ParametersObject import ParametersObject as po
 from ..Components import Rlc_component, Valve_simple_bernoulli, HC_mixed_elastance
 
@@ -21,7 +21,7 @@ FULL_NAMES =[
 ]
 
 class KorakianitisMixedModel(OdeModel):
-    def __init__(self, time_setup_dict, parobj:po=k2006, suppress_printing:bool=False) -> None:
+    def __init__(self, time_setup_dict, parobj:po=KorakianitisModel_parameters, suppress_printing:bool=False) -> None:
         super().__init__(time_setup_dict)
         self.name = 'KorakianitisModel'
         
