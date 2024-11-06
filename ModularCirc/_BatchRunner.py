@@ -62,13 +62,17 @@ class _BatchRunner:
         for key, val in self._parameters_constant.items():
             self._samples[key] = val
         return
+    
+    @property
+    def samples(self):
+        return self._samples.copy()
             
     def map_sample_timings(self, map:dict = dict(), ref_time=1.0):
         for key, mappings in map.items():
             for key2 in mappings:
                 if key2 in self._samples.columns: self._samples.drop(key2, axis=1)
                 self._samples[key2] = self._samples[key] * self._samples['T'] / ref_time
-            if key not in mappings : self._samples.drop(key, inplace=True)
+            if key not in mappings: self._samples.drop(key, inplace=True, axis=1)
         self._ref_time = ref_time
         return
     
@@ -104,9 +108,9 @@ class _BatchRunner:
     
     def _run_case(self, row, **kwargs):
         time_setup = self._tst.copy()
-        time_setup['T']  = row['T']
+        time_setup['tcycle']  = row['T']
         time_setup['dt']*= row['T'] / self._ref_time
-        
+                
         po : ParametersObject = self._po_generator()
         for key, val in row.items():
             if key == "T":
@@ -161,16 +165,14 @@ class _BatchRunner:
             raw_signal = solver._asd.copy()
         else:
             raw_signal = solver._asd[out_cols].copy()
-
-            
-        if output_path is not None: raw_signal.to_csv(os.path.join(output_path, f'all_outputs_{row.name}.csv'))
-        
-        raw_signal_short = raw_signal.tail(model.time_object.n_c)
+                
+        raw_signal_short = raw_signal.tail(model.time_object.n_c).copy()
         raw_signal_short.index = pd.MultiIndex.from_tuples([(row.name, i) for i in range(len(raw_signal_short))], names=
         ['realization', 'time_ind'])
+        raw_signal_short.loc[:,'T'] = model.time_object._sym_t.values[-model.time_object.n_c:]
+                
+        if output_path is not None: raw_signal_short.loc[row.name].to_csv(os.path.join(output_path, f'all_outputs_{row.name}.csv'))
         
-        # raw_signal_short.reindex([ i for i in range(len(raw_signal_short))])
-        # raw_signal_short.index.name = 'Index (realization, time)'
         return raw_signal_short
         
             
