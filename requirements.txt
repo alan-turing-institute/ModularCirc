@@ -4,3 +4,6 @@ numpy==1.26.4
 pandas==2.2.1
 pandera==0.18.0
 scipy==1.12.0
+joblib
+tqdm
+multimethod
