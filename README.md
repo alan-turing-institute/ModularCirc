@@ -69,3 +69,11 @@ p_lv = solver.model.commponents['lv'].P_i.values
 
 ## Example values pv loops for all 4 chambers:
 ![Example PV loops!](Figures/PV_loops.png)
+
+## Run tests
+
+You can run locally the tests by running the following command:
+```bash
+  python -m unittest discover -s tests
+```
+there is also a autamtated test pipeline that runs the tests on every push to the repository (see [here](.github/workflows/ci.yml)).
