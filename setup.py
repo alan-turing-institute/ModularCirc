@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 
 here = os.path.abspath(os.path.dirname(__file__))
-home_page = 'https://github.com/MaxBalmus/ModularCirc'
+home_page = 'https://github.com/alan-turing-institute/ModularCirc'
 
 def read_requirements(file_name):
     reqs = []
