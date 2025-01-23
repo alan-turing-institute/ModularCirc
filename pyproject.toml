@@ -8,11 +8,10 @@ version = "0.1.1"
 description = "A python package for creating and running 0D models of the cardiovascular system"
 readme = "README.md"
 requires-python = ">=3.8"
-license = "MIT"
+license = {text = "MIT" }
 authors = [
     {name = "Maximilian Balmus", email = "mbalmus@turing.ac.uk"}
 ]
-homepage = "https://github.com/alan-turing-institute/ModularCirc"
 
 dependencies = [
     "matplotlib==3.8.2",
@@ -32,3 +31,6 @@ notebooks = ["ipykernel"]
 "Homepage" = "https://github.com/alan-turing-institute/ModularCirc"
 "Source Code" = "https://github.com/alan-turing-institute/ModularCirc"
 "Bug Tracker" = "https://github.com/alan-turing-institute/ModularCirc/issues"
+
+[tool.setuptools]
+packages = ["ModularCirc"]
