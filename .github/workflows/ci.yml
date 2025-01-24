@@ -23,7 +23,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.10'
 
     - name: Set up environment
       run: |
@@ -50,11 +50,11 @@ jobs:
     - name: Set up Conda
       uses: conda-incubator/setup-miniconda@v2
       with:
-        python-version: '3.x'
+        python-version: '3.10'
 
     - name: Create Conda environment
       run: |
-        conda create --name myenv python=3.x -y
+        conda create --name myenv python=3.10 -y
 
     - name: Install dependencies
       run: |
