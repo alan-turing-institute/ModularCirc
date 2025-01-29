@@ -55,6 +55,7 @@ jobs:
 
     - name: Create Conda environment
       run: |
+        $CONDA/bin/conda init
         $CONDA/bin/conda create --name myenv python=3.10 -y
 
     - name: Install dependencies
