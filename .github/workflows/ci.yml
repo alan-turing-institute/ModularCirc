@@ -62,12 +62,8 @@ jobs:
     - name: Create Conda environment
       shell: bash -l {0}
       run: |
-        $CONDA/bin/conda init bash
-        source /home/runner/.bashrc
         $CONDA/bin/conda create --name myenv python=3.10 -y
-        source /home/runner/.bashrc
-        $CONDA/bin/conda init bash
-        source /home/runner/.bashrc
+        eval $(conda shell.bash hook)
         $CONDA/bin/conda activate myenv
 
 #     - name: Install dependencies
