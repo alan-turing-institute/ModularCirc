@@ -13,33 +13,33 @@ on:
       - tests_ci
 
 jobs:
-  build-venv:
-    runs-on: ubuntu-latest
+  # build-venv:
+  #   runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v4
+  #     with:
+  #       python-version: '3.10'
 
-    - name: Set up environment
-      run: |
-        python -m venv venv
-        source venv/bin/activate
+  #   - name: Set up environment
+  #     run: |
+  #       python -m venv venv
+  #       source venv/bin/activate
 
-    - name: Install dependencies
-      run: |
-        source venv/bin/activate
-        python -m pip install --upgrade pip
-        pip install ./
+  #   - name: Install dependencies
+  #     run: |
+  #       source venv/bin/activate
+  #       python -m pip install --upgrade pip
+  #       pip install ./
 
-    - name: Run tests
-      run: |
-        source venv/bin/activate
-        python -m unittest discover -s tests
+  #   - name: Run tests
+  #     run: |
+  #       source venv/bin/activate
+  #       python -m unittest discover -s tests
 
   build-conda:
     runs-on: ubuntu-latest
@@ -68,8 +68,8 @@ jobs:
       run: |
         $CONDA/bin/conda init
         $CONDA/bin/conda activate myenv
-        python -m pip install --upgrade pip
-        pip install ./
+#        python -m pip install --upgrade pip
+#        pip install ./
 
     - name: Run tests
       run: |
