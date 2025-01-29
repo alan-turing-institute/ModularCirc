@@ -63,6 +63,7 @@ jobs:
       run: |
         $CONDA/bin/conda init
         $CONDA/bin/conda create --name myenv python=3.10 -y
+        $CONDA/bin/conda activate myenv
 
     - name: Install dependencies
       run: |
