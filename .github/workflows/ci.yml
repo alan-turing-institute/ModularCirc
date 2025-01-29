@@ -59,6 +59,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        source ~/.bashrc
         conda init
         conda activate myenv
         python -m pip install --upgrade pip
