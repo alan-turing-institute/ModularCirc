@@ -65,7 +65,9 @@ jobs:
         $CONDA/bin/conda init bash
         source /home/runner/.bashrc
         $CONDA/bin/conda create --name myenv python=3.10 -y
+        source /home/runner/.bashrc
         $CONDA/bin/conda init bash
+        source /home/runner/.bashrc
         $CONDA/bin/conda activate myenv
 
 #     - name: Install dependencies
