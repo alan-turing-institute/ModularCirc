@@ -60,9 +60,11 @@ jobs:
         auto-activate-base: false
 
     - name: Create Conda environment
+      shell: bash -l {0}
       run: |
-        $CONDA/bin/conda init
+        $CONDA/bin/conda init bash
         $CONDA/bin/conda create --name myenv python=3.10 -y
+        $CONDA/bin/conda init bash
         $CONDA/bin/conda activate myenv
 
     - name: Install dependencies
