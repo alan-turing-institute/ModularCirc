@@ -28,11 +28,12 @@ jobs:
           # condarc-file: etc/example-condarc.yml
           auto-activate-base: false
       - run: |
-          conda info
-          conda list
-          conda install -c conda-forge llvmdev=14.0.6  # Install LLVM
-          conda install -c conda-forge rust  # Install Rust for building pydantic-cor          
+          # conda info
+          # conda list
+          # conda install -c conda-forge llvmdev=14.0.6  # Install LLVM
+          # conda install -c conda-forge rust  # Install Rust for building pydantic-cor   
           python -m pip install --upgrade pip
+          pip install setuptools --upgrade
           pip install ./          
 
 # jobs:
