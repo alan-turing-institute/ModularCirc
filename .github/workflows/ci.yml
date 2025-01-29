@@ -34,7 +34,10 @@ jobs:
           # conda install -c conda-forge rust  # Install Rust for building pydantic-cor   
           python -m pip install --upgrade pip
           pip install setuptools --upgrade
-          pip install ./          
+          pip install ./
+                
+      - name: Run tests
+        run: |    
           python -m unittest discover -s tests
 
 # jobs:
