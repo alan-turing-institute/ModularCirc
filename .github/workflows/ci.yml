@@ -66,6 +66,7 @@ jobs:
 
     - name: Run tests
       run: |
+        source ~/.bashrc
         conda init
         conda activate myenv
         python -m unittest discover -s tests
