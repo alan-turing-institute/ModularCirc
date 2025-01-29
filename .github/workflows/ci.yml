@@ -25,7 +25,6 @@ jobs:
         with:
           activate-environment: myenv
           environment-file: environment.yml
-          python-version: 3.10
           # condarc-file: etc/example-condarc.yml
           auto-activate-base: false
       - run: |
