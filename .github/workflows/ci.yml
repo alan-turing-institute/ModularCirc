@@ -59,7 +59,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        source ~/.bashrc
         conda init
         conda activate myenv
         python -m pip install --upgrade pip
@@ -67,7 +66,6 @@ jobs:
 
     - name: Run tests
       run: |
-        source ~/.bashrc
         conda init
         conda activate myenv
         python -m unittest discover -s tests
