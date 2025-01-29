@@ -11,54 +11,81 @@ on:
       - dev
 
 jobs:
+
   build-conda:
-    name: Conda environment
-    runs-on: "ubuntu-latest"
-    defaults:
-      run:
-        shell: bash -el {0}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          activate-environment: myenv
-          environment-file: environment.yml
-          python-version: '3.10'
-          auto-activate-base: false
-      - run: | 
-          python -m pip install --upgrade pip
-          pip install setuptools --upgrade
-          pip install ./
-
-      - name: Run tests
-        run: |    
-          python -m unittest discover -s tests
-
-  build-venv:
-    name: Python virtual environment
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v2
       with:
         python-version: '3.10'
 
-    - name: Set up environment
+    - name: Create Conda environment
       run: |
-        python -m venv venv
-        source venv/bin/activate
-
+        conda create --name myenv python=3.10 -y
     - name: Install dependencies
       run: |
-        source venv/bin/activate
+        conda init
+        conda activate myenv
         python -m pip install --upgrade pip
         pip install ./
-
     - name: Run tests
       run: |
-        source venv/bin/activate
         python -m unittest discover -s tests
+
+
+  # build-conda:
+  #   name: Conda environment
+  #   runs-on: "ubuntu-latest"
+  #   defaults:
+  #     run:
+  #       shell: bash -el {0}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: conda-incubator/setup-miniconda@v3
+  #       with:
+  #         activate-environment: myenv
+  #         environment-file: environment.yml
+  #         python-version: '3.10'
+  #         auto-activate-base: false
+  #     - run: | 
+  #         python -m pip install --upgrade pip
+  #         pip install setuptools --upgrade
+  #         pip install ./
+
+  #     - name: Run tests
+  #       run: |    
+  #         python -m unittest discover -s tests
+
+  # build-venv:
+  #   name: Python virtual environment
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v4
+  #     with:
+  #       python-version: '3.10'
+
+  #   - name: Set up environment
+  #     run: |
+  #       python -m venv venv
+  #       source venv/bin/activate
+
+  #   - name: Install dependencies
+  #     run: |
+  #       source venv/bin/activate
+  #       python -m pip install --upgrade pip
+  #       pip install ./
+
+  #   - name: Run tests
+  #     run: |
+  #       source venv/bin/activate
+  #       python -m unittest discover -s tests
