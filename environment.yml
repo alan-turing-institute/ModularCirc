@@ -5,5 +5,3 @@ channels:
 
 dependencies:
   - pip
-  # Core scientific python
-  # - numpy
