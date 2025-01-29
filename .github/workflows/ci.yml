@@ -63,8 +63,8 @@ jobs:
       shell: bash -l {0}
       run: |
         $CONDA/bin/conda create --name myenv python=3.10 -y
-        eval $(conda shell.bash hook)
-        $CONDA/bin/conda activate myenv
+        # eval $(conda shell.bash hook)
+        # $CONDA/bin/conda activate myenv
 
 #     - name: Install dependencies
 #       run: |
