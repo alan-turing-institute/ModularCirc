@@ -58,6 +58,8 @@ jobs:
         channel-priority: true
         auto-update-conda: false
         auto-activate-base: false
+        environment-file: environment.yml
+        activate-environment: myenv
 
     - name: Create Conda environment
       shell: bash -l {0}
