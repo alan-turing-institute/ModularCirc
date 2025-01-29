@@ -55,8 +55,8 @@ jobs:
 
     - name: Initialize Conda
       run: |
-        conda init
-        echo "source ~/.bashrc" >> $GITHUB_ENV
+        conda init bash
+        echo "source ~/.bashrc" >> $GITHUB_ENV        
   
     - name: Create Conda environment
       run: |
