@@ -5,20 +5,18 @@ on:
     branches:
       - main
       - dev
-      - tests_ci
   pull_request:
     branches:
       - main
       - dev
-      - tests_ci
 
 jobs:
-  example-3:
-    name: Ex3 Linux
+  build-conda:
+    name: Conda environment
     runs-on: "ubuntu-latest"
     defaults:
       run:
-        shell: bash -el {0}
+        shell: bash -eo pipefail
     steps:
       - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v3
@@ -37,11 +35,12 @@ jobs:
           python -m unittest discover -s tests
 
   build-venv:
+    name: Python virtual environment
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
