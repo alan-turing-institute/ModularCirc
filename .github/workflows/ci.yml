@@ -52,6 +52,12 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         python-version: '3.10'
+        miniconda-version: 'latest'
+        channels: 'conda-forge'
+        mamba-version: '*'
+        channel-priority: true
+        auto-update-conda: false
+        auto-activate-base: false
 
     - name: Create Conda environment
       run: |
@@ -60,6 +66,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        $CONDA/bin/conda init
         $CONDA/bin/conda activate myenv
         python -m pip install --upgrade pip
         pip install ./
