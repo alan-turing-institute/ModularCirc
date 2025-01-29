@@ -56,7 +56,7 @@ jobs:
     - name: Initialize Conda
       run: |
         conda init
-        . ~/.bashrc
+        echo "source ~/.bashrc" >> $GITHUB_ENV
   
     - name: Create Conda environment
       run: |
@@ -64,11 +64,13 @@ jobs:
 
     - name: Install dependencies
       run: |
+        source ~/.bashrc
         conda activate myenv
         python -m pip install --upgrade pip
         pip install ./
 
     - name: Run tests
       run: |
+        source ~/.bashrc
         conda activate myenv
         python -m unittest discover -s tests
