@@ -53,19 +53,13 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Initialize Conda
-      run: |
-        conda init bash
-        echo "source ~/.bashrc" >> $GITHUB_ENV        
-  
     - name: Create Conda environment
       run: |
-        conda create --name myenv python=3.10 -y
+        $CONDA/bin/conda create --name myenv python=3.10 -y
 
     - name: Install dependencies
       run: |
-        source ~/.bashrc
-        conda activate myenv
+        $CONDA/bin/conda activate myenv
         python -m pip install --upgrade pip
         pip install ./
 
