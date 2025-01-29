@@ -13,70 +13,86 @@ on:
       - tests_ci
 
 jobs:
-  # build-venv:
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v3
-
-  #   - name: Set up Python
-  #     uses: actions/setup-python@v4
-  #     with:
-  #       python-version: '3.10'
-
-  #   - name: Set up environment
-  #     run: |
-  #       python -m venv venv
-  #       source venv/bin/activate
-
-  #   - name: Install dependencies
-  #     run: |
-  #       source venv/bin/activate
-  #       python -m pip install --upgrade pip
-  #       pip install ./
-
-  #   - name: Run tests
-  #     run: |
-  #       source venv/bin/activate
-  #       python -m unittest discover -s tests
-
-  build-conda:
-    runs-on: ubuntu-latest
-
+  example-3:
+    name: Ex3 Linux
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: myenv
+          environment-file: environment.yml
+          python-version: 3.10
+          # condarc-file: etc/example-condarc.yml
+          auto-activate-base: false
+      - run: |
+          conda info
+          conda list
 
-    - name: Set up Conda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        python-version: '3.10'
-        miniconda-version: 'latest'
-        channels: 'conda-forge'
-        mamba-version: '*'
-        channel-priority: true
-        auto-update-conda: false
-        auto-activate-base: false
-        environment-file: environment.yml
-        activate-environment: myenv
+# jobs:
+#   # build-venv:
+#   #   runs-on: ubuntu-latest
 
-    - name: Create Conda environment
-      shell: bash -l {0}
-      run: |
-        $CONDA/bin/conda create --name myenv python=3.10 -y
-        # eval $(conda shell.bash hook)
-        # $CONDA/bin/conda activate myenv
+#   #   steps:
+#   #   - name: Checkout code
+#   #     uses: actions/checkout@v3
 
-#     - name: Install dependencies
+#   #   - name: Set up Python
+#   #     uses: actions/setup-python@v4
+#   #     with:
+#   #       python-version: '3.10'
+
+#   #   - name: Set up environment
+#   #     run: |
+#   #       python -m venv venv
+#   #       source venv/bin/activate
+
+#   #   - name: Install dependencies
+#   #     run: |
+#   #       source venv/bin/activate
+#   #       python -m pip install --upgrade pip
+#   #       pip install ./
+
+#   #   - name: Run tests
+#   #     run: |
+#   #       source venv/bin/activate
+#   #       python -m unittest discover -s tests
+
+#   build-conda:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v3
+
+#     - name: Set up Conda
+#       uses: conda-incubator/setup-miniconda@v2
+#       with:
+#         python-version: '3.10'
+#         miniconda-version: 'latest'
+#         channels: 'conda-forge'
+#         auto-activate-base: false
+#         environment-file: environment.yml
+#         activate-environment: myenv
+
+#     - name: Create Conda environment
+#       shell: bash -l {0}
 #       run: |
-#         $CONDA/bin/conda init
+#         $CONDA/bin/conda create --name myenv python=3.10 -y
 #         $CONDA/bin/conda activate myenv
-#        python -m pip install --upgrade pip
-#        pip install ./
 
-#     - name: Run tests
-#       run: |
-#         source ~/.bashrc
-#         conda activate myenv
-#         python -m unittest discover -s tests
+# #     - name: Install dependencies
+# #       run: |
+# #         $CONDA/bin/conda init
+# #         $CONDA/bin/conda activate myenv
+# #        python -m pip install --upgrade pip
+# #        pip install ./
+
+# #     - name: Run tests
+# #       run: |
+# #         source ~/.bashrc
+# #         conda activate myenv
+# #         python -m unittest discover -s tests
