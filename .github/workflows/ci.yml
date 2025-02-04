@@ -12,31 +12,6 @@ on:
 
 jobs:
 
-  # build-conda:
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v3
-
-  #   - name: Set up Conda
-  #     uses: conda-incubator/setup-miniconda@v2
-  #     with:
-  #       python-version: '3.10'
-
-  #   - name: Create Conda environment
-  #     run: |
-  #       conda create --name myenv python=3.10 -y
-  #   - name: Install dependencies
-  #     run: |
-  #       conda init
-  #       conda activate myenv
-  #       python -m pip install --upgrade pip
-  #       pip install ./
-  #   - name: Run tests
-  #     run: |
-  #       python -m unittest discover -s tests
-
   build-conda:
     name: Conda environment
     runs-on: "ubuntu-latest"
