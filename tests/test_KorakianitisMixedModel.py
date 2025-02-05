@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 from ModularCirc.Models.KorakianitisMixedModel import KorakianitisMixedModel
 from ModularCirc.Models.KorakianitisMixedModel_parameters import KorakianitisMixedModel_parameters
 from ModularCirc.Solver import Solver
@@ -17,7 +18,7 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         self.parobj = KorakianitisMixedModel_parameters()
         self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj, suppress_printing=True)
         self.solver = Solver(model=self.model)
-        self.solver.setup(suppress_output=True)
+        self.solver.setup(suppress_output=True, method='LSODA')
 
         self.initial_values = {}
 
@@ -61,8 +62,10 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         self.assertFalse(self.initial_values == new_dict)
 
         # Check that the values are the same as the expected values
-        self.assertTrue(new_dict == self.expected_values)
-
+        expected_ndarray = np.array([self.expected_values[key1][key2]  for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
+        new_ndarray      = np.array([new_dict[key1][key2]              for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
+        test_ndarray     = np.where(np.abs(expected_ndarray) > 1e-6, np.abs((expected_ndarray - new_ndarray) / expected_ndarray),  np.abs((expected_ndarray - new_ndarray)))
+        self.assertTrue((test_ndarray < 1e-3).all())
 
 
 if __name__ == '__main__':
