@@ -7,7 +7,7 @@ The scope of this package is to provide a framework for building **0D models** a
 
 ## Installation
 ```bash
-pip install git+https://github.com/MaxBalmus/ModularCirc.git
+pip install git+https://github.com/alan-turing-institute/ModularCirc.git
 ```
 
 ## Steps for running basic models
