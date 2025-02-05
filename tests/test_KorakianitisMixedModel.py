@@ -15,9 +15,9 @@ class TestKorakianitisMixedModel(unittest.TestCase):
             'export_min': 1
         }
         self.parobj = KorakianitisMixedModel_parameters()
-        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj)
+        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj, suppress_printing=True)
         self.solver = Solver(model=self.model)
-        self.solver.setup()
+        self.solver.setup(suppress_output=True)
 
         self.initial_values = {}
 
