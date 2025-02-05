@@ -228,9 +228,9 @@ class BaseAnalysis():
         
         ## Inputs
         component : str
-            name of the component (ideally the aortic valve) for which we are computing the cardiac outpu
+            name of the component (ideally the aortic valve) for which we are computing the cardiac output
         
-        ## Outpus
+        ## Outputs
         CO : float
             the cardiac ouput value 
         """
@@ -242,6 +242,25 @@ class BaseAnalysis():
         self.CO = q.sum() * dt / T / self.model.time_object.export_min
         
         return self.CO
+    
+    def compute_ejection_fraction(self, component:str)->float:
+        """
+        Method for estimating the cardiac output.
+        
+        ## Inputs
+        component : str
+            name of the component (ideally one of the ventricles) for which we are Ejection Fraction
+        
+        ## Outputs
+        CO : float
+            the ejection fraction
+        """
+        ventricle = self.model.commponents[component]
+        edv = ventricle.V.values[self.tind].max()
+        esv = ventricle.V.values[self.tind].min()
+        self.EF = (edv - esv) / edv
+        return self.EF
+    
     
     def compute_artery_pressure_range(self, component:str)->tuple[float]:
         """Method for computing the range of pressures in artery
