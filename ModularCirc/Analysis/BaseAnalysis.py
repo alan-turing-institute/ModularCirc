@@ -249,7 +249,7 @@ class BaseAnalysis():
         
         ## Inputs
         component : str
-            name of the component (ideally one of the ventricles) for which we are Ejection Fraction
+            name of the component (ideally one of the ventricles) for which we are computing Ejection Fraction
         
         ## Outputs
         CO : float
