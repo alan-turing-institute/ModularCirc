@@ -19,10 +19,10 @@ class TestModularCirc(unittest.TestCase):
 
     def test_model_initialization(self):
         self.assertIsInstance(self.model, NaghaviModel)
-        self.assertTrue(hasattr(self.solver.model, 'commponents'))
-        self.assertIn('lv', self.solver.model.commponents)
-        self.assertEqual( self.solver.model.commponents['lv'].E_pas, self.parobj.components['lv']['E_pas'])
-        self.assertEqual( self.solver.model.commponents['ao'].R, self.parobj.components['ao']['r'])
+        self.assertTrue(hasattr(self.solver.model, 'components'))
+        self.assertIn('lv', self.solver.model.components)
+        self.assertEqual( self.solver.model.components['lv'].E_pas, self.parobj.components['lv']['E_pas'])
+        self.assertEqual( self.solver.model.components['ao'].R, self.parobj.components['ao']['r'])
 
 
     def test_solver_initialization(self):
@@ -31,8 +31,8 @@ class TestModularCirc(unittest.TestCase):
 
     def test_solver_run(self):
         self.solver.solve()
-        self.assertTrue(len(self.solver.model.commponents['lv'].V.values) > 0)
-        self.assertTrue(len(self.solver.model.commponents['lv'].P_i.values) > 0)
+        self.assertTrue(len(self.solver.model.components['lv'].V.values) > 0)
+        self.assertTrue(len(self.solver.model.components['lv'].P_i.values) > 0)
 
 if __name__ == '__main__':
     unittest.main()
