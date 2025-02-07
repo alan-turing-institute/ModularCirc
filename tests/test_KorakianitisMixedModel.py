@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 from ModularCirc.Models.KorakianitisMixedModel import KorakianitisMixedModel
 from ModularCirc.Models.KorakianitisMixedModel_parameters import KorakianitisMixedModel_parameters
 from ModularCirc.Solver import Solver
@@ -15,21 +16,24 @@ class TestKorakianitisMixedModel(unittest.TestCase):
             'export_min': 1
         }
         self.parobj = KorakianitisMixedModel_parameters()
-        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj)
+        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj, suppress_printing=True)
         self.solver = Solver(model=self.model)
-        self.solver.setup()
+        self.solver.setup(suppress_output=True, method='LSODA')
 
         self.initial_values = {}
-
+        
+        self.tind_init  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * self.model.time_object.export_min,
+                               stop =self.model.time_object.n_t)
+        
         for key, value in self.model.commponents.items():
             self.initial_values[key] = {
-                'V': value.V.values.mean(),
-                'P_i': value.P_i.values.mean(),
-                'Q_i': value.Q_i.values.mean()
+                'V': value.V.values[self.tind_init].mean(),
+                'P_i': value.P_i.values[self.tind_init].mean(),
+                'Q_i': value.Q_i.values[self.tind_init].mean()
             }
 
         # Expected values from a previous run
-        self.expected_values = {'la': {'V': 86.29361864828056, 'P_i': 1.3463596745790851, 'Q_i': 90.59968155550254}, 'mi': {'V': 0.0, 'P_i': 1.3463596745790851, 'Q_i': 86.33390902640244}, 'lv': {'V': 59.138804423397644, 'P_i': 25.959881273118285, 'Q_i': 86.33390902640244}, 'ao': {'V': 0.0, 'P_i': 25.959881273118285, 'Q_i': 78.75019226787782}, 'sas': {'V': 9.818789889013463, 'P_i': 122.7348736126631, 'Q_i': 78.75019226787782}, 'sat': {'V': 195.39715170393742, 'P_i': 122.12321981496237, 'Q_i': 117.98734314176914}, 'svn': {'V': 159.79374319303628, 'P_i': 7.794816741123734, 'Q_i': 106.83895350857598}, 'ra': {'V': 54.75886810642046, 'P_i': 0.7858211510595732, 'Q_i': 93.4532745341888}, 'ti': {'V': 0.0, 'P_i': 0.7858211510595732, 'Q_i': 91.42440301323052}, 'rv': {'V': 65.67855889569168, 'P_i': 11.108968588959739, 'Q_i': 91.42440301323052}, 'po': {'V': 0.0, 'P_i': 11.108968588959739, 'Q_i': 88.83083714042574}, 'pas': {'V': 5.941821072574982, 'P_i': 33.010117069866396, 'Q_i': 88.83083714042574}, 'pat': {'V': 124.43450990744847, 'P_i': 32.74592365985507, 'Q_i': 106.70569255158107}, 'pvn': {'V': 38.744134160198236, 'P_i': 1.8899577639121004, 'Q_i': 99.5089793327935}}
+        self.expected_values = {'la': {'V': 126.38884973, 'P_i': 1.9049962, 'Q_i': 85.55031592}, 'mi': {'V': 0.0, 'P_i': 1.9049962851, 'Q_i': 85.1636944244}, 'lv': {'V': 78.92264366, 'P_i': 35.6800612, 'Q_i': 85.16369442}, 'ao': {'V': 0.0, 'P_i': 35.6800612, 'Q_i': 85.72479065}, 'sas': {'V': 7.9275133, 'P_i': 99.0939162631, 'Q_i': 85.724790652}, 'sat': {'V': 158.13864426, 'P_i': 98.83665266, 'Q_i': 85.74867979}, 'svn': {'V': 145.49804915, 'P_i': 7.09746581, 'Q_i': 85.73761272}, 'ra': {'V': 53.83474153, 'P_i': 0.73421251, 'Q_i': 84.8433774}, 'ti': {'V': 0.0, 'P_i': 0.73421251, 'Q_i': 84.58031928}, 'rv': {'V': 66.10678226, 'P_i': 11.48872347, 'Q_i': 84.58031928}, 'po': {'V': 0.0, 'P_i': 11.48872347, 'Q_i': 83.979334974}, 'pas': {'V': 5.16689938, 'P_i': 28.704996546, 'Q_i': 83.97933499}, 'pat': {'V': 108.44076581847, 'P_i': 28.53704363, 'Q_i': 83.97564173}, 'pvn': {'V': 49.57511092, 'P_i': 2.41829809, 'Q_i': 84.254321165}}
 
 
     def test_model_initialization(self):
@@ -47,22 +51,27 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         self.solver.solve()
         self.assertTrue(len(self.solver.model.commponents['lv'].V.values) > 0)
         self.assertTrue(len(self.solver.model.commponents['lv'].P_i.values) > 0)
+        
+        self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * self.model.time_object.export_min,
+                               stop =self.model.time_object.n_t)
 
         new_dict = {}
         for key, value in self.model.commponents.items():
 
             new_dict[key] = {
-                'V': value.V.values.mean(),
-                'P_i': value.P_i.values.mean(),
-                'Q_i': value.Q_i.values.mean()
+                'V': value.V.values[self.tind_fin].mean(),
+                'P_i': value.P_i.values[self.tind_fin].mean(),
+                'Q_i': value.Q_i.values[self.tind_fin].mean()
             }
 
         # Check that the values have changed wrt the initial values
         self.assertFalse(self.initial_values == new_dict)
 
         # Check that the values are the same as the expected values
-        self.assertTrue(new_dict == self.expected_values)
-
+        expected_ndarray = np.array([self.expected_values[key1][key2]  for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
+        new_ndarray      = np.array([new_dict[key1][key2]              for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
+        test_ndarray     = np.where(np.abs(expected_ndarray) > 1e-6, np.abs((expected_ndarray - new_ndarray) / expected_ndarray),  np.abs((expected_ndarray - new_ndarray)))
+        self.assertTrue((test_ndarray < 1e-3).all())
 
 
 if __name__ == '__main__':

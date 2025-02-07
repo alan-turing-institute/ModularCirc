@@ -13,9 +13,9 @@ class TestModularCirc(unittest.TestCase):
             'export_min': 1
         }
         self.parobj = NaghaviModelParameters()
-        self.model = NaghaviModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj)
+        self.model = NaghaviModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj, suppress_printing=True)
         self.solver = Solver(model=self.model)
-        self.solver.setup()
+        self.solver.setup(suppress_output=True)
 
     def test_model_initialization(self):
         self.assertIsInstance(self.model, NaghaviModel)
