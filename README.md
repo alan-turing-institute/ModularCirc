@@ -5,10 +5,49 @@ The scope of this package is to provide a framework for building **0D models** a
 2. **Valves**
 3. **Vessels**
 
-## Installation
-```bash
-pip install git+https://github.com/alan-turing-institute/ModularCirc.git
+## Clone the ModularCirc GitHub repo locally
+
+Run:
+
 ```
+git clone https://github.com/alan-turing-institute/ModularCirc
+cd ModularCirc
+```
+
+## Setup Conda or python virtual environment
+
+Before installation of the ModularCirc package, please setup a virtual environment using either Conda or python virtual environment.
+
+### Conda setup
+
+Install Conda from https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html
+
+Run: 
+
+```
+conda create --name <yourenvname>
+conda activate <yourenvname>
+```
+
+Proceed to installing the ModularCirc package.
+
+### Python virtual environment setup
+
+Run `python3 -m venv venv`. This creates a virtual environment called `venv` in your base directory. 
+
+Activate the python environment: `source venv/bin/activate`
+
+Proceed to installing the ModularCirc package.
+
+## Installation
+
+From the repo directory, run:
+
+```bash
+pip install ./
+```
+
+This will install the package based on the `pyproject.toml` file specifications. 
 
 ## Steps for running basic models
 1. Load the classes for the model of interest and the parameter object used to paramterise the said model:

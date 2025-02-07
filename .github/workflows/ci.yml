@@ -4,31 +4,76 @@ on:
   push:
     branches:
       - main
-      - tests_ci
+      - dev
   pull_request:
     branches:
       - main
-      - tests_ci
+      - dev
 
 jobs:
-  build:
+
+  build-conda:
+    name: Conda environment
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create environment.yml
+        run: |
+          echo "name: myenv" > environment.yml
+          echo "channels:" >> environment.yml
+          echo "  - conda-forge" >> environment.yml
+          echo "  - defaults" >> environment.yml
+          echo "dependencies:" >> environment.yml
+          echo "  - pip" >> environment.yml
+
+      - name: Set up Conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: myenv
+          environment-file: environment.yml
+          python-version: '3.10'
+          auto-activate-base: false
+      
+      - name: Install dependencies
+        run: | 
+          python -m pip install --upgrade pip
+          pip install setuptools --upgrade
+          pip install ./
+
+      - name: Run tests
+        run: |    
+          python -m unittest discover -s tests
+
+  build-venv:
+    name: Python virtual environment
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.10'
+
+    - name: Set up environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
 
     - name: Install dependencies
       run: |
+        source venv/bin/activate
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install ./
 
     - name: Run tests
       run: |
+        source venv/bin/activate
         python -m unittest discover -s tests
-
