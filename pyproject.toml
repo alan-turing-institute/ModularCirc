@@ -26,6 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 notebooks = ["ipykernel"]
+dev = ["pre-commit"]
 
 [project.urls]
 "Homepage" = "https://github.com/alan-turing-institute/ModularCirc"
