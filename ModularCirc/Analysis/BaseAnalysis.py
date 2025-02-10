@@ -116,7 +116,7 @@ class BaseAnalysis():
         )
         ax.set_title(component.upper() + ': PV loop')
         ax.set_xlabel(f'Time (${time_units}$)')
-        ax.set_ylabel(f'Flux (${volume_units}\cdot {time_units}^' + "{-1}$)")
+        ax.set_ylabel(f'Flux (${volume_units}\\cdot {time_units}^' + "{-1}$)")
         return ax
 
     def plot_fluxes(self, component:str, ax=None, time_units:str='s', volume_units:str='mL'):
@@ -147,7 +147,7 @@ class BaseAnalysis():
         )      
         ax.set_title(f"{component.upper()}: Fluxes")   
         ax.set_xlabel(f'Time (${time_units}$)')
-        ax.set_ylabel(f'Flux (${volume_units}\cdot {time_units}$)')   
+        ax.set_ylabel(f'Flux (${volume_units}\\cdot {time_units}$)')   
         ax.set_xlim(self.tsym[0], self.tsym[-1])
         ax.legend()    
         return ax
@@ -160,11 +160,11 @@ class BaseAnalysis():
             self.model.commponents[component].PHI.values[self.tind],
             linestyle='-',
             linewidth=4,
-            label=f'{component} $\phi$'
+            label=f'{component} $\\phi$'
         )
-        ax.set_title(f"{component.upper()}: $\Phi$")   
+        ax.set_title(f"{component.upper()}: $\\Phi$")   
         ax.set_xlabel(f'Time (${time_units}$)')
-        ax.set_ylabel(f'$\phi$')   
+        ax.set_ylabel(f'$\\phi$')   
         ax.set_xlim(self.tsym[0], self.tsym[-1])
         ax.legend()    
         return ax
