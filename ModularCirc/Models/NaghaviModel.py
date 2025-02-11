@@ -11,7 +11,7 @@ class NaghaviModel(OdeModel):
         if not suppress_printing: print(parobj)
                 
         # Defining the aorta object
-        self.commponents['ao'] = Rlc_component( name='Aorta',
+        self.components['ao'] = Rlc_component( name='Aorta',
                                 time_object=self.time_object, 
                                 r     = parobj['ao']['r'],
                                 c     = parobj['ao']['c'], 
@@ -22,7 +22,7 @@ class NaghaviModel(OdeModel):
         self.set_v_sv('ao')
         
         # Defining the arterial system object
-        self.commponents['art'] = Rlc_component(name='Arteries',
+        self.components['art'] = Rlc_component(name='Arteries',
                                 time_object=self.time_object,
                                 r     = parobj['art']['r'],
                                 c     = parobj['art']['c'], 
@@ -33,7 +33,7 @@ class NaghaviModel(OdeModel):
         self.set_v_sv('art')
         
         # Defining the venous system object
-        self.commponents['ven'] = Rlc_component(name='VenaCava',
+        self.components['ven'] = Rlc_component(name='VenaCava',
                                 time_object=self.time_object,
                                 r     = parobj['ven']['r'],
                                 c     = parobj['ven']['c'], 
@@ -44,14 +44,14 @@ class NaghaviModel(OdeModel):
         self.set_v_sv('ven')
                 
         # Defining the aortic valve object
-        self.commponents['av']  = Valve_non_ideal(name='AorticValve',
+        self.components['av']  = Valve_non_ideal(name='AorticValve',
                                      time_object=self.time_object,
                                      r=parobj['av']['r'],
                                      max_func=parobj['av']['max_func']
                                      )
         
         # Defining the mitral valve object
-        self.commponents['mv'] = Valve_non_ideal(name='MitralValve',
+        self.components['mv'] = Valve_non_ideal(name='MitralValve',
                                     time_object=self.time_object,
                                     r=parobj['mv']['r'],
                                     max_func=parobj['mv']['max_func']
@@ -61,7 +61,7 @@ class NaghaviModel(OdeModel):
         # def la_af(t, t_max=parobj['la']['t_max'], t_tr=parobj['la']['t_tr'], tau=parobj['la']['tau'], af=parobj['la']['activation_function']):
         #     return af(time_shift(t, 100., self.time_object), t_max=t_max, t_tr=t_tr, tau=tau)
         # Defining the left atrium class
-        self.commponents['la'] = HC_mixed_elastance(name='LeftAtrium',
+        self.components['la'] = HC_mixed_elastance(name='LeftAtrium',
                                         time_object=self.time_object,
                                         E_pas=parobj['la']['E_pas'],
                                         E_act=parobj['la']['E_act'],
@@ -74,13 +74,13 @@ class NaghaviModel(OdeModel):
                                         tau  =parobj['la']['tau'], 
                                         delay=parobj['la']['delay']
                                         )
-        self._state_variable_dict['v_la'] = self.commponents['la']._V
+        self._state_variable_dict['v_la'] = self.components['la']._V
         self._state_variable_dict['v_la'].set_name('v_la')
-        self.all_sv_data['v_la'] = self.commponents['la'].V
-        self.commponents['la']._V._u = self.all_sv_data['v_la']
+        self.all_sv_data['v_la'] = self.components['la'].V
+        self.components['la']._V._u = self.all_sv_data['v_la']
         
         # Defining the left ventricle activation function
-        self.commponents['lv'] = HC_mixed_elastance(name='LeftVentricle', 
+        self.components['lv'] = HC_mixed_elastance(name='LeftVentricle', 
                                         time_object=self.time_object,
                                         E_pas=parobj['lv']['E_pas'],
                                         E_act=parobj['lv']['E_act'],
@@ -93,52 +93,52 @@ class NaghaviModel(OdeModel):
                                         tau  =parobj['la']['tau'],
                                         delay=parobj['lv']['delay']
                                         )
-        self._state_variable_dict['v_lv'] = self.commponents['lv']._V
+        self._state_variable_dict['v_lv'] = self.components['lv']._V
         self._state_variable_dict['v_lv'].set_name('v_lv')
-        self.all_sv_data['v_lv'] = self.commponents['lv'].V
-        self.commponents['lv']._V._u = self.all_sv_data['v_lv']
+        self.all_sv_data['v_lv'] = self.components['lv'].V
+        self.components['lv']._V._u = self.all_sv_data['v_lv']
         
-        for component in self.commponents.values():
+        for component in self.components.values():
             component.setup()
         
         # connect the left ventricle class to the aortic valve
-        self.connect_modules(self.commponents['lv'],  
-                             self.commponents['av'],  
+        self.connect_modules(self.components['lv'],  
+                             self.components['av'],  
                              plabel='p_lv',   
                              qlabel='q_av',
                              )
         # connect the aortic valve to the aorta
-        self.connect_modules(self.commponents['av'],  
-                             self.commponents['ao'],  
+        self.connect_modules(self.components['av'],  
+                             self.components['ao'],  
                              plabel='p_ao',   
                              qlabel='q_av')
         # connect the aorta to the arteries
-        self.connect_modules(self.commponents['ao'],  
-                             self.commponents['art'], 
+        self.connect_modules(self.components['ao'],  
+                             self.components['art'], 
                              plabel= 'p_art', 
                              qlabel= 'q_ao')
         # connect the arteries to the veins
-        self.connect_modules(self.commponents['art'], 
-                             self.commponents['ven'], 
+        self.connect_modules(self.components['art'], 
+                             self.components['ven'], 
                              plabel= 'p_ven', 
                              qlabel= 'q_art')
         # connect the veins to the left atrium
-        self.connect_modules(self.commponents['ven'], 
-                             self.commponents['la'],  
+        self.connect_modules(self.components['ven'], 
+                             self.components['la'],  
                              plabel= 'p_la',  
                              qlabel='q_ven',
                              )
         # connect the left atrium to the mitral valve
-        self.connect_modules(self.commponents['la'],  
-                             self.commponents['mv'],  
+        self.connect_modules(self.components['la'],  
+                             self.components['mv'],  
                              plabel= 'p_la', 
                              qlabel='q_mv')
         # connect the mitral valve to the left ventricle
-        self.connect_modules(self.commponents['mv'],  
-                             self.commponents['lv'],  
+        self.connect_modules(self.components['mv'],  
+                             self.components['lv'],  
                              plabel='p_lv',  
                              qlabel='q_mv',
                              )
         
-        for component in self.commponents.values():
+        for component in self.components.values():
             component.setup()

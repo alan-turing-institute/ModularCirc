@@ -26,7 +26,7 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         self.tind_init  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * self.model.time_object.export_min,
                                stop =self.model.time_object.n_t)
         
-        for key, value in self.model.commponents.items():
+        for key, value in self.model.components.items():
             self.initial_values[key] = {
                 'V': value.V.values[self.tind_init].mean(),
                 'P_i': value.P_i.values[self.tind_init].mean(),
@@ -39,10 +39,10 @@ class TestKorakianitisMixedModel(unittest.TestCase):
 
     def test_model_initialization(self):
         self.assertIsInstance(self.model, KorakianitisMixedModel)
-        self.assertTrue(hasattr(self.solver.model, 'commponents'))
-        self.assertIn('lv', self.solver.model.commponents)
-        self.assertEqual(self.solver.model.commponents['lv'].E_pas, self.parobj.components['lv']['E_pas'])
-        self.assertEqual(self.solver.model.commponents['ao'].CQ, self.parobj.components['ao']['CQ'])
+        self.assertTrue(hasattr(self.solver.model, 'components'))
+        self.assertIn('lv', self.solver.model.components)
+        self.assertEqual(self.solver.model.components['lv'].E_pas, self.parobj.components['lv']['E_pas'])
+        self.assertEqual(self.solver.model.components['ao'].CQ, self.parobj.components['ao']['CQ'])
 
     def test_solver_initialization(self):
         self.assertIsInstance(self.solver, Solver)
@@ -50,14 +50,14 @@ class TestKorakianitisMixedModel(unittest.TestCase):
 
     def test_solver_run(self):
         self.solver.solve()
-        self.assertTrue(len(self.solver.model.commponents['lv'].V.values) > 0)
-        self.assertTrue(len(self.solver.model.commponents['lv'].P_i.values) > 0)
+        self.assertTrue(len(self.solver.model.components['lv'].V.values) > 0)
+        self.assertTrue(len(self.solver.model.components['lv'].P_i.values) > 0)
         
         self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * self.model.time_object.export_min,
                                    stop=self.model.time_object.n_t)
 
         new_dict = {}
-        for key, value in self.model.commponents.items():
+        for key, value in self.model.components.items():
 
             new_dict[key] = {
                 'V': value.V.values[self.tind_fin].mean(),

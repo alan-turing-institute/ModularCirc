@@ -9,7 +9,7 @@ class OdeModel():
         self.time_object = TimeClass(time_setup_dict=time_setup_dict)
         self._state_variable_dict = pd.Series()
         self.all_sv_data = pd.DataFrame(index=self.time_object.time.index, dtype='float64')
-        self.commponents = dict()
+        self.components = dict()
         self.name = 'Template'
         
     
@@ -70,7 +70,7 @@ class OdeModel():
     
     def __str__(self) -> str:
         out = f'Model {self.name} \n\n'
-        for component in self.commponents.values():
+        for component in self.components.values():
             out += (str(component) + '\n')
         out += '\n'
         out += 'Main State Variable Dictionary \n'
@@ -80,10 +80,10 @@ class OdeModel():
     
     def set_v_sv(self, comp_key:str):
         v_key = 'v_' + comp_key
-        self._state_variable_dict[v_key] = self.commponents[comp_key]._V
+        self._state_variable_dict[v_key] = self.components[comp_key]._V
         self._state_variable_dict[v_key].set_name(v_key)
-        self.all_sv_data[v_key] = self.commponents[comp_key].V     ##### test
-        # self.commponents[comp_key]._V._u = self.all_sv_data[v_key]
+        self.all_sv_data[v_key] = self.components[comp_key].V     ##### test
+        # self.components[comp_key]._V._u = self.all_sv_data[v_key]
         
         
     def __del__(self):
@@ -91,9 +91,9 @@ class OdeModel():
             del self.name
         if hasattr(self, 'all_sv_data'):
             del self.all_sv_data
-        for comp in self.commponents.values():
+        for comp in self.components.values():
             del comp
-        del self.commponents
+        del self.components
         for sv in self._state_variable_dict.values:
             del sv
         del self._state_variable_dict
