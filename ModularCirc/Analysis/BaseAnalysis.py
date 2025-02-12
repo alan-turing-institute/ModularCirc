@@ -67,7 +67,7 @@ class BaseAnalysis():
         if ax is None:
             _, ax = plt.subplots(figsize=(5,5))
         ax.plot(self.tsym, 
-                self.model.commponents[component].V.values[self.tind],
+                self.model.components[component].V.values[self.tind],
                 linewidth=4,
                 label=component,
                 linestyle=linestyle)
@@ -81,7 +81,7 @@ class BaseAnalysis():
         if ax is None:
             _, ax = plt.subplots(figsize=(5,5))
         ax.plot(self.tsym, 
-                self.model.commponents[component].P.values[self.tind],
+                self.model.components[component].P.values[self.tind],
                 linewidth=4,
                 label=component,
                 linestyle=linestyle)
@@ -95,8 +95,8 @@ class BaseAnalysis():
         if ax is None:
             _, ax = plt.subplots(figsize=(5,5))
         ax.plot(
-            self.model.commponents[component].V.values[self.tind],
-            self.model.commponents[component].P.values[self.tind],
+            self.model.components[component].V.values[self.tind],
+            self.model.components[component].P.values[self.tind],
             linewidth=4,
         )
         ax.set_title(component.upper() + ': PV loop')
@@ -109,7 +109,7 @@ class BaseAnalysis():
             _, ax = plt.subplots(figsize=(5,5))
         ax.plot(
             self.tsym, 
-            self.model.commponents[component].Q_o.values[self.tind],
+            self.model.components[component].Q_o.values[self.tind],
             linewidth=4,
             linestyle=linestyle,
             label=component,
@@ -124,8 +124,8 @@ class BaseAnalysis():
             _, ax = plt.subplots(figsize=(5,5))
         ax.plot(
             self.tsym,
-            self.model.commponents[component].Q_i.values[self.tind] - 
-            self.model.commponents[component].Q_o.values[self.tind],
+            self.model.components[component].Q_i.values[self.tind] - 
+            self.model.components[component].Q_o.values[self.tind],
             linestyle='-',
             linewidth=4,
             alpha=0.6,
@@ -133,14 +133,14 @@ class BaseAnalysis():
         )     
         ax.plot(
             self.tsym,
-            self.model.commponents[component].Q_i.values[self.tind],
+            self.model.components[component].Q_i.values[self.tind],
             linestyle=':',
             linewidth=4,
             label=f'{component} $Q_i$'
         )  
         ax.plot(
             self.tsym,
-            self.model.commponents[component].Q_o.values[self.tind],
+            self.model.components[component].Q_o.values[self.tind],
             linestyle=':',
             linewidth=4,
             label=f'{component} $Q_o$'
@@ -157,7 +157,7 @@ class BaseAnalysis():
             _, ax = plt.subplots(figsize=(5,5))
         ax.plot(
             self.tsym,
-            self.model.commponents[component].PHI.values[self.tind],
+            self.model.components[component].PHI.values[self.tind],
             linestyle='-',
             linewidth=4,
             label=f'{component} $\phi$'
@@ -182,7 +182,7 @@ class BaseAnalysis():
         shift : float
             a time shift value which takes into account that the contraction of the atria starts before the ventricles.
         """
-        valve = self.model.commponents[component]
+        valve = self.model.components[component]
         nshift= int(shift/ self.model.time_object.dt)
         self.valves[component] = ValveData(component)
         
@@ -214,7 +214,7 @@ class BaseAnalysis():
         voc : int
             the time index corresponding to the outflow valve closing
         """
-        ventricle = self.model.commponents[component]
+        ventricle = self.model.components[component]
         volume    = ventricle.V.values[self.tind]
         
         self.ventricles[component] = VentricleData(component)
@@ -234,7 +234,7 @@ class BaseAnalysis():
         CO : float
             the cardiac ouput value 
         """
-        valve = self.model.commponents[component]
+        valve = self.model.components[component]
         dt    = self.model.time_object.dt
         T     = self.model.time_object.tcycle / 60.0
         
@@ -255,7 +255,7 @@ class BaseAnalysis():
         CO : float
             the ejection fraction
         """
-        ventricle = self.model.commponents[component]
+        ventricle = self.model.components[component]
         edv = ventricle.V.values[self.tind].max()
         esv = ventricle.V.values[self.tind].min()
         self.EF = (edv - esv) / edv
@@ -272,7 +272,7 @@ class BaseAnalysis():
             DP (float) : diastolic pressure
             SP (float) : systolic pressure
         """
-        c = self.model.commponents[component]
+        c = self.model.components[component]
         p = c.P_i.values[self.tind]
         return (np.min(p), np.max(p))
     
@@ -290,10 +290,10 @@ class BaseAnalysis():
         ESP : float 
             vessel end systolic pressure
         """
-        c = self.model.commponents[component]
+        c = self.model.components[component]
         p = c.P_i.values[self.tind]
         
-        uc = self.model.commponents[upstream]
+        uc = self.model.components[upstream]
         up = uc.P_i.values[self.tind]
         
         flag = up > p  
