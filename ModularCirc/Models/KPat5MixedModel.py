@@ -25,11 +25,11 @@ FULL_NAMES =[
 ]
 
 class KPat5MixedModel(OdeModel):
-    def __init__(self, time_setup_dict, parobj:po=k2006, supress_printing:bool=False) -> None:
+    def __init__(self, time_setup_dict, parobj:po=k2006, suppress_printing:bool=False) -> None:
         super().__init__(time_setup_dict)
         self.name = 'KorakianitisModel'
         
-        if not supress_printing: print(parobj)
+        if not suppress_printing: print(parobj)
         
         # The components...
         for key, name in zip(parobj.components.keys(), FULL_NAMES):
