@@ -17,7 +17,7 @@ class TestKorakianitisMixedModel(unittest.TestCase):
             'dt': 0.001,
             'export_min': 1
         }
-        # Initializing the parameter objecty
+        # Initializing the parameter object
         self.parobj = KorakianitisMixedModel_parameters()
         # Initializing the model 
         self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj, suppress_printing=True)
