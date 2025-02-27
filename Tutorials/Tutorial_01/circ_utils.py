@@ -97,7 +97,7 @@ def run_case(row, output_path, N_cycles, dt):
     ind = model.time_object.n_c
 
     # Get the raw pressure signal...
-    raw_signal = model.commponents["ao"].P[-ind:]
+    raw_signal = model.components["ao"].P[-ind:]
 
     # Resamples the raw signals (variable length) to a standard 100 time points resolution
     resampled_dt, resampled_signal = signal_get_pulse(raw_signal, model.time_object.dt)
