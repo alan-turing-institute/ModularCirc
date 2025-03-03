@@ -109,8 +109,8 @@ class Solver():
                 self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey], (0, self._N_sv-len(self._global_ssv_update_ind[mkey])), mode='constant', constant_values=-1)
             else:
                 continue
-        self._N_psv= len(self._global_psv_update_fun)
-        self._N_ssv= len(self._global_ssv_update_fun)
+        self._N_psv=len(self._global_psv_update_fun)
+        self._N_ssv=len(self._global_ssv_update_fun)
         if not suppress_output: print(' ')
         self.generate_dfdt_functions()
         
@@ -120,32 +120,39 @@ class Solver():
             self._cols = self._conv_cols
         return
     
+
     @property
     def vd(self) -> Series[StateVariable]:
         return self._vd
     
+
     @property
     def dt(self) -> float:
         return self._to.dt
+    
     
     @property
     def Nconv(self) -> float:
         return self._Nconv
     
+
     @property
     def n_sub_iter(self)->int:
         return self._n_sub_iter
     
+
     @property
     def optimize_secondary_sv(self)->bool:
         return self._optimize_secondary_sv
     
+
     @n_sub_iter.setter
     def n_sub_iter(self, value):
         assert isinstance(value, int)
         assert value > 0
         self._n_sub_iter = value
-        
+
+
     def generate_dfdt_functions(self):
         
         funcs1 = self._global_sv_init_fun.values()
@@ -264,6 +271,7 @@ class Solver():
         self.optimize = optimize
         self.s_u_residual = s_u_residual
     
+    
     def advance_cycle(self, y0, cycleID):
         n_t = self._to.n_c - 1
         t = self._to._sym_t.values[cycleID*n_t:(cycleID+1)*n_t+1] 
@@ -283,7 +291,7 @@ class Solver():
             else:
                 res = solve_ivp(fun=self.pv_dfdt_global, 
                                 t_span=(t[0], t[-1]), 
-                                y0=self.perm_mat @ y0, 
+                                y0=self.perm_mat @ y0, # permute the solution to the new order. Makes computation faster
                                 t_eval=t,
                                 method=self._method,
                                 atol=self._atol,
@@ -295,7 +303,7 @@ class Solver():
         if res.status == -1:
             return False
         y = res.y
-        y = self.perm_mat.T @ y
+        y = self.perm_mat.T @ y # reorder the solution to the original order
         ids = list(self._global_psv_update_fun.keys())
         inds= list(range(len(ids)))
         self._asd.iloc[cycleID*n_t:(cycleID+1)*n_t+1, ids] = y[inds, 0:n_t+1].T
