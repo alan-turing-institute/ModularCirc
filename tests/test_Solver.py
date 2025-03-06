@@ -44,6 +44,31 @@ class TestSolver(unittest.TestCase):
         self.assertIsNotNone(self.solver.s_u_update)
         self.assertIsNotNone(self.solver.optimize)
 
+
+    def test_initialize_by_function(self):
+        """
+        Test the `initialize_by_function` method of the solver.
+        This test performs the following steps:
+        1. Sets up the solver with the specified parameters.
+        2. Loads the expected input values from a .npy file.
+        3. Verifies that the `initialize_by_function` method accepts the expected input and returns the output in the correct data type.
+        Assertions:
+            - The output of `initialize_by_function` should be an instance of `np.ndarray`.
+        Raises:
+            AssertionError: If the output is not an instance of `np.ndarray`.
+        """
+
+        # Setup the solver
+        self.solver.setup(suppress_output=True, method='LSODA')
+
+        # Verify that initialize_by_function accepts the expected input, and returns the expected output
+        # Load the expected values from a an npy file
+        expected_input = np.load('tests/inputs_for_tests/asd_first_row.npy')
+
+        # Verify the function returns the output in the right data type
+        self.assertIsInstance(self.solver.initialize_by_function(y=expected_input), np.ndarray)
+
+
     def test_advance_cycle(self):
         # Setup the solver
         self.solver.setup(suppress_output=True, method='LSODA')
