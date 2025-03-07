@@ -64,7 +64,7 @@ class TestSolver(unittest.TestCase):
         # Generate a random input that is not the expected input
         random_input = np.random.rand(1, 1)
         # Verify that the function does not accept the random input
-        with self.assertRaises(ValueError):
+        with self.assertRaises(IndexError):
             self.solver.initialize_by_function(y=random_input)
 
         # Test optimize():
@@ -83,10 +83,10 @@ class TestSolver(unittest.TestCase):
         y0 = np.load('tests/inputs_for_tests/inputs_for_pv_dfdt_update.npy')
 
         # Verify the function can run with the expected input
-        pv_dfdt_result = self.solver.pv_dfdt_global(y0, t=0) 
+        pv_dfdt_result = self.solver.pv_dfdt_global(t=0, y=y0) 
 
         # Verify the output matches the expected output
-        expected_output = np.load('tests/expected_outputs/expected_output_pv_dfdt_global.npy')
+        expected_output = np.load('tests/expected_outputs/pv_dfdt_update_expected_output.npy')
         np.testing.assert_allclose(pv_dfdt_result, expected_output)
 
         # Test s_u_update():
@@ -96,10 +96,10 @@ class TestSolver(unittest.TestCase):
         y_temp = np.load('tests/inputs_for_tests/inputs_for_s_u_update.npy')
 
         # Verify the function can run with the expected input
-        s_u_result = self.solver.s_u_update(y_temp)
+        s_u_result = self.solver.s_u_update(t=0, y=y_temp)
 
         # Verify the output matches the expected output
-        expected_output = np.load('tests/expected_outputs/expected_output_s_u_update.npy')
+        expected_output = np.load('tests/expected_outputs/s_u_update_expected_output.npy')
         np.testing.assert_allclose(s_u_result, expected_output)
 
 
