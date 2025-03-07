@@ -30,19 +30,43 @@ class TestSolver(unittest.TestCase):
         self.assertEqual(self.solver.model, self.model)
 
     def test_solver_setup(self):
+        
         # Setup the solver
         self.solver.setup(suppress_output=True, method='LSODA')
+
         # Verify the setup attributes
         self.assertEqual(self.solver._method, 'LSODA')
         self.assertTrue(self.solver._optimize_secondary_sv is False)
 
-    def test_generate_dfdt_functions(self):
-        # Setup the solver
-        self.solver.setup(suppress_output=True, method='LSODA')
         # Verify the generated functions
         self.assertIsNotNone(self.solver.pv_dfdt_global)
         self.assertIsNotNone(self.solver.s_u_update)
-        self.assertIsNotNone(self.solver.optimize)
+        self.assertIsNotNone(self.solver.optimize)     
+        self.assertIsNotNone(self.solver.initialize_by_function)                
+
+        # Test initialize_by_function():
+
+        # Verify that initialize_by_function accepts the expected input, and returns the expected output
+        # Load the expected values from an npy file
+        expected_input = np.load('tests/inputs_for_tests/asd_first_row.npy')
+
+        # Verify the function returns the output in the right data type
+        self.assertIsInstance(self.solver.initialize_by_function(y=expected_input), np.ndarray)
+
+        # Generate a random input that is not the expected input
+        random_input = np.random.rand(1, 1)
+        # Verify that the function does not accept the random input
+        with self.assertRaises(ValueError):
+            self.solver.initialize_by_function(y=random_input)
+
+        # Test optimize():
+
+        # Verify that optimize accepts the expected input
+        # Load the expected values from an npz file
+        expected_input = np.load('tests/inputs_for_tests/inputs_for_optimize.npz')
+
+        # Verify the function can run with the expected input
+        self.solver.optimize(y=expected_input['y_temp'], keys=expected_input['keys4'])
 
 
     def test_initialize_by_function(self):
@@ -61,12 +85,9 @@ class TestSolver(unittest.TestCase):
         # Setup the solver
         self.solver.setup(suppress_output=True, method='LSODA')
 
-        # Verify that initialize_by_function accepts the expected input, and returns the expected output
-        # Load the expected values from a an npy file
-        expected_input = np.load('tests/inputs_for_tests/asd_first_row.npy')
 
-        # Verify the function returns the output in the right data type
-        self.assertIsInstance(self.solver.initialize_by_function(y=expected_input), np.ndarray)
+        
+        # 
 
 
     def test_advance_cycle(self):
