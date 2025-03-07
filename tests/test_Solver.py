@@ -65,33 +65,25 @@ class TestSolver(unittest.TestCase):
 
         # Test optimize():
 
-        # Verify that optimize accepts the expected input
+        # Verify that optimize() accepts the expected input
         # Load the expected values from an npz file
         expected_input = np.load('tests/inputs_for_tests/inputs_for_optimize.npz')
 
         # Verify the function can run with the expected input
         self.solver.optimize(y=expected_input['y_temp'], keys=expected_input['keys4'])
 
+        # Test pv_dfdt_update():
 
-    def test_initialize_by_function(self):
-        """
-        Test the `initialize_by_function` method of the solver.
-        This test performs the following steps:
-        1. Sets up the solver with the specified parameters.
-        2. Loads the expected input values from a .npy file.
-        3. Verifies that the `initialize_by_function` method accepts the expected input and returns the output in the correct data type.
-        Assertions:
-            - The output of `initialize_by_function` should be an instance of `np.ndarray`.
-        Raises:
-            AssertionError: If the output is not an instance of `np.ndarray`.
-        """
+        # Verify that pv_dfdt_update() accepts the expected input
+        # Load the expected values from an npy file
+        y0 = np.load('tests/inputs_for_tests/inputs_for_pv_dfdt_update.npy')
 
-        # Setup the solver
-        self.solver.setup(suppress_output=True, method='LSODA')
+        # Verify the function can run with the expected input
+        pv_dfdt_result = self.solver.pv_dfdt_global(y0, t=0) 
 
-
-        
-        # 
+        # Verify the output matches the expected output
+        expected_output = np.load('tests/expected_outputs/expected_output_pv_dfdt_global.npy')
+        np.testing.assert_allclose(pv_dfdt_result, expected_output)
 
 
     def test_advance_cycle(self):
