@@ -8,6 +8,10 @@ from ModularCirc.Models.KorakianitisMixedModel_parameters import KorakianitisMix
 class TestSolver(unittest.TestCase):
 
     def setUp(self):
+
+        # Set a random seed for reproducibility
+        np.random.seed(42)
+
         # Define the time setup dictionary
         self.time_setup_dict = {
             'name': 'TimeTest',
