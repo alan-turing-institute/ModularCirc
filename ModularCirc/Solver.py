@@ -120,32 +120,7 @@ class Solver():
             self._cols = self._conv_cols
         return
     
-    @property
-    def vd(self) -> Series[StateVariable]:
-        return self._vd
-    
-    @property
-    def dt(self) -> float:
-        return self._to.dt
-    
-    @property
-    def Nconv(self) -> float:
-        return self._Nconv
-    
-    @property
-    def n_sub_iter(self)->int:
-        return self._n_sub_iter
-    
-    @property
-    def optimize_secondary_sv(self)->bool:
-        return self._optimize_secondary_sv
-    
-    @n_sub_iter.setter
-    def n_sub_iter(self, value):
-        assert isinstance(value, int)
-        assert value > 0
-        self._n_sub_iter = value
-        
+
     def generate_dfdt_functions(self):
         
         funcs1 = self._global_sv_init_fun.values()
@@ -264,6 +239,7 @@ class Solver():
         self.optimize = optimize
         self.s_u_residual = s_u_residual
     
+
     def advance_cycle(self, y0, cycleID):
         n_t = self._to.n_c - 1
         t = self._to._sym_t.values[cycleID*n_t:(cycleID+1)*n_t+1] 
@@ -357,7 +333,38 @@ class Solver():
         
         for key in self._vd.keys():
             self._vd[key]._u = self._asd[key] 
-        
+
+    
+    @property
+    def vd(self) -> Series[StateVariable]:
+        return self._vd
+    
+
+    @property
+    def dt(self) -> float:
+        return self._to.dt
+    
+
+    @property
+    def Nconv(self) -> float:
+        return self._Nconv
+    
+
+    @property
+    def optimize_secondary_sv(self)->bool:
+        return self._optimize_secondary_sv
+    
+    
+    @property
+    def n_sub_iter(self)->int:
+        return self._n_sub_iter    
+    
+    
+    @n_sub_iter.setter
+    def n_sub_iter(self, value):
+        assert isinstance(value, int)
+        assert value > 0
+        self._n_sub_iter = value
 
             
         
