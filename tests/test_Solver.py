@@ -52,6 +52,8 @@ class TestSolver(unittest.TestCase):
         self.assertIsNotNone(self.solver.optimize)     
         self.assertIsNotNone(self.solver.initialize_by_function)                
 
+    def test_initialize_by_function(self):
+
         # Test initialize_by_function():
 
         # Verify that initialize_by_function accepts the expected input, and returns the expected output
@@ -67,6 +69,8 @@ class TestSolver(unittest.TestCase):
         with self.assertRaises(IndexError):
             self.solver.initialize_by_function(y=random_input)
 
+    def test_optimize(self):
+
         # Test optimize():
 
         # Verify that optimize() accepts the expected input
@@ -75,6 +79,9 @@ class TestSolver(unittest.TestCase):
 
         # Verify the function can run with the expected input
         self.solver.optimize(y=expected_input['y_temp'], keys=expected_input['keys4'])
+
+
+    def test_pvd_dfdt_update(self):
 
         # Test pv_dfdt_update():
 
@@ -89,6 +96,8 @@ class TestSolver(unittest.TestCase):
         expected_output = np.load('tests/expected_outputs/pv_dfdt_update_expected_output.npy')
         np.testing.assert_allclose(pv_dfdt_result, expected_output)
 
+    def test_s_u_update(self):
+        
         # Test s_u_update():
 
         # Verify that s_u_update() accepts the expected input
