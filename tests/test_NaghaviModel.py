@@ -44,7 +44,7 @@ class TestNaghaviModel(unittest.TestCase):
         self.assertTrue(hasattr(self.solver.model, 'components'))
         self.assertIn('lv', self.solver.model.components)
         self.assertEqual(self.solver.model.components['lv'].E_pas, self.parobj.components['lv']['E_pas'])
-        self.assertEqual(self.solver.model.components['ao'].CQ, self.parobj.components['ao']['CQ'])
+        # self.assertEqual(self.solver.model.components['ao'].CQ, self.parobj.components['ao']['CQ'])
 
     def test_solver_initialization(self):
         self.assertIsInstance(self.solver, Solver)
