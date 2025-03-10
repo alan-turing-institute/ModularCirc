@@ -55,7 +55,7 @@ class TestNaghaviModel(unittest.TestCase):
         self.assertTrue(len(self.solver.model.commponents['lv'].V.values) > 0)
         self.assertTrue(len(self.solver.model.commponents['lv'].P_i.values) > 0)
         
-        self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * self.model.time_object.export_min,
+        self.tind_fin = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * self.model.time_object.export_min,
                                    stop=self.model.time_object.n_t)
 
         new_dict = {}
