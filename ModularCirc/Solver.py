@@ -239,6 +239,7 @@ class Solver():
         self.optimize = optimize
         self.s_u_residual = s_u_residual
     
+    
     def advance_cycle(self, y0, cycleID):
         n_t = self._to.n_c - 1
         t = self._to._sym_t.values[cycleID*n_t:(cycleID+1)*n_t+1] 
