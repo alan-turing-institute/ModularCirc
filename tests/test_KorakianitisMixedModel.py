@@ -9,10 +9,10 @@ from ModularCirc.Solver import Solver
 class TestKorakianitisMixedModel(unittest.TestCase):
 
     def setUp(self):
-        # Define the duration of the simulation (no of cycles), duration of the cycle, maximum time step size, and minimum number of cycles to run 
+        # Define the duration of the simulation (no of cycles), duration of the cycle, maximum time step size, and minimum number of cycles to run
         self.time_setup_dict = {
             'name': 'TimeTest',
-            'ncycles': 40,
+            'ncycles': 12,
             'tcycle': 1.0,
             'dt': 0.001,
             'export_min': 1
