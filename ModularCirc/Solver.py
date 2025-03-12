@@ -319,8 +319,7 @@ class Solver():
     def advance_cycle(self, y0, cycleID):
 
         # computes the current time within the cycle
-        n_t = self._to.n_c - 1
-
+        n_t = len(self._to._sym_t.values) // self._to.ncycles
         # retrieves the time points for the current cycle, n_t is the step size
         t = self._to._sym_t.values[cycleID*n_t:(cycleID+1)*n_t+1] 
 
@@ -385,7 +384,7 @@ class Solver():
             self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
         # Solve the main system of ODEs..
 
-        for i in range(self._to.ncycles, step= 40): # step is a pulse, we might wabnt to do it in all pulses
+        for i in range(self._to.ncycles): # step is a pulse, we might wabnt to do it in all pulses
             # print(i)
             y0 = self._asd.iloc[i * (self._to.n_c-1), list(self._global_psv_update_fun.keys())].to_list()
             try:
