@@ -243,7 +243,6 @@ class Solver():
     def advance_cycle(self, y0, cycleID):
         n_t = self._to.n_c - 1
         t = self._to._sym_t.values[cycleID*n_t:(cycleID+1)*n_t+1] 
-        print(f'Time {t[0]} -> {t[-1]}')
         
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
