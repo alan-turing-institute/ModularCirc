@@ -400,8 +400,8 @@ class Solver():
                 self._Nconv = i + self.step - 1
                 self.converged = True
                 break
-            if i == self._to.ncycles - 1:
-                self._Nconv = i
+            if i + self.step - 1 == self._to.ncycles - 1:
+                self._Nconv = i + self.step - 1
                 self.converged = False
         
         self._to.n_t = (self.Nconv+1)*(self._to.n_c-1) + 1
