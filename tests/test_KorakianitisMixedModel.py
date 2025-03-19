@@ -76,8 +76,8 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         self.assertTrue(len(self.solver.model.components['lv'].V.values) > 0)
         self.assertTrue(len(self.solver.model.components['lv'].P_i.values) > 0)
         # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
-        self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * self.model.time_object.export_min,
-                                   stop=self.model.time_object.n_t)
+        self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * (self.model.time_object.export_min+1),
+                                   stop=(self.model.time_object.n_t-self.model.time_object.n_c)) + self.solver.Nconv
         # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
         # the new solution dictionary
         new_dict = {}
