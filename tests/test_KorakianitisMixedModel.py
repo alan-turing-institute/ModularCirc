@@ -12,7 +12,7 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         # Define the duration of the simulation (no of cycles), duration of the cycle, maximum time step size, and minimum number of cycles to run
         self.time_setup_dict = {
             'name': 'TimeTest',
-            'ncycles': 12,
+            'ncycles': 40,
             'tcycle': 1.0,
             'dt': 0.001,
             'export_min': 1
@@ -24,7 +24,7 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         # Initializing the solver
         self.solver = Solver(model=self.model)
         # Solver is being setup: switching off console printing and setting the solver method to "LSODA"
-        self.solver.setup(suppress_output=True, method='LSODA')
+        self.solver.setup(suppress_output=True, method='LSODA',step=1)
 
         self.initial_values = {}
         

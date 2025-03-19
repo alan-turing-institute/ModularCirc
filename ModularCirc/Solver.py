@@ -97,6 +97,7 @@ class Solver():
               method:str='BDF',
               atol=1e-6,
               rtol=1e-6,
+              step = 1,
               )->None:
         """
         Method for detecting which are the principal variables and which are the secondary ones.
@@ -112,6 +113,7 @@ class Solver():
         self._method    = method
         self._atol      = atol
         self._rtol      = rtol
+        self.step       = step
 
 
         # Loop over the state variables and check if they have an update function,
@@ -316,12 +318,13 @@ class Solver():
         self.s_u_residual = s_u_residual
     
 
-    def advance_cycle(self, y0, cycleID):
+    def advance_cycle(self, y0, cycleID, step = 1):
 
         # computes the current time within the cycle
-        n_t = len(self._to._sym_t.values) // self._to.ncycles
+        n_t = self._to.n_c - 1
+        end_cycle = cycleID + step
         # retrieves the time points for the current cycle, n_t is the step size
-        t = self._to._sym_t.values[cycleID*n_t:(cycleID+1)*n_t+1] 
+        t = self._to._sym_t.values[cycleID*n_t:end_cycle*n_t+1]
 
         # solves the system of ODEs
         with warnings.catch_warnings():
@@ -358,16 +361,14 @@ class Solver():
         # updates the state variables in the DataFrame
         ids = list(self._global_psv_update_fun.keys())
         inds= list(range(len(ids)))
-        self._asd.iloc[cycleID*n_t:(cycleID+1)*n_t+1, ids] = y[inds, 0:n_t+1].T
+        self._asd.iloc[cycleID*n_t:(end_cycle)*n_t+1, ids] = y[inds, 0:n_t*step+1].T
             
         if cycleID == 0: return False
 
+        cycleP = end_cycle - 1
 
-        ind = list(self._global_psv_update_fun.keys())
-        cycleP = cycleID - 1
-
-        cs   = self._asd[self._cols].iloc[cycleID*n_t:(cycleID+1)*n_t, :].values
-        cp   = self._asd[self._cols].iloc[cycleP *n_t:(cycleP +1)*n_t, :].values
+        cs   = self._asd[self._cols].iloc[cycleP*n_t:end_cycle*n_t, :].values
+        cp   = self._asd[self._cols].iloc[(cycleP-1) *n_t:(cycleP)*n_t, :].values
         
         cp_ptp = np.max(np.abs(cp), axis=0)
         cp_r   = np.max(np.abs(cs - cp), axis=0)
@@ -384,19 +385,19 @@ class Solver():
             self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
         # Solve the main system of ODEs..
 
-        for i in range(self._to.ncycles): # step is a pulse, we might wabnt to do it in all pulses
+        for i in range(0, self._to.ncycles, self.step): # step is a pulse, we might wabnt to do it in all pulses
             # print(i)
             y0 = self._asd.iloc[i * (self._to.n_c-1), list(self._global_psv_update_fun.keys())].to_list()
             try:
                 # advances the cycle one step at the time, and only that step,
                 #changes are to select a range of cycles up to to ith, + dept of cycle instead of selecting that index.
-                flag = self.advance_cycle(y0=y0, cycleID=i)
+                flag = self.advance_cycle(y0=y0, cycleID=i, step=self.step)
             except ValueError:
                 self._Nconv = i-1
                 self.converged = False
                 break
             if flag and i > self._to.export_min:
-                self._Nconv = i
+                self._Nconv = i + self.step - 1
                 self.converged = True
                 break
             if i == self._to.ncycles - 1:
