@@ -315,11 +315,12 @@ class Solver():
                 self._Nconv = i
                 self.converged = False
         
-        self._asd = self._asd.iloc[:self.Nconv*(self._to.n_c)+1]
-        self._to._sym_t   = self._to._sym_t.head(self.Nconv*(self._to.n_c)+1)
-        self._to._cycle_t = self._to._cycle_t.head(self.Nconv*(self._to.n_c)+1)
+        self._to.n_t = (self.Nconv+1)*(self._to.n_c-1) + 1
         
-        self._to.n_t = self.Nconv*(self._to.n_c-1)+1
+        self._asd = self._asd.iloc[:self._to.n_t]
+        self._to._sym_t   = self._to._sym_t.head(self._to.n_t)
+        self._to._cycle_t = self._to._cycle_t.head(self._to.n_t)
+        
             
         keys4  = np.array(list(self._global_ssv_update_fun.keys()))      
         temp   = np.zeros(self._asd.iloc[:,keys4].shape)  
