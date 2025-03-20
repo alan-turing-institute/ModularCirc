@@ -28,16 +28,18 @@ class Solver():
         self.model = model
 
 
-        #Primary State Variables: Primary state variables are the main variables that are directly integrated over time
+        # Primary State Variables: Primary state variables are the main variables that are directly integrated over time
         # using their respective differential equations. These variables are updated using their time derivatives (dudt_func).
         # They are essential for the system's dynamics and are typically the focus of the numerical integration process.
+
         # Secondary State Variables: Secondary state variables are derived from the primary state variables. They do not
         # have their own differential equations but are instead computed from the primary state variables using algebraic
         # relationships (u_func). These variables are updated based on the current values of the primary state variables.
 
         # DataFrame containing all state variable data from the model.
         self._asd = model.all_sv_data
-        #Dictionary of state variables from the model.
+
+        # Dictionary of state variables from the model.
         self._vd  = model._state_variable_dict
 
         # Time object from the model
@@ -45,13 +47,14 @@ class Solver():
 
 
         # Global variables for the solver
-        #Dictionary to store update functions for primary state variables.
+
+        # Dictionary to store update functions for primary state variables.
         self._global_psv_update_fun  = {}
         # Dictionary to store update functions for secondary state variables.
         self._global_ssv_update_fun  = {}
+
         # Dictionary to store the names of the update functions for primary state variables.
         self._global_psv_update_fun_n  = {}
-
         # Dictionary to store the names of the update functions for secondary state variables.
         self._global_ssv_update_fun_n  = {}
 
@@ -70,16 +73,16 @@ class Solver():
 
         # Dictionary mapping the state variable names to their  indexes.
         self._global_sv_id          = {key: id   for id, key in enumerate(model.all_sv_data.columns.to_list())}
-        # dictionary mapping the indexes to the state variable names.
+        # Dictionary mapping the indexes to the state variable names.
         self._global_sv_id_rev      = {id: key   for id, key in enumerate(model.all_sv_data.columns.to_list())}
 
         # Series to store state variables initialized by functions.
         self._initialize_by_function = pd.Series()
 
-        #Number of sub-iterations for the solver.
+        # Number of sub-iterations for the solver. <- is this right? LB.
         self._N_sv = len(self._global_sv_id)
 
-        # V ariable to store the number of converged cycles.
+        # Variable to store the number of converged cycles.
         self._Nconv = None
 
         # Number of sub-iterations for the solver.
@@ -117,10 +120,12 @@ class Solver():
 
 
         # Loop over the state variables and check if they have an update function,
-        # This code ensures that each state variable's update function is correctly assigned and indexed, allowing the solver to update the state variables during the simulation
+        # This code ensures that each state variable's update function is correctly assigned and indexed, 
+        # allowing the solver to update the state variables during the simulation
         for key, component in self._vd.items():
             mkey = self._global_sv_id[key]
-            # initialization function for a state variable. This function is used to initialize the state variable at the beginning of the simulation.
+            # initialization function for a state variable. This function is used to initialize the state 
+            # variable at the beginning of the simulation.
             if component.i_func is not None:
                 if not suppress_output: print(f" -- Variable {bold_text(key)} added to the init list.")
                 if not suppress_output: print(f'    - name of update function: {bold_text(component.i_name)}')
@@ -128,7 +133,8 @@ class Solver():
                 self._initialize_by_function[key] = component
                 self._global_sv_init_fun[mkey] = component.i_func
                 self._global_sv_init_ind[mkey] = [self._global_sv_id[key2] for key2 in component.i_inputs.to_list()]
-            # derivative function for a state variable. This function is used to update the state variable during the numerical integration process.
+            # derivative function for a state variable. This function is used to update the state variable 
+            # during the numerical integration process.
             if component.dudt_func is not None:
                 if not suppress_output: print(f" -- Variable {bold_text(key)} added to the principal variable key list.")
                 if not suppress_output: print(f'    - name of update function: {bold_text(component.dudt_name)}')
