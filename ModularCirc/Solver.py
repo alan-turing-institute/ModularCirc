@@ -144,7 +144,8 @@ class Solver():
                 self._global_psv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
                 self._global_psv_update_ind[mkey]   = np.pad(self._global_psv_update_ind[mkey], (0, self._N_sv-len(self._global_psv_update_ind[mkey])), mode='constant', constant_values=-1)
                 self._global_psv_names.append(key)
-             # updated function for the secondary state variable. This function is used to update the state variable based on the current values of the primary state variables using algebraic relationships.
+             # updated function for the secondary state variable. This function is used to update the state variable 
+             # based on the current values of the primary state variables using algebraic relationships.
             elif component.u_func is not None:
                 if not suppress_output: print(f" -- Variable {bold_text(key)} added to the secondary variable key list.")
                 if not suppress_output: print(f'    - name of update function: {bold_text(component.u_name)}')
@@ -155,8 +156,7 @@ class Solver():
                 self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey], (0, self._N_sv-len(self._global_ssv_update_ind[mkey])), mode='constant', constant_values=-1)
             else:
                 continue
-        self._N_psv= len(self._global_psv_update_fun)
-        self._N_ssv= len(self._global_ssv_update_fun)
+
         if not suppress_output: print(' ')
         self.generate_dfdt_functions()
         
