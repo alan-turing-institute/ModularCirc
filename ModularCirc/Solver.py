@@ -158,13 +158,21 @@ class Solver():
                 continue
 
         if not suppress_output: print(' ')
+
         self.generate_dfdt_functions()
         
+        
         if self._conv_cols is None:
+            # If no specific columns for convergence (_conv_cols) are provided,
+            # automatically select columns from the DataFrame (_asd) whose names
+            # contain 'v_' or 'p_', as variables of interest for convergence checks.
             self._cols = [col for col in self._asd.columns if 'v_' in col or 'p_' in col]
         else:
+            # If specific convergence columns are provided, use them directly.
             self._cols = self._conv_cols
-        return
+
+        # End the method without returning any specific value.
+        return None 
     
 
     def generate_dfdt_functions(self):
