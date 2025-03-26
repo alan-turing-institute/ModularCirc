@@ -449,9 +449,11 @@ class Solver():
     
     
     def solve(self):
+        
         # initialize the solution fields
         self._asd.loc[0, self._initialize_by_function.index] = \
             self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
+        
         # Solve the main system of ODEs..
 
         for i in range(0, self._to.ncycles, self.step): # step is a pulse, we might wabnt to do it in all pulses
