@@ -242,7 +242,7 @@ class Solver():
 
             Args:
                 t (float): The current time step.
-                y (np.ndarray[float, float]): A NumPy array containing the current values of the primary state variables.
+                y (np.ndarray[float]): A NumPy array containing the current values of the primary state variables.
 
             Returns:
                 np.ndarray[float]: A NumPy array containing the updated values of the secondary state variables.
