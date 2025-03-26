@@ -269,7 +269,7 @@ class TestSolver(unittest.TestCase):
             AssertionError: If the solver did not converge or if the computed values do not match the expected 
             values within the tolerance.
         """
-        step_sizes = [1, 3, 5]  # Define the step sizes to test
+        step_sizes = [1, 3, 5, 7]  # Define the step sizes to test
 
         for step_size in step_sizes:
 
