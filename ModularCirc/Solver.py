@@ -71,7 +71,7 @@ class Solver():
         # Dictionary to store the indexes of the secondary state variables.
         self._global_sv_init_ind    = {}
 
-        # Dictionary mapping the state variable names to their  indexes.
+        # Dictionary mapping the state variable names to their indexes.
         self._global_sv_id          = {key: id   for id, key in enumerate(model.all_sv_data.columns.to_list())}
         # Dictionary mapping the indexes to the state variable names.
         self._global_sv_id_rev      = {id: key   for id, key in enumerate(model.all_sv_data.columns.to_list())}
@@ -123,7 +123,10 @@ class Solver():
         # This code ensures that each state variable's update function is correctly assigned and indexed, 
         # allowing the solver to update the state variables during the simulation
         for key, component in self._vd.items():
-            mkey = self._global_sv_id[key]
+            
+            # Get the index of the state variable.
+            mkey = self._global_sv_id[key] # _global_sv_id - maps the state variable names to their indexes.
+            
             # initialization function for a state variable. This function is used to initialize the state 
             # variable at the beginning of the simulation.
             if component.i_func is not None:
@@ -133,6 +136,7 @@ class Solver():
                 self._initialize_by_function[key] = component
                 self._global_sv_init_fun[mkey] = component.i_func
                 self._global_sv_init_ind[mkey] = [self._global_sv_id[key2] for key2 in component.i_inputs.to_list()]
+            
             # derivative function for a state variable. This function is used to update the state variable 
             # during the numerical integration process.
             if component.dudt_func is not None:
@@ -142,10 +146,17 @@ class Solver():
                 self._global_psv_update_fun[mkey]   = component.dudt_func
                 self._global_psv_update_fun_n[mkey] = component.dudt_name
                 self._global_psv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
-                self._global_psv_update_ind[mkey]   = np.pad(self._global_psv_update_ind[mkey], (0, self._N_sv-len(self._global_psv_update_ind[mkey])), mode='constant', constant_values=-1)
+
+                # Pad the index array to the length of the state variable array.
+                self._global_psv_update_ind[mkey]   = np.pad(self._global_psv_update_ind[mkey], 
+                                                             (0, self._N_sv-len(self._global_psv_update_ind[mkey])), 
+                                                             mode='constant', constant_values=-1)
+                
+                # Add the state variable name to the global primary state variable list.
                 self._global_psv_names.append(key)
-             # updated function for the secondary state variable. This function is used to update the state variable 
-             # based on the current values of the primary state variables using algebraic relationships.
+            
+            # updated function for the secondary state variable. This function is used to update the state variable 
+            # based on the current values of the primary state variables using algebraic relationships.
             elif component.u_func is not None:
                 if not suppress_output: print(f" -- Variable {bold_text(key)} added to the secondary variable key list.")
                 if not suppress_output: print(f'    - name of update function: {bold_text(component.u_name)}')
@@ -153,7 +164,9 @@ class Solver():
                 self._global_ssv_update_fun[mkey]   = component.u_func
                 self._global_ssv_update_fun_n[mkey] = component.u_name
                 self._global_ssv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
-                self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey], (0, self._N_sv-len(self._global_ssv_update_ind[mkey])), mode='constant', constant_values=-1)
+                self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey], 
+                                                             (0, self._N_sv-len(self._global_ssv_update_ind[mkey])), 
+                                                             mode='constant', constant_values=-1)
             else:
                 continue
 
@@ -187,8 +200,30 @@ class Solver():
         ids1   = self._global_sv_init_ind.values()
 
         def initialize_by_function(y:np.ndarray[float]) -> np.ndarray[float]:
-            """ Function to initialize the state variables using the initialization functions."""
-            return np.fromiter([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)], dtype=np.float64)
+            """
+            Initialize the state variables using a set of initialization functions.
+
+            This function applies a list of initialization functions (`funcs1`) to 
+            specific subsets of the input array `y`, as determined by the indices 
+            in `ids1`. Each function is called with `t=0.0` and the corresponding 
+            subset of `y`, and the results are combined into a single NumPy array.
+
+            Args:
+                y (np.ndarray[float]): A 1D NumPy array representing the state 
+                variables to be initialized. Each subset of `y` is passed to 
+                the corresponding initialization function.
+
+            Returns:
+                np.ndarray[float]: A 1D NumPy array containing the initialized 
+                state variables, with the same length as the input array `y`.
+
+            Note:
+                - Each function in `funcs1` is expected to accept two arguments: 
+                  `t` (a float, representing time) and `y` (a NumPy array, 
+                  representing the subset of state variables).
+            """
+            return np.fromiter([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)], 
+                               dtype=np.float64)
 
         funcs2 = np.array(list(self._global_ssv_update_fun.values()))
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
