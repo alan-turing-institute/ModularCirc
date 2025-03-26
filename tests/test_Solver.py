@@ -75,7 +75,7 @@ class TestSolver(unittest.TestCase):
         self.solver = Solver(model=self.model)
 
         # Setup the solver
-        self.solver.setup(suppress_output=True, method='LSODA')        
+        self.solver.setup(suppress_output=True, method='LSODA', step=1)        
 
 
     def test_solver_initialization(self):
@@ -252,49 +252,65 @@ class TestSolver(unittest.TestCase):
 
     def test_solver_solve(self):
         """
-        Test the `solve` method of the solver.
+        Test the `solve` method of the solver with different step sizes.
 
-        This test performs the following steps:
-        1. Solves the system using the solver.
-        2. Verifies that the solver has converged.
-        3. Loads expected values from a JSON file.
-        4. Redefines the time indices based on the number of heart cycles necessary to reach steady state.
-        5. Retrieves the component state variables, computes the mean values during the last cycle, and stores them in a new solution dictionary.
-        6. Compares the new solution dictionary values with the expected values and asserts that they are within an acceptable tolerance.
+        This test performs the following steps for each step size:
+        1. Configures the solver with the given step size.
+        2. Solves the system using the solver.
+        3. Verifies that the solver has converged.
+        4. Loads expected values from a JSON file.
+        5. Redefines the time indices based on the number of heart cycles necessary to reach steady state.
+        6. Retrieves the component state variables, computes the mean values during the last cycle, 
+        and stores them in a new solution dictionary.
+        7. Compares the new solution dictionary values with the expected values and asserts that they are 
+        within an acceptable tolerance.
 
         Raises:
-            AssertionError: If the solver did not converge or if the computed values do not match the expected values within the tolerance.
+            AssertionError: If the solver did not converge or if the computed values do not match the expected 
+            values within the tolerance.
         """
+        step_sizes = [1, 3, 5]  # Define the step sizes to test
 
-        # Solve the system
-        self.solver.solve()
+        for step_size in step_sizes:
+            with self.subTest(step_size=step_size):
+                # Reconfigure the solver with the current step size
+                self.solver.setup(suppress_output=True, method='LSODA', step=step_size)
 
-        # Verify the solver converged
-        self.assertTrue(self.solver.converged or self.solver._Nconv is not None)
+                # Solve the system
+                self.solver.solve()
 
-        # Load expected values from a JSON file
-        with open('tests/expected_outputs/KorakianitisMixedModel_expected_output.json', 'r') as f:
-            self.expected_values = json.load(f)
+                # Verify the solver converged
+                self.assertTrue(self.solver.converged or self.solver._Nconv is not None)
 
-        # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
-        self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * (self.model.time_object.export_min+1),
-                                   stop=(self.model.time_object.n_t-self.model.time_object.n_c)) + self.solver.Nconv
-        # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
-        # the new solution dictionary
-        new_dict = {}
-        for key, value in self.model.components.items():
+                # Load expected values from a JSON file
+                with open('tests/expected_outputs/KorakianitisMixedModel_expected_output.json', 'r') as f:
+                    self.expected_values = json.load(f)
 
-            new_dict[key] = {
-                'V': value.V.values[self.tind_fin].mean(),
-                'P_i': value.P_i.values[self.tind_fin].mean(),
-                'Q_i': value.Q_i.values[self.tind_fin].mean()
-            }
+                # Redefine tind based on how many heart cycles have actually been necessary to reach steady state
+                self.tind_fin = np.arange(
+                    start=self.model.time_object.n_t - self.model.time_object.n_c * (self.model.time_object.export_min + 1),
+                    stop=(self.model.time_object.n_t - self.model.time_object.n_c)
+                ) + self.solver.Nconv
 
-        # Check that the values are the same as the expected values
-        expected_ndarray = np.array([self.expected_values[key1][key2]  for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
-        new_ndarray      = np.array([new_dict[key1][key2]              for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
-        test_ndarray     = np.where(np.abs(expected_ndarray) > 1e-6, np.abs((expected_ndarray - new_ndarray) / expected_ndarray),  np.abs((expected_ndarray - new_ndarray)))
-        self.assertTrue((test_ndarray < 1e-3).all())
+                # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
+                # the new solution dictionary
+                new_dict = {}
+                for key, value in self.model.components.items():
+                    new_dict[key] = {
+                        'V': value.V.values[self.tind_fin].mean(),
+                        'P_i': value.P_i.values[self.tind_fin].mean(),
+                        'Q_i': value.Q_i.values[self.tind_fin].mean()
+                    }
+
+                # Check that the values are the same as the expected values
+                expected_ndarray = np.array([self.expected_values[key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
+                new_ndarray = np.array([new_dict[key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
+                test_ndarray = np.where(
+                    np.abs(expected_ndarray) > 1e-6,
+                    np.abs((expected_ndarray - new_ndarray) / expected_ndarray),
+                    np.abs((expected_ndarray - new_ndarray))
+                )
+                self.assertTrue((test_ndarray < 1e-3).all())
 
 if __name__ == '__main__':
     unittest.main()
