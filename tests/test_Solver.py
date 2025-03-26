@@ -272,6 +272,9 @@ class TestSolver(unittest.TestCase):
         step_sizes = [1, 3, 5]  # Define the step sizes to test
 
         for step_size in step_sizes:
+
+            print(f"Testing solver with step size: {step_size}")
+
             with self.subTest(step_size=step_size):
                 # Reconfigure the solver with the current step size
                 self.solver.setup(suppress_output=True, method='LSODA', step=step_size)
@@ -310,7 +313,9 @@ class TestSolver(unittest.TestCase):
                     np.abs((expected_ndarray - new_ndarray) / expected_ndarray),
                     np.abs((expected_ndarray - new_ndarray))
                 )
-                self.assertTrue((test_ndarray < 1e-3).all())
+                self.assertTrue((test_ndarray < 1e-3).all(), 
+                                f"Test failed for step size {step_size}: {test_ndarray}")
+
 
 if __name__ == '__main__':
     unittest.main()
