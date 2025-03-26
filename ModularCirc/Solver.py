@@ -207,6 +207,8 @@ class Solver():
             specific subsets of the input array `y`, as determined by the indices 
             in `ids1`. Each function is called with `t=0.0` and the corresponding 
             subset of `y`, and the results are combined into a single NumPy array.
+            The input array `y` is usually the initial state variable array, so 
+            the 0th row of the self._asd DataFrame.
 
             Args:
                 y (np.ndarray[float]): A 1D NumPy array representing the state 
@@ -221,6 +223,10 @@ class Solver():
                 - Each function in `funcs1` is expected to accept two arguments: 
                   `t` (a float, representing time) and `y` (a NumPy array, 
                   representing the subset of state variables).
+            
+            Example use:
+                >>> initialize_by_function(y=self._asd.iloc[0].to_numpy())
+
             """
             return np.fromiter([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)], 
                                dtype=np.float64)
