@@ -231,13 +231,27 @@ class Solver():
             return np.fromiter([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)], 
                                dtype=np.float64)
 
+        # Function to update the secondary state variables based on the primary state variables.
         funcs2 = np.array(list(self._global_ssv_update_fun.values()))
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
         
         # @nb.njit(cache=True) 
         def s_u_update(t, y:np.ndarray[float,float]) -> np.ndarray[float]:
-            """ Function to update the secondary state variables based on the current values of the primary state variables."""
-            return np.fromiter([fi(t=t, y=yi) for fi, yi in zip(funcs2, y[ids2])], dtype=np.float64)
+            """
+            Updates the secondary state variables based on the current values of the primary state variables.
+
+            Args:
+                t (float): The current time step.
+                y (np.ndarray[float, float]): A NumPy array containing the current values of the primary state variables.
+
+            Returns:
+                np.ndarray[float]: A NumPy array containing the updated values of the secondary state variables.
+
+            Example use:
+                >>> s_u_update(t=0.0, y=self._asd.iloc[0].to_numpy())
+            """
+            return np.fromiter([fi(t=t, y=yi) for fi, yi in zip(funcs2, y[ids2])], 
+                               dtype=np.float64)
         
         def s_u_residual(y, yall, keys):
             """ Function to compute the residual of the secondary state variables."""
