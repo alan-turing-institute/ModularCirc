@@ -236,7 +236,7 @@ class Solver():
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
         
         # @nb.njit(cache=True) 
-        def s_u_update(t, y:np.ndarray[float,float]) -> np.ndarray[float]:
+        def s_u_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
             """
             Updates the secondary state variables based on the current values of the primary state variables.
 
