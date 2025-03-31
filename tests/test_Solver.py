@@ -279,8 +279,13 @@ class TestSolver(unittest.TestCase):
                 # Reconfigure the solver with the current step size
                 self.solver.setup(suppress_output=True, method='LSODA', step=step_size)
 
-                # Solve the system
-                self.solver.solve()
+        # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
+        self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
+                                   stop=(self.model.time_object.n_t))
+        # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
+        # the new solution dictionary
+        new_dict = {}
+        for key, value in self.model.components.items():
 
                 # Verify the solver converged
                 self.assertTrue(self.solver.converged or self.solver._Nconv is not None)
