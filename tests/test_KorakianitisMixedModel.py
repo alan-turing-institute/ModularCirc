@@ -29,7 +29,7 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         self.initial_values = {}
         
         # Define the indexes of the equivalent to the last cycles
-        self.tind_init  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * self.model.time_object.export_min,
+        self.tind_init  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c+1,
                                stop =self.model.time_object.n_t)
         
         # From each of the components, retrieve the volume (<V>), pressure (<P_i>) and flow (<Q_i>)
