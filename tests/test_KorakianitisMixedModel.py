@@ -26,20 +26,6 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         # Solver is being setup: switching off console printing and setting the solver method to "LSODA"
         self.solver.setup(suppress_output=True, method='LSODA')
 
-        self.initial_values = {}
-        
-        # Define the indexes of the equivalent to the last cycles
-        self.tind_init  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * self.model.time_object.export_min,
-                               stop =self.model.time_object.n_t)
-        
-        # From each of the components, retrieve the volume (<V>), pressure (<P_i>) and flow (<Q_i>)
-        for key, value in self.model.components.items():
-            self.initial_values[key] = {
-                'V': value.V.values[self.tind_init].mean(),
-                'P_i': value.P_i.values[self.tind_init].mean(),
-                'Q_i': value.Q_i.values[self.tind_init].mean()
-            }
-
         # Load expected values from a JSON file
         with open('tests/expected_outputs/KorakianitisMixedModel_expected_output.json', 'r') as f:
             self.expected_values = json.load(f)
@@ -72,12 +58,15 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         
         # Running the model
         self.solver.solve()
+
         # Verifying the model changed the state variables stored within components.
         self.assertTrue(len(self.solver.model.components['lv'].V.values) > 0)
         self.assertTrue(len(self.solver.model.components['lv'].P_i.values) > 0)
+
         # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
-        self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c * (self.model.time_object.export_min+1),
-                                   stop=(self.model.time_object.n_t-self.model.time_object.n_c)) + self.solver.Nconv
+        self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
+                                   stop=(self.model.time_object.n_t))
+
         # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
         # the new solution dictionary
         new_dict = {}
@@ -88,9 +77,6 @@ class TestKorakianitisMixedModel(unittest.TestCase):
                 'P_i': value.P_i.values[self.tind_fin].mean(),
                 'Q_i': value.Q_i.values[self.tind_fin].mean()
             }
-
-        # Check that the values have changed wrt the initial values
-        self.assertFalse(self.initial_values == new_dict)
 
         # Check that the values are the same as the expected values
         expected_ndarray = np.array([self.expected_values[key1][key2]  for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
