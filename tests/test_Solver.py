@@ -269,15 +269,15 @@ class TestSolver(unittest.TestCase):
             AssertionError: If the solver did not converge or if the computed values do not match the expected 
             values within the tolerance.
         """
-        step_sizes = [1, 3, 5, 7]  # Define the step sizes to test
+        cycle_step_sizes = [1, 3, 5, 7]  # Define the step sizes to test
 
-        for step_size in step_sizes:
+        for cycle_step_size in cycle_step_sizes:
 
-            print(f"Testing solver with step size: {step_size}")
+            print(f"Testing solver with step size: {cycle_step_size}")
 
-            with self.subTest(step_size=step_size):
+            with self.subTest(cycle_step_size=cycle_step_size):
                 # Reconfigure the solver with the current step size
-                self.solver.setup(suppress_output=True, method='LSODA', step=step_size)
+                self.solver.setup(suppress_output=True, method='LSODA', step=cycle_step_size)
 
         # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
         self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
@@ -319,7 +319,7 @@ class TestSolver(unittest.TestCase):
                     np.abs((expected_ndarray - new_ndarray))
                 )
                 self.assertTrue((test_ndarray < 1e-3).all(), 
-                                f"Test failed for step size {step_size}: {test_ndarray}")
+                                f"Test failed for step size {cycle_step_size}: {test_ndarray}")
 
 
 if __name__ == '__main__':
