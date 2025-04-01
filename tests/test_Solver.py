@@ -11,6 +11,9 @@ from ModularCirc.Models.KorakianitisMixedModel_parameters import KorakianitisMix
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Define global constants for tolerances
+RELATIVE_TOLERANCE = 1e-3
+
 class TestSolver(unittest.TestCase):
     """
     TestSolver is a unittest.TestCase class designed to test the functionality of the Solver class and its 
@@ -367,7 +370,7 @@ class TestSolver(unittest.TestCase):
                     np.abs((expected_ndarray - new_ndarray) / expected_ndarray),
                     np.abs((expected_ndarray - new_ndarray))
                 )
-                self.assertTrue((test_ndarray < 1e-3).all(), 
+                self.assertTrue((test_ndarray < RELATIVE_TOLERANCE).all(), 
                                 f"Test failed for step size {i_cycle_step_size}: {test_ndarray}")
 
 
