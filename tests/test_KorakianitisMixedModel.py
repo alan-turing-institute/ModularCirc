@@ -16,6 +16,13 @@ RELATIVE_TOLERANCE = 1e-3
 class TestKorakianitisMixedModel(unittest.TestCase):
 
     def setUp(self):
+
+        # Set a random seed for reproducibility
+        np.random.seed(42)
+
+        # Define the base directory for file paths
+        self.base_dir = os.path.dirname(__file__)
+
         # Define the duration of the simulation (no of cycles), duration of the cycle, maximum time step size, and minimum number of cycles to run
         self.time_setup_dict = {
             'name': 'TimeTest',
