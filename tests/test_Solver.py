@@ -329,7 +329,7 @@ class TestSolver(unittest.TestCase):
 
         for i_cycle_step_size in cycle_step_sizes:
 
-            # Use logging instead of print
+            # Use logging to print the current step size
             logging.info(f"Testing solver with step size: {i_cycle_step_size}")
 
             with self.subTest(cycle_step_size=i_cycle_step_size):
