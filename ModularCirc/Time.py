@@ -54,12 +54,12 @@ class TimeClass():
         
         # discretization of the entire simulation duration
         self._sym_t = pd.Series(
-            [t+cycle*self.tcycle for cycle in range(self.ncycles) for t in self._one_cycle_t[:-1]]
+            [t+cycle*self.tcycle for cycle in range(self.ncycles) for t in self._one_cycle_t[:-1]] + [self._one_cycle_t.values[-1]+(self.ncycles-1)*self.tcycle,]
         )
         
         # array of the current time within the heart cycle
         self._cycle_t = pd.Series(
-            [t for _ in range(self.ncycles) for t in self._one_cycle_t[:-1]]
+            [t for _ in range(self.ncycles) for t in self._one_cycle_t[:-1]] + [self._one_cycle_t.values[-1],]
         )
         
         self.time = pd.DataFrame({'cycle_t' : self._cycle_t, 'sym_t' : self._sym_t})
