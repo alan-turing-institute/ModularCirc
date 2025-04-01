@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 import json
+import os
 from ModularCirc.Models.OdeModel import OdeModel
 from ModularCirc.Solver import Solver
 from ModularCirc.Models.KorakianitisMixedModel import KorakianitisMixedModel
@@ -55,6 +56,9 @@ class TestSolver(unittest.TestCase):
 
         # Set a random seed for reproducibility
         np.random.seed(42)
+
+        # Define the base directory for file paths
+        self.base_dir = os.path.dirname(__file__)
 
         # Define the time setup dictionary
         self.time_setup_dict = {
@@ -139,8 +143,15 @@ class TestSolver(unittest.TestCase):
         # Test initialize_by_function():
 
         # Verify that initialize_by_function accepts the expected input, and returns the expected output
-        # Load the expected values from an npy file
-        expected_input = np.load('tests/inputs_for_tests/asd_first_row.npy')
+
+        # Construct the file path dynamically
+        input_file_path = os.path.join(self.base_dir, 'inputs_for_tests', 'asd_first_row.npy')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(input_file_path), f"Input file not found: {input_file_path}")
+
+        # Load the expected values from the file
+        expected_input = np.load(input_file_path)
 
         # Verify the function returns the output in the right data type
         self.assertIsInstance(self.solver.initialize_by_function(y=expected_input), np.ndarray)
@@ -177,8 +188,15 @@ class TestSolver(unittest.TestCase):
         # Test optimize():
 
         # Verify that optimize() accepts the expected input
+
+        # Construct the file path dynamically
+        input_file_path = os.path.join(self.base_dir, 'inputs_for_tests', 'inputs_for_optimize.npz')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(input_file_path), f"Input file not found: {input_file_path}")
+
         # Load the expected values from an npz file
-        expected_input = np.load('tests/inputs_for_tests/inputs_for_optimize.npz')
+        expected_input = np.load(input_file_path)
 
         # Verify the function can run with the expected input
         self.solver.optimize(y=expected_input['y_temp'], keys=expected_input['keys4'])
@@ -206,14 +224,29 @@ class TestSolver(unittest.TestCase):
         # Test pv_dfdt_update():
 
         # Verify that pv_dfdt_update() accepts the expected input
+
+        # Construct the file path dynamically
+        input_file_path = os.path.join(self.base_dir, 'inputs_for_tests', 'inputs_for_pv_dfdt_update.npy')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(input_file_path), f"Input file not found: {input_file_path}")
+
         # Load the expected values from an npy file
-        y0 = np.load('tests/inputs_for_tests/inputs_for_pv_dfdt_update.npy')
+        y0 = np.load(input_file_path)
 
         # Verify the function can run with the expected input
         pv_dfdt_result = self.solver.pv_dfdt_global(t=0, y=y0) 
 
         # Verify the output matches the expected output
-        expected_output = np.load('tests/expected_outputs/pv_dfdt_update_expected_output.npy')
+
+        # Construct the file path dynamically
+        output_file_path = os.path.join(self.base_dir, 'expected_outputs', 'pv_dfdt_update_expected_output.npy')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
+
+        expected_output = np.load(output_file_path)
+
         np.testing.assert_allclose(pv_dfdt_result, expected_output)
 
 
@@ -239,14 +272,27 @@ class TestSolver(unittest.TestCase):
         # Test s_u_update():
 
         # Verify that s_u_update() accepts the expected input
+
+        # Construct the file path dynamically
+        input_file_path = os.path.join(self.base_dir, 'inputs_for_tests', 'inputs_for_s_u_update.npy')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(input_file_path), f"Input file not found: {input_file_path}")
+
         # Load the expected values from an npy file
-        y_temp = np.load('tests/inputs_for_tests/inputs_for_s_u_update.npy')
+        y_temp = np.load(input_file_path)
 
         # Verify the function can run with the expected input
         s_u_result = self.solver.s_u_update(t=0.0, y=y_temp)
 
-        # Verify the output matches the expected output
-        expected_output = np.load('tests/expected_outputs/s_u_update_expected_output.npy')
+        # Construct the file path dynamically
+        output_file_path = os.path.join(self.base_dir, 'expected_outputs', 's_u_update_expected_output.npy')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
+
+        expected_output = np.load(output_file_path)
+
         np.testing.assert_allclose(s_u_result, expected_output)
 
 
@@ -267,7 +313,12 @@ class TestSolver(unittest.TestCase):
         """
 
         # Load the expected values from a JSON file:
-        with open('tests/expected_outputs/KorakianitisMixedModel_expected_output.json', 'r') as f:
+        output_file_path = os.path.join(self.base_dir, 'expected_outputs', 'KorakianitisMixedModel_expected_output.json')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
+
+        with open(output_file_path, 'r') as f:
             self.expected_values = json.load(f)
 
         cycle_step_sizes = [1, 3, 5, 7]  # Define the step sizes to test
