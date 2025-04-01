@@ -1,10 +1,17 @@
 import unittest
 import numpy as np
 import json
+import os
+import logging
 from ModularCirc.Models.KorakianitisMixedModel import KorakianitisMixedModel
 from ModularCirc.Models.KorakianitisMixedModel_parameters import KorakianitisMixedModel_parameters
 from ModularCirc.Solver import Solver
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Define global constants for tolerances
+RELATIVE_TOLERANCE = 1e-3
 
 class TestKorakianitisMixedModel(unittest.TestCase):
 
@@ -27,7 +34,12 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         self.solver.setup(suppress_output=True, method='LSODA',step=1)
 
         # Load expected values from a JSON file
-        with open('tests/expected_outputs/KorakianitisMixedModel_expected_output.json', 'r') as f:
+        output_file_path = os.path.join(self.base_dir, 'expected_outputs', 'KorakianitisMixedModel_expected_output.json')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
+
+        with open(output_file_path, 'r') as f:
             self.expected_values = json.load(f)
 
     def test_model_initialization(self):
@@ -56,33 +68,52 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         of equations is then passed to solve_ivp (retrieved from scipy).
         '''
         
-        # Running the model
-        self.solver.solve()
+        cycle_step_sizes = [1, 3, 5, 7]  # Define the step sizes to test
 
-        # Verifying the model changed the state variables stored within components.
-        self.assertTrue(len(self.solver.model.components['lv'].V.values) > 0)
-        self.assertTrue(len(self.solver.model.components['lv'].P_i.values) > 0)
+        for i_cycle_step_size in cycle_step_sizes:
 
-        # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
-        self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
-                                   stop=(self.model.time_object.n_t))
+            # Use logging to print the current step size
+            logging.info(f"Testing solver with step size: {i_cycle_step_size}")
 
-        # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
-        # the new solution dictionary
-        new_dict = {}
-        for key, value in self.model.components.items():
+            with self.subTest(cycle_step_size=i_cycle_step_size):
 
-            new_dict[key] = {
-                'V': value.V.values[self.tind_fin].mean(),
-                'P_i': value.P_i.values[self.tind_fin].mean(),
-                'Q_i': value.Q_i.values[self.tind_fin].mean()
-            }
+                # Reconfigure the solver with the current step size
+                self.solver.setup(suppress_output=True, method='LSODA', step=i_cycle_step_size)
 
-        # Check that the values are the same as the expected values
-        expected_ndarray = np.array([self.expected_values[key1][key2]  for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
-        new_ndarray      = np.array([new_dict[key1][key2]              for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
-        test_ndarray     = np.where(np.abs(expected_ndarray) > 1e-6, np.abs((expected_ndarray - new_ndarray) / expected_ndarray),  np.abs((expected_ndarray - new_ndarray)))
-        self.assertTrue((test_ndarray < 1e-3).all())
+                # Running the model
+                self.solver.solve()     
+
+                # Verify the solver converged
+                self.assertTrue(self.solver.converged or self.solver._Nconv is not None) 
+
+                # Verifying the model changed the state variables stored within components.
+                self.assertTrue(len(self.solver.model.components['lv'].V.values) > 0)
+                self.assertTrue(len(self.solver.model.components['lv'].P_i.values) > 0)
+
+                # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
+                self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
+                                           stop=(self.model.time_object.n_t))
+
+                # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
+                # the new solution dictionary
+                new_dict = {}
+                for key, value in self.model.components.items():
+
+                    new_dict[key] = {
+                        'V': value.V.values[self.tind_fin].mean(),
+                        'P_i': value.P_i.values[self.tind_fin].mean(),
+                        'Q_i': value.Q_i.values[self.tind_fin].mean()
+                    }
+
+                # Check that the values are the same as the expected values
+                expected_ndarray = np.array(
+                    [self.expected_values["results"][str(i_cycle_step_size)][key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()]
+                    )
+                new_ndarray = np.array([new_dict[key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
+                test_ndarray = np.where(np.abs(expected_ndarray) > 1e-6, 
+                                        np.abs((expected_ndarray - new_ndarray) / expected_ndarray),  
+                                        np.abs((expected_ndarray - new_ndarray)))
+                self.assertTrue((test_ndarray < RELATIVE_TOLERANCE).all())
 
 
 if __name__ == '__main__':
