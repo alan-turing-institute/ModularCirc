@@ -2,10 +2,14 @@ import unittest
 import numpy as np
 import json
 import os
+import logging
 from ModularCirc.Models.OdeModel import OdeModel
 from ModularCirc.Solver import Solver
 from ModularCirc.Models.KorakianitisMixedModel import KorakianitisMixedModel
 from ModularCirc.Models.KorakianitisMixedModel_parameters import KorakianitisMixedModel_parameters
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class TestSolver(unittest.TestCase):
     """
@@ -325,7 +329,8 @@ class TestSolver(unittest.TestCase):
 
         for i_cycle_step_size in cycle_step_sizes:
 
-            print(f"Testing solver with step size: {i_cycle_step_size}")
+            # Use logging instead of print
+            logging.info(f"Testing solver with step size: {i_cycle_step_size}")
 
             with self.subTest(cycle_step_size=i_cycle_step_size):
 
@@ -339,7 +344,7 @@ class TestSolver(unittest.TestCase):
                 self.assertTrue(self.solver.converged or self.solver._Nconv is not None)                
 
                 # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
-                self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
+                tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
                                            stop=(self.model.time_object.n_t))
 
                 # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
@@ -347,9 +352,9 @@ class TestSolver(unittest.TestCase):
                 new_dict = {}
                 for key, value in self.model.components.items():
                     new_dict[key] = {
-                        'V': value.V.values[self.tind_fin].mean(),
-                        'P_i': value.P_i.values[self.tind_fin].mean(),
-                        'Q_i': value.Q_i.values[self.tind_fin].mean()
+                        'V': value.V.values[tind_fin].mean(),
+                        'P_i': value.P_i.values[tind_fin].mean(),
+                        'Q_i': value.Q_i.values[tind_fin].mean()
                     }
                 
                 # Check that the values are the same as the expected values
