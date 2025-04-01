@@ -16,6 +16,28 @@ RELATIVE_TOLERANCE = 1e-3
 class TestKorakianitisMixedModel(unittest.TestCase):
 
     def setUp(self):
+        """
+        Set up the test environment for the KorakianitisMixedModel.
+
+        This method initializes the necessary components and configurations 
+        required for testing the KorakianitisMixedModel. It performs the following:
+        
+        - Sets a random seed for reproducibility.
+        - Defines the base directory for file paths.
+        - Configures the simulation time setup parameters, including the number 
+          of cycles, cycle duration, time step size, and minimum export cycles.
+        - Initializes the parameter object for the KorakianitisMixedModel.
+        - Creates an instance of the KorakianitisMixedModel with the specified 
+          time setup and parameter object, suppressing console output.
+        - Initializes the solver for the model and configures it with the 
+          "LSODA" method, suppressing console output.
+        - Loads expected output values from a JSON file for validation during tests.
+        - Verifies the existence of the expected output file and raises an 
+          assertion error if the file is not found.
+
+        Raises:
+            AssertionError: If the expected output file is not found.
+        """
 
         # Set a random seed for reproducibility
         np.random.seed(42)
@@ -70,10 +92,15 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         self.assertEqual(self.solver.model, self.model)
 
     def test_solver_run(self):
-        '''
-        Testing running the solver: all the components (their associated equations) are assembled within a system. The system
-        of equations is then passed to solve_ivp (retrieved from scipy).
-        '''
+        """
+        Test the functionality of the solver by running it with different step sizes and verifying its behavior.
+        This test ensures that:
+        1. The solver can be configured and run with various step sizes.
+        2. The solver converges successfully for each step size.
+        3. The state variables of the model components are updated correctly after solving.
+        4. The computed results match the expected values within a specified tolerance.
+   
+        """
         
         cycle_step_sizes = [1, 3, 5, 7]  # Define the step sizes to test
 
