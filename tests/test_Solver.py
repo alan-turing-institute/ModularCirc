@@ -80,7 +80,9 @@ class TestSolver(unittest.TestCase):
         self.parobj = KorakianitisMixedModel_parameters()
 
         # Initialize the model
-        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj, suppress_printing=True)
+        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, 
+                                            parobj=self.parobj, 
+                                            suppress_printing=True)
  
         # Initialize the solver
         self.solver = Solver(model=self.model)
@@ -337,6 +339,17 @@ class TestSolver(unittest.TestCase):
 
             with self.subTest(cycle_step_size=i_cycle_step_size):
 
+                # Initialize the parameter object
+                self.parobj = KorakianitisMixedModel_parameters()
+
+                # Initialize the model
+                self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, 
+                                                    parobj=self.parobj, 
+                                                    suppress_printing=True)
+        
+                # Initialize the solver
+                self.solver = Solver(model=self.model)
+
                 # Reconfigure the solver with the current step size
                 self.solver.setup(suppress_output=True, method='LSODA', step=i_cycle_step_size)
 
@@ -348,7 +361,7 @@ class TestSolver(unittest.TestCase):
 
                 # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
                 tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
-                                           stop=(self.model.time_object.n_t))
+                                      stop=(self.model.time_object.n_t))
 
                 # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
                 # the new solution dictionary
