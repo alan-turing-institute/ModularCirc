@@ -15,8 +15,49 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 RELATIVE_TOLERANCE = 1e-3
 
 class TestNaghaviModel(unittest.TestCase):
+    """
+    Unit tests for the NaghaviModel and its associated Solver.
+    This test suite verifies the correct initialization, configuration, and functionality of the 
+    NaghaviModel and Solver classes. It ensures that the model behaves as expected under various 
+    conditions and that the computed results match the expected outputs.
+    Classes:
+        TestNaghaviModel: A unittest.TestCase subclass containing tests for the NaghaviModel and Solver.
+    Methods:
+        setUp:
+            Sets up the test environment by initializing the model, solver, and loading expected outputs.
+            Ensures reproducibility by setting a random seed.
+        test_model_initialization:
+            Tests the initialization of the model and parameter objects.
+            Verifies the presence of required attributes and correct parameter assignments.
+        test_solver_initialization:
+            Tests the initialization of the solver.
+            Verifies that the solver is correctly linked to the model.
+        test_solver_run:
+            Tests the functionality of the solver by running it with different cycle step sizes.
+            Verifies solver convergence, updates to model state variables, and correctness of computed results.
+    """
 
     def setUp(self):
+        """
+        Set up the test environment for the NaghaviModel.
+        This method initializes the necessary components and configurations for testing
+        the NaghaviModel. It includes setting up the temporal discretization, model parameters,
+        and solver, as well as loading expected output values for validation.
+        Attributes:
+            base_dir (str): The base directory for file paths, derived from the current file's location.
+            time_setup_dict (dict): Configuration dictionary for temporal discretization, including:
+                - name (str): Name associated with the temporal discretization.
+                - ncycles (int): Maximum number of cycles for the simulation.
+                - tcycle (float): Duration of a heartbeat in milliseconds.
+                - dt (float): Duration of a discrete time step.
+                - export_min (int): Minimum number of time steps for exporting the simulation.
+            parobj (NaghaviModelParameters): Parameter object for the NaghaviModel.
+            model (NaghaviModel): Instance of the NaghaviModel initialized with the time setup and parameters.
+            solver (Solver): Solver instance configured for the model with specific settings.
+            expected_values (dict): Expected output values loaded from a JSON file for validation.
+        Raises:
+            AssertionError: If the expected output file does not exist at the specified path.
+        """
         
         # Set a random seed for reproducibility
         np.random.seed(42)
@@ -74,6 +115,13 @@ class TestNaghaviModel(unittest.TestCase):
         self.assertEqual(self.solver.model.components['lv'].E_pas, self.parobj.components['lv']['E_pas'])
 
     def test_solver_initialization(self):
+        """
+        Test the initialization of the solver.
+
+        This test verifies the following:
+        1. The `solver` attribute is an instance of the `Solver` class.
+        2. The `model` attribute of the `solver` instance is the same as the original `model` object.
+        """
         # Verify <solver> is an instance of <Solver>
         self.assertIsInstance(self.solver, Solver)
         # Verify the instance of <model> that is an atribute of <solver> is the same as the original <model>
@@ -85,7 +133,7 @@ class TestNaghaviModel(unittest.TestCase):
         This test ensures that:
         1. The solver can be configured and run with various step sizes.
         2. The solver converges successfully for each step size.
-        3. The state variables of the model components are updated correctly after solving.
+        3. The state variables of the model components are updated after solving.
         4. The computed results match the expected values within a specified tolerance.
    
         """
