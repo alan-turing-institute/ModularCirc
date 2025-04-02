@@ -1,10 +1,18 @@
 import unittest
 import numpy as np
 import json
+import os
+import logging
 from ModularCirc.Models.OdeModel import OdeModel
 from ModularCirc.Solver import Solver
 from ModularCirc.Models.KorakianitisMixedModel import KorakianitisMixedModel
 from ModularCirc.Models.KorakianitisMixedModel_parameters import KorakianitisMixedModel_parameters
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Define global constants for tolerances
+RELATIVE_TOLERANCE = 1e-3
 
 class TestSolver(unittest.TestCase):
     """
@@ -56,6 +64,9 @@ class TestSolver(unittest.TestCase):
         # Set a random seed for reproducibility
         np.random.seed(42)
 
+        # Define the base directory for file paths
+        self.base_dir = os.path.dirname(__file__)
+
         # Define the time setup dictionary
         self.time_setup_dict = {
             'name': 'TimeTest',
@@ -69,13 +80,15 @@ class TestSolver(unittest.TestCase):
         self.parobj = KorakianitisMixedModel_parameters()
 
         # Initialize the model
-        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj, suppress_printing=True)
+        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, 
+                                            parobj=self.parobj, 
+                                            suppress_printing=True)
  
         # Initialize the solver
         self.solver = Solver(model=self.model)
 
         # Setup the solver
-        self.solver.setup(suppress_output=True, method='LSODA')        
+        self.solver.setup(suppress_output=True, method='LSODA', step=1)        
 
 
     def test_solver_initialization(self):
@@ -139,8 +152,15 @@ class TestSolver(unittest.TestCase):
         # Test initialize_by_function():
 
         # Verify that initialize_by_function accepts the expected input, and returns the expected output
-        # Load the expected values from an npy file
-        expected_input = np.load('tests/inputs_for_tests/asd_first_row.npy')
+
+        # Construct the file path dynamically
+        input_file_path = os.path.join(self.base_dir, 'inputs_for_tests', 'asd_first_row.npy')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(input_file_path), f"Input file not found: {input_file_path}")
+
+        # Load the expected values from the file
+        expected_input = np.load(input_file_path)
 
         # Verify the function returns the output in the right data type
         self.assertIsInstance(self.solver.initialize_by_function(y=expected_input), np.ndarray)
@@ -177,8 +197,15 @@ class TestSolver(unittest.TestCase):
         # Test optimize():
 
         # Verify that optimize() accepts the expected input
+
+        # Construct the file path dynamically
+        input_file_path = os.path.join(self.base_dir, 'inputs_for_tests', 'inputs_for_optimize.npz')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(input_file_path), f"Input file not found: {input_file_path}")
+
         # Load the expected values from an npz file
-        expected_input = np.load('tests/inputs_for_tests/inputs_for_optimize.npz')
+        expected_input = np.load(input_file_path)
 
         # Verify the function can run with the expected input
         self.solver.optimize(y=expected_input['y_temp'], keys=expected_input['keys4'])
@@ -206,14 +233,29 @@ class TestSolver(unittest.TestCase):
         # Test pv_dfdt_update():
 
         # Verify that pv_dfdt_update() accepts the expected input
+
+        # Construct the file path dynamically
+        input_file_path = os.path.join(self.base_dir, 'inputs_for_tests', 'inputs_for_pv_dfdt_update.npy')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(input_file_path), f"Input file not found: {input_file_path}")
+
         # Load the expected values from an npy file
-        y0 = np.load('tests/inputs_for_tests/inputs_for_pv_dfdt_update.npy')
+        y0 = np.load(input_file_path)
 
         # Verify the function can run with the expected input
         pv_dfdt_result = self.solver.pv_dfdt_global(t=0, y=y0) 
 
         # Verify the output matches the expected output
-        expected_output = np.load('tests/expected_outputs/pv_dfdt_update_expected_output.npy')
+
+        # Construct the file path dynamically
+        output_file_path = os.path.join(self.base_dir, 'expected_outputs', 'pv_dfdt_update_expected_output.npy')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
+
+        expected_output = np.load(output_file_path)
+
         np.testing.assert_allclose(pv_dfdt_result, expected_output)
 
 
@@ -239,62 +281,111 @@ class TestSolver(unittest.TestCase):
         # Test s_u_update():
 
         # Verify that s_u_update() accepts the expected input
+
+        # Construct the file path dynamically
+        input_file_path = os.path.join(self.base_dir, 'inputs_for_tests', 'inputs_for_s_u_update.npy')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(input_file_path), f"Input file not found: {input_file_path}")
+
         # Load the expected values from an npy file
-        y_temp = np.load('tests/inputs_for_tests/inputs_for_s_u_update.npy')
+        y_temp = np.load(input_file_path)
 
         # Verify the function can run with the expected input
         s_u_result = self.solver.s_u_update(t=0.0, y=y_temp)
 
-        # Verify the output matches the expected output
-        expected_output = np.load('tests/expected_outputs/s_u_update_expected_output.npy')
+        # Construct the file path dynamically
+        output_file_path = os.path.join(self.base_dir, 'expected_outputs', 's_u_update_expected_output.npy')
+
+        # Verify the file exists
+        self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
+
+        expected_output = np.load(output_file_path)
+
         np.testing.assert_allclose(s_u_result, expected_output)
 
 
     def test_solver_solve(self):
         """
-        Test the `solve` method of the solver.
+        Test the `solve` method of the solver with different step sizes.
 
-        This test performs the following steps:
-        1. Solves the system using the solver.
-        2. Verifies that the solver has converged.
-        3. Loads expected values from a JSON file.
-        4. Redefines the time indices based on the number of heart cycles necessary to reach steady state.
-        5. Retrieves the component state variables, computes the mean values during the last cycle, and stores them in a new solution dictionary.
-        6. Compares the new solution dictionary values with the expected values and asserts that they are within an acceptable tolerance.
+        This test performs the following steps for each step size:
+        1. Configures the solver with the given step size.
+        2. Solves the system using the solver.
+        3. Verifies that the solver has converged.
+        7. Compares the new solution dictionary values with the expected values and asserts that they are 
+        within an acceptable tolerance.
 
         Raises:
-            AssertionError: If the solver did not converge or if the computed values do not match the expected values within the tolerance.
+            AssertionError: If the solver did not converge or if the computed values do not match the expected 
+            values within the tolerance.
         """
 
-        # Solve the system
-        self.solver.solve()
+        # Load the expected values from a JSON file:
+        output_file_path = os.path.join(self.base_dir, 'expected_outputs', 'KorakianitisMixedModel_expected_output.json')
 
-        # Verify the solver converged
-        self.assertTrue(self.solver.converged or self.solver._Nconv is not None)
+        # Verify the file exists
+        self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
 
-        # Load expected values from a JSON file
-        with open('tests/expected_outputs/KorakianitisMixedModel_expected_output.json', 'r') as f:
+        with open(output_file_path, 'r') as f:
             self.expected_values = json.load(f)
 
-        # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
-        self.tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
-                                   stop=(self.model.time_object.n_t))
-        # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
-        # the new solution dictionary
-        new_dict = {}
-        for key, value in self.model.components.items():
+        cycle_step_sizes = [1, 3, 5, 7]  # Define the step sizes to test
 
-            new_dict[key] = {
-                'V': value.V.values[self.tind_fin].mean(),
-                'P_i': value.P_i.values[self.tind_fin].mean(),
-                'Q_i': value.Q_i.values[self.tind_fin].mean()
-            }
+        for i_cycle_step_size in cycle_step_sizes:
 
-        # Check that the values are the same as the expected values
-        expected_ndarray = np.array([self.expected_values[key1][key2]  for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
-        new_ndarray      = np.array([new_dict[key1][key2]              for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
-        test_ndarray     = np.where(np.abs(expected_ndarray) > 1e-6, np.abs((expected_ndarray - new_ndarray) / expected_ndarray),  np.abs((expected_ndarray - new_ndarray)))
-        self.assertTrue((test_ndarray < 1e-3).all())
+            # Use logging to print the current step size
+            logging.info(f"Testing solver with step size: {i_cycle_step_size}")
+
+            with self.subTest(cycle_step_size=i_cycle_step_size):
+
+                # Initialize the parameter object
+                self.parobj = KorakianitisMixedModel_parameters()
+
+                # Initialize the model
+                self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, 
+                                                    parobj=self.parobj, 
+                                                    suppress_printing=True)
+        
+                # Initialize the solver
+                self.solver = Solver(model=self.model)
+
+                # Reconfigure the solver with the current step size
+                self.solver.setup(suppress_output=True, method='LSODA', step=i_cycle_step_size)
+
+                # Running the model
+                self.solver.solve()     
+
+                # Verify the solver converged
+                self.assertTrue(self.solver.converged or self.solver._Nconv is not None)                
+
+                # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
+                tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
+                                      stop=(self.model.time_object.n_t))
+
+                # Retrieve the component state variables, compute the mean of the values during the last cycle and store them within
+                # the new solution dictionary
+                new_dict = {}
+                for key, value in self.model.components.items():
+                    new_dict[key] = {
+                        'V': value.V.values[tind_fin].mean(),
+                        'P_i': value.P_i.values[tind_fin].mean(),
+                        'Q_i': value.Q_i.values[tind_fin].mean()
+                    }
+                
+                # Check that the values are the same as the expected values
+                expected_ndarray = np.array(
+                    [self.expected_values["results"][str(i_cycle_step_size)][key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()]
+                    )
+                new_ndarray = np.array([new_dict[key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
+                test_ndarray = np.where(
+                    np.abs(expected_ndarray) > 1e-6,
+                    np.abs((expected_ndarray - new_ndarray) / expected_ndarray),
+                    np.abs((expected_ndarray - new_ndarray))
+                )
+                self.assertTrue((test_ndarray < RELATIVE_TOLERANCE).all(), 
+                                f"Test failed for step size {i_cycle_step_size}: {test_ndarray}")
+
 
 if __name__ == '__main__':
     unittest.main()
