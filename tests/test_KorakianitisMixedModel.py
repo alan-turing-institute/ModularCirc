@@ -53,12 +53,18 @@ class TestKorakianitisMixedModel(unittest.TestCase):
             'dt': 0.001,
             'export_min': 1
         }
+
         # Initializing the parameter object
         self.parobj = KorakianitisMixedModel_parameters()
+
         # Initializing the model 
-        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, parobj=self.parobj, suppress_printing=True)
+        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, 
+                                            parobj=self.parobj, 
+                                            suppress_printing=True)
+        
         # Initializing the solver
         self.solver = Solver(model=self.model)
+        
         # Solver is being setup: switching off console printing and setting the solver method to "LSODA"
         self.solver.setup(suppress_output=True, method='LSODA',step=1)
 
@@ -110,6 +116,17 @@ class TestKorakianitisMixedModel(unittest.TestCase):
             logging.info(f"Testing solver with step size: {i_cycle_step_size}")
 
             with self.subTest(cycle_step_size=i_cycle_step_size):
+
+                # Initializing the parameter object
+                self.parobj = KorakianitisMixedModel_parameters()
+
+                # Initializing the model 
+                self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, 
+                                                    parobj=self.parobj, 
+                                                    suppress_printing=True)
+                
+                # Initializing the solver
+                self.solver = Solver(model=self.model)
 
                 # Reconfigure the solver with the current step size
                 self.solver.setup(suppress_output=True, method='LSODA', step=i_cycle_step_size)
