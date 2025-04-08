@@ -1,6 +1,6 @@
 # ModularCirc
 
-[![Actions Status][actions-badge]][actions-link]
+[![Actions Status][actions-badge]](https://github.com/alan-turing-institute/ModularCirc/.github/workflows/ci.yml/badge.svg?branch=dev)
 [![PyPI version][pypi-version]][pypi-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
