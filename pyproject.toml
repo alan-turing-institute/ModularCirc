@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ModularCirc_LevanBokeria"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
     {name = "Maximilian Balmus", email = "mbalmus@turing.ac.uk"}
 ]
