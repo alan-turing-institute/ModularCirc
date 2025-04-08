@@ -1,8 +1,8 @@
 # ModularCirc
 
 [![Actions Status][actions-badge]](https://github.com/alan-turing-institute/ModularCirc/.github/workflows/ci.yml/badge.svg?branch=dev)
-[![PyPI version][pypi-version]][pypi-link]
-[![PyPI platforms][pypi-platforms]][pypi-link]
+[![PyPI version][pypi-version]](https://test.pypi.org/project/ModularCirc-LevanBokeria/0.1.1/)
+[![PyPI platforms][pypi-platforms]](https://test.pypi.org/project/ModularCirc-LevanBokeria/0.1.1/)
 
 The scope of this package is to provide a framework for building **0D models** and **simulating cardiovascular flow** and **mechanics**. Conceptually, the models can be split into three types of components:
 1. **Heart chambers**
