@@ -32,5 +32,5 @@ dependencies = [
 # "Source Code" = "https://github.com/alan-turing-institute/ModularCirc"
 # "Bug Tracker" = "https://github.com/alan-turing-institute/ModularCirc/issues"
 
-[tool.setuptools]
-packages = ["ModularCirc_LevanBokeria"]
+# [tool.setuptools]
+# packages = ["ModularCirc_LevanBokeria"]
