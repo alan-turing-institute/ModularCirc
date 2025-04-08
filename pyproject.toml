@@ -3,7 +3,7 @@ requires = ["setuptools >= 77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ModularCirc_LevanBokeria"
+name = "ModularCirc"
 version = "0.1.2"
 authors = [
     {name = "Maximilian Balmus", email = "mbalmus@turing.ac.uk"}
