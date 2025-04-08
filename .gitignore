@@ -171,4 +171,4 @@ cython_debug/
 .pypirc
 
 # Ignore vscode settings
-.vscode/*
+.vscode/
