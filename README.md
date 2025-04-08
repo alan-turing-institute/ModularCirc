@@ -1,8 +1,8 @@
 # ModularCirc
 
-[![Actions Status][actions-badge]](https://github.com/alan-turing-institute/ModularCirc/.github/workflows/ci.yml/badge.svg?branch=dev)
-[![PyPI version][pypi-version]](https://test.pypi.org/project/ModularCirc-LevanBokeria/0.1.1/)
-[![PyPI platforms][pypi-platforms]](https://test.pypi.org/project/ModularCirc-LevanBokeria/0.1.1/)
+[![Actions Status][actions-badge]][actions-link]
+[![PyPI version][pypi-version]][pypi-link]
+[![PyPI platforms][pypi-platforms]][pypi-link]
 
 The scope of this package is to provide a framework for building **0D models** and **simulating cardiovascular flow** and **mechanics**. Conceptually, the models can be split into three types of components:
 1. **Heart chambers**
@@ -131,9 +131,9 @@ You can run locally the tests by running the following command:
 there is also a autamtated test pipeline that runs the tests on every push to the repository (see [here](.github/workflows/ci.yml)).
 
 <!-- prettier-ignore-start -->
-[actions-badge]:            {{url}}/workflows/CI/badge.svg
-[actions-link]:             {{url}}/actions
-[pypi-link]:                https://pypi.org/project/{{project_name}}/
-[pypi-platforms]:           https://img.shields.io/pypi/pyversions/{{project_name}}
-[pypi-version]:             https://img.shields.io/pypi/v/{{project_name}}
+[actions-badge]:            https://github.com/alan-turing-institute/ModularCirc/workflows/CI/badge.svg
+[actions-link]:             https://github.com/alan-turing-institute/ModularCirc/actions
+[pypi-link]:                https://test.pypi.org/project/ModularCirc-LevanBokeria/
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/ModularCirc-LevanBokeria
+[pypi-version]:             https://img.shields.io/pypi/v/ModularCirc-LevanBokeria
 <!-- prettier-ignore-end -->
