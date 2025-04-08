@@ -3,7 +3,7 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ModularCirc"
+name = "ModularCirc_LevanBokeria"
 version = "0.1.1"
 description = "A python package for creating and running 0D models of the cardiovascular system"
 readme = "README.md"
@@ -24,13 +24,13 @@ dependencies = [
     "tdqm"
 ]
 
-[project.optional-dependencies]
-notebooks = ["ipykernel"]
+# [project.optional-dependencies]
+# notebooks = ["ipykernel"]
 
-[project.urls]
-"Homepage" = "https://github.com/alan-turing-institute/ModularCirc"
-"Source Code" = "https://github.com/alan-turing-institute/ModularCirc"
-"Bug Tracker" = "https://github.com/alan-turing-institute/ModularCirc/issues"
+# [project.urls]
+# "Homepage" = "https://github.com/alan-turing-institute/ModularCirc"
+# "Source Code" = "https://github.com/alan-turing-institute/ModularCirc"
+# "Bug Tracker" = "https://github.com/alan-turing-institute/ModularCirc/issues"
 
 [tool.setuptools]
-packages = ["ModularCirc"]
+packages = ["ModularCirc_LevanBokeria"]
