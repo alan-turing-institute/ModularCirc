@@ -5,13 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ModularCirc_LevanBokeria"
 version = "0.1.1"
+authors = [
+    {name = "Maximilian Balmus", email = "mbalmus@turing.ac.uk"}
+]
 description = "A python package for creating and running 0D models of the cardiovascular system"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-authors = [
-    {name = "Maximilian Balmus", email = "mbalmus@turing.ac.uk"}
-]
+license-files = ["LICEN[CS]E*"]
 
 dependencies = [
     "matplotlib",
@@ -24,13 +25,10 @@ dependencies = [
     "tdqm"
 ]
 
-# [project.optional-dependencies]
-# notebooks = ["ipykernel"]
+[project.optional-dependencies]
+notebooks = ["ipykernel"]
 
-# [project.urls]
-# "Homepage" = "https://github.com/alan-turing-institute/ModularCirc"
-# "Source Code" = "https://github.com/alan-turing-institute/ModularCirc"
-# "Bug Tracker" = "https://github.com/alan-turing-institute/ModularCirc/issues"
-
-# [tool.setuptools]
-# packages = ["ModularCirc_LevanBokeria"]
+[project.urls]
+"Homepage" = "https://github.com/alan-turing-institute/ModularCirc"
+"Source Code" = "https://github.com/alan-turing-institute/ModularCirc"
+"Bug Tracker" = "https://github.com/alan-turing-institute/ModularCirc/issues"
