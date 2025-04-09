@@ -1,14 +1,66 @@
 # ModularCirc
 
+[![Actions Status][actions-badge]][actions-link]
+[![PyPI version][pypi-version]][pypi-link]
+[![PyPI platforms][pypi-platforms]][pypi-link]
+
 The scope of this package is to provide a framework for building **0D models** and **simulating cardiovascular flow** and **mechanics**. Conceptually, the models can be split into three types of components:
 1. **Heart chambers**
 2. **Valves**
-3. **Vessels**
+3. **Vessels** 
+
+## Clone the ModularCirc GitHub repo locally
+
+Run:
+
+```
+git clone https://github.com/alan-turing-institute/ModularCirc
+cd ModularCirc
+```
+
+## Setup Conda or python virtual environment
+
+Before installation of the ModularCirc package, please setup a virtual environment using either Conda or python virtual environment.
+
+### Conda setup
+
+Install Conda from https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html
+
+Run: 
+
+```
+conda create --name <yourenvname>
+conda activate <yourenvname>
+```
+
+Proceed to installing the ModularCirc package.
+
+### Python virtual environment setup
+
+Run `python3 -m venv venv`. This creates a virtual environment called `venv` in your base directory. 
+
+Activate the python environment: `source venv/bin/activate`
+
+Proceed to installing the ModularCirc package.
 
 ## Installation
+
+To install the pip package: 
+
 ```bash
-pip install git+https://github.com/alan-turing-institute/ModularCirc.git
+python -m pip install ModularCirc_LevanBokeria
 ```
+
+From source:
+
+After downloading the GitHub repository, from the repo directory run:
+
+```bash
+pip install ./
+```
+
+This will install the package based on the `pyproject.toml` file specifications.
+
 
 ## Steps for running basic models
 1. Load the classes for the model of interest and the parameter object used to paramterise the said model:
@@ -63,9 +115,25 @@ solver.solve()
 
 8. Extract the state variable values of interest.
 ```python
-v_lv = solver.model.commponents['lv'].V.values
-p_lv = solver.model.commponents['lv'].P_i.values
+v_lv = solver.model.components['lv'].V.values
+p_lv = solver.model.components['lv'].P_i.values
 ```
 
 ## Example values pv loops for all 4 chambers:
 ![Example PV loops!](Figures/PV_loops.png)
+
+## Run tests
+
+You can run locally the tests by running the following command:
+```bash
+  python -m unittest discover -s tests
+```
+there is also a autamtated test pipeline that runs the tests on every push to the repository (see [here](.github/workflows/ci.yml)).
+
+<!-- prettier-ignore-start -->
+[actions-badge]:            https://github.com/alan-turing-institute/ModularCirc/workflows/CI/badge.svg
+[actions-link]:             https://github.com/alan-turing-institute/ModularCirc/actions
+[pypi-link]:                https://test.pypi.org/project/ModularCirc-LevanBokeria/
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/ModularCirc-LevanBokeria
+[pypi-version]:             https://img.shields.io/pypi/v/ModularCirc-LevanBokeria
+<!-- prettier-ignore-end -->
