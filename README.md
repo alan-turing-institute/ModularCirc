@@ -133,7 +133,7 @@ there is also a autamtated test pipeline that runs the tests on every push to th
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/alan-turing-institute/ModularCirc/workflows/CI/badge.svg
 [actions-link]:             https://github.com/alan-turing-institute/ModularCirc/actions
-[pypi-link]:                https://test.pypi.org/project/ModularCirc-LevanBokeria/
-[pypi-platforms]:           https://img.shields.io/pypi/pyversions/ModularCirc-LevanBokeria
-[pypi-version]:             https://img.shields.io/pypi/v/ModularCirc-LevanBokeria
+[pypi-link]:                https://pypi.org/project/ModularCirc
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/ModularCirc
+[pypi-version]:             https://img.shields.io/pypi/v/ModularCirc
 <!-- prettier-ignore-end -->
