@@ -1,17 +1,18 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools >= 77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ModularCirc"
-version = "0.1.1"
-description = "A python package for creating and running 0D models of the cardiovascular system"
-readme = "README.md"
-requires-python = ">=3.10"
-license = {text = "MIT" }
+version = "0.1.2"
 authors = [
     {name = "Maximilian Balmus", email = "mbalmus@turing.ac.uk"}
 ]
+description = "A python package for creating and running 0D models of the cardiovascular system"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
 
 dependencies = [
     "matplotlib",
@@ -31,6 +32,3 @@ notebooks = ["ipykernel"]
 "Homepage" = "https://github.com/alan-turing-institute/ModularCirc"
 "Source Code" = "https://github.com/alan-turing-institute/ModularCirc"
 "Bug Tracker" = "https://github.com/alan-turing-institute/ModularCirc/issues"
-
-[tool.setuptools]
-packages = ["ModularCirc"]
