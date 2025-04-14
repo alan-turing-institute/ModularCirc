@@ -7,16 +7,13 @@
 The scope of this package is to provide a framework for building **0D models** and **simulating cardiovascular flow** and **mechanics**. Conceptually, the models can be split into three types of components:
 1. **Heart chambers**
 2. **Valves**
-3. **Vessels** 
+3. **Vessels**
 
-## Clone the ModularCirc GitHub repo locally
+The current version of the published package contains two models: 
+1. Naghavi model.
+2. Korakianitis Mixed model.
 
-Run:
-
-```
-git clone https://github.com/alan-turing-institute/ModularCirc
-cd ModularCirc
-```
+For other models currently under development, see the `dev` branch. 
 
 ## Setup Conda or python virtual environment
 
@@ -43,15 +40,24 @@ Activate the python environment: `source venv/bin/activate`
 
 Proceed to installing the ModularCirc package.
 
-## Installation
+## Installation through pip
 
 To install the pip package: 
 
 ```bash
-python -m pip install ModularCirc_LevanBokeria
+python -m pip install ModularCirc
 ```
 
-From source:
+## Installation from source:
+
+### Clone the ModularCirc GitHub repo locally
+
+Run:
+
+```
+git clone https://github.com/alan-turing-institute/ModularCirc
+cd ModularCirc
+```
 
 After downloading the GitHub repository, from the repo directory run:
 
