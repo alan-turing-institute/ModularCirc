@@ -40,7 +40,9 @@ Activate the python environment: `source venv/bin/activate`
 
 Proceed to installing the ModularCirc package.
 
-## Installation through pip
+## Installing ModularCirc
+
+### pip install
 
 To install the pip package: 
 
@@ -48,9 +50,9 @@ To install the pip package:
 python -m pip install ModularCirc
 ```
 
-## Installation from source:
+### Installation from source:
 
-### Clone the ModularCirc GitHub repo locally
+Clone the ModularCirc GitHub repo locally.
 
 Run:
 
