@@ -102,8 +102,8 @@ solver.solve()
 
 8. Extract the state variable values of interest.
 ```python
-v_lv = solver.model.commponents['lv'].V.values
-p_lv = solver.model.commponents['lv'].P_i.values
+v_lv = solver.model.components['lv'].V.values
+p_lv = solver.model.components['lv'].P_i.values
 ```
 
 ## Example values pv loops for all 4 chambers:

@@ -43,7 +43,7 @@ class MixedHeartMaynard4eWindkessel(OdeModel):
                 class_ = HC_constant_elastance # HC_mixed_elastance HC_constant_elastance
             else:
                 raise Exception(f'Component name {key} not in the model list.')
-            self.commponents[key] = class_(name=name,
+            self.components[key] = class_(name=name,
                                     time_object=self.time_object, 
                                     **parobj[key].to_dict())
             
@@ -51,82 +51,82 @@ class MixedHeartMaynard4eWindkessel(OdeModel):
                 self.set_v_sv(key)
             # else:
             #     self.set_phi_sv(key)
-            self.commponents[key].setup()
+            self.components[key].setup()
             
-        self.connect_modules(self.commponents['lv'],
-                            self.commponents['ao'],
+        self.connect_modules(self.components['lv'],
+                            self.components['ao'],
                             plabel='p_lv',
                             qlabel='q_ao',
                             )
-        self.connect_modules(self.commponents['ao'],
-                            self.commponents['sai'],
+        self.connect_modules(self.components['ao'],
+                            self.components['sai'],
                             plabel='p_sa',
                             qlabel='q_ao')
-        self.connect_modules(self.commponents['sai'],
-                            self.commponents['sa'],
+        self.connect_modules(self.components['sai'],
+                            self.components['sa'],
                             plabel='pi_sa',
                             qlabel='q_ao',
-                            qvariable=self.commponents['ao']._Q_o)
-        self.connect_modules(self.commponents['sa'],
-                            self.commponents['sc'],
+                            qvariable=self.components['ao']._Q_o)
+        self.connect_modules(self.components['sa'],
+                            self.components['sc'],
                             plabel='p_sc',
                             qlabel='q_sa')
-        self.connect_modules(self.commponents['sc'],
-                            self.commponents['sv'],
+        self.connect_modules(self.components['sc'],
+                            self.components['sv'],
                             plabel='p_sv',
                             qlabel='q_sa',
-                            qvariable=self.commponents['sa']._Q_o)
-        self.connect_modules(self.commponents['sv'],
-                            self.commponents['ra'],
+                            qvariable=self.components['sa']._Q_o)
+        self.connect_modules(self.components['sv'],
+                            self.components['ra'],
                             plabel='p_ra',
                             qlabel='q_sv')
-        self.connect_modules(self.commponents['ra'],
-                            self.commponents['ti'],
+        self.connect_modules(self.components['ra'],
+                            self.components['ti'],
                             plabel='p_ra',
                             qlabel='q_ti')
-        self.connect_modules(self.commponents['ti'],
-                            self.commponents['rv'],
+        self.connect_modules(self.components['ti'],
+                            self.components['rv'],
                             plabel='p_rv',
                             qlabel='q_ti')
-        self.connect_modules(self.commponents['rv'],
-                            self.commponents['po'],
+        self.connect_modules(self.components['rv'],
+                            self.components['po'],
                             plabel='p_rv',
                             qlabel='q_po')
-        self.connect_modules(self.commponents['po'],
-                            self.commponents['pai'],
+        self.connect_modules(self.components['po'],
+                            self.components['pai'],
                             plabel='p_pa',
                             qlabel='q_po')
-        self.connect_modules(self.commponents['pai'],
-                            self.commponents['pa'],
+        self.connect_modules(self.components['pai'],
+                            self.components['pa'],
                             plabel='pi_pa',
                             qlabel='q_po',
-                            qvariable=self.commponents['po']._Q_o)
-        self.connect_modules(self.commponents['pa'],
-                            self.commponents['pc'],
+                            qvariable=self.components['po']._Q_o)
+        self.connect_modules(self.components['pa'],
+                            self.components['pc'],
                             plabel='p_pc',
                             qlabel='q_pa')
-        self.connect_modules(self.commponents['pc'],
-                            self.commponents['pv'],
+        self.connect_modules(self.components['pc'],
+                            self.components['pv'],
                             plabel='p_pv',
                             qlabel='q_pa',
-                            qvariable=self.commponents['pa']._Q_o)
-        self.connect_modules(self.commponents['pv'],
-                            self.commponents['la'],
+                            qvariable=self.components['pa']._Q_o)
+        self.connect_modules(self.components['pv'],
+                            self.components['la'],
                             plabel='p_la',
                             qlabel='q_pv')
-        self.connect_modules(self.commponents['la'],
-                            self.commponents['mi'],
+        self.connect_modules(self.components['la'],
+                            self.components['mi'],
                             plabel='p_la',
                             qlabel='q_mi')
-        self.connect_modules(self.commponents['mi'],
-                            self.commponents['lv'],
+        self.connect_modules(self.components['mi'],
+                            self.components['lv'],
                             plabel='p_lv',
                             qlabel='q_mi')
-        for component in self.commponents.values():
+        for component in self.components.values():
             component.setup()
             
     def set_phi_sv(self, comp_key:str) -> None:
         phi_key = 'phi_' + comp_key
-        self._state_variable_dict[phi_key] = self.commponents[comp_key]._PHI
+        self._state_variable_dict[phi_key] = self.components[comp_key]._PHI
         self._state_variable_dict[phi_key].set_name(phi_key)
-        self.all_sv_data[phi_key] = self.commponents[comp_key].PHI
+        self.all_sv_data[phi_key] = self.components[comp_key].PHI
