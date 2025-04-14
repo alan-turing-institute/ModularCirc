@@ -21,10 +21,10 @@ from scipy.integrate import LSODA
 import warnings
 
 class Solver():
-    def __init__(self, 
+    def __init__(self,
                 model:OdeModel=None,
                  ) -> None:
-        
+
         self.model = model
 
 
@@ -87,12 +87,12 @@ class Solver():
 
         # Number of sub-iterations for the solver.
         self._n_sub_iter = 1
-        
+
         # flag for checking if the model is converged or not...
         self.converged = False
-        
-                
-    def setup(self, 
+
+
+    def setup(self,
               optimize_secondary_sv:bool=False,
               suppress_output:bool=False,
               step_tol:float=1e-2,
@@ -104,7 +104,7 @@ class Solver():
               )->None:
         """
         Method for detecting which are the principal variables and which are the secondary ones.
-        
+
         ## Inputs
         optimize_secondary_sv : boolean
             flag used to switch on the optimization for secondary variable computations, this flag needs to be
@@ -120,14 +120,14 @@ class Solver():
 
 
         # Loop over the state variables and check if they have an update function,
-        # This code ensures that each state variable's update function is correctly assigned and indexed, 
+        # This code ensures that each state variable's update function is correctly assigned and indexed,
         # allowing the solver to update the state variables during the simulation
         for key, component in self._vd.items():
-            
+
             # Get the index of the state variable.
             mkey = self._global_sv_id[key] # _global_sv_id - maps the state variable names to their indexes.
-            
-            # initialization function for a state variable. This function is used to initialize the state 
+
+            # initialization function for a state variable. This function is used to initialize the state
             # variable at the beginning of the simulation.
             if component.i_func is not None:
                 if not suppress_output: print(f" -- Variable {bold_text(key)} added to the init list.")
@@ -136,8 +136,8 @@ class Solver():
                 self._initialize_by_function[key] = component
                 self._global_sv_init_fun[mkey] = component.i_func
                 self._global_sv_init_ind[mkey] = [self._global_sv_id[key2] for key2 in component.i_inputs.to_list()]
-            
-            # derivative function for a state variable. This function is used to update the state variable 
+
+            # derivative function for a state variable. This function is used to update the state variable
             # during the numerical integration process.
             if component.dudt_func is not None:
                 if not suppress_output: print(f" -- Variable {bold_text(key)} added to the principal variable key list.")
@@ -148,14 +148,14 @@ class Solver():
                 self._global_psv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
 
                 # Pad the index array to the length of the state variable array.
-                self._global_psv_update_ind[mkey]   = np.pad(self._global_psv_update_ind[mkey], 
-                                                             (0, self._N_sv-len(self._global_psv_update_ind[mkey])), 
+                self._global_psv_update_ind[mkey]   = np.pad(self._global_psv_update_ind[mkey],
+                                                             (0, self._N_sv-len(self._global_psv_update_ind[mkey])),
                                                              mode='constant', constant_values=-1)
-                
+
                 # Add the state variable name to the global primary state variable list.
                 self._global_psv_names.append(key)
-            
-            # updated function for the secondary state variable. This function is used to update the state variable 
+
+            # updated function for the secondary state variable. This function is used to update the state variable
             # based on the current values of the primary state variables using algebraic relationships.
             elif component.u_func is not None:
                 if not suppress_output: print(f" -- Variable {bold_text(key)} added to the secondary variable key list.")
@@ -164,8 +164,8 @@ class Solver():
                 self._global_ssv_update_fun[mkey]   = component.u_func
                 self._global_ssv_update_fun_n[mkey] = component.u_name
                 self._global_ssv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
-                self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey], 
-                                                             (0, self._N_sv-len(self._global_ssv_update_ind[mkey])), 
+                self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey],
+                                                             (0, self._N_sv-len(self._global_ssv_update_ind[mkey])),
                                                              mode='constant', constant_values=-1)
             else:
                 continue
@@ -173,8 +173,8 @@ class Solver():
         if not suppress_output: print(' ')
 
         self.generate_dfdt_functions()
-        
-        
+
+
         if self._conv_cols is None:
             # If no specific columns for convergence (_conv_cols) are provided,
             # automatically select columns from the DataFrame (_asd) whose names
@@ -185,8 +185,8 @@ class Solver():
             self._cols = self._conv_cols
 
         # End the method without returning any specific value.
-        return None 
-    
+        return None
+
 
     def generate_dfdt_functions(self):
 
@@ -203,39 +203,39 @@ class Solver():
             """
             Initialize the state variables using a set of initialization functions.
 
-            This function applies a list of initialization functions (`funcs1`) to 
-            specific subsets of the input array `y`, as determined by the indices 
-            in `ids1`. Each function is called with `t=0.0` and the corresponding 
+            This function applies a list of initialization functions (`funcs1`) to
+            specific subsets of the input array `y`, as determined by the indices
+            in `ids1`. Each function is called with `t=0.0` and the corresponding
             subset of `y`, and the results are combined into a single NumPy array.
-            The input array `y` is usually the initial state variable array, so 
+            The input array `y` is usually the initial state variable array, so
             the 0th row of the self._asd DataFrame.
 
             Args:
-                y (np.ndarray[float]): A 1D NumPy array representing the state 
-                variables to be initialized. Each subset of `y` is passed to 
+                y (np.ndarray[float]): A 1D NumPy array representing the state
+                variables to be initialized. Each subset of `y` is passed to
                 the corresponding initialization function.
 
             Returns:
-                np.ndarray[float]: A 1D NumPy array containing the initialized 
+                np.ndarray[float]: A 1D NumPy array containing the initialized
                 state variables, with the same length as the input array `y`.
 
             Note:
-                - Each function in `funcs1` is expected to accept two arguments: 
-                  `t` (a float, representing time) and `y` (a NumPy array, 
+                - Each function in `funcs1` is expected to accept two arguments:
+                  `t` (a float, representing time) and `y` (a NumPy array,
                   representing the subset of state variables).
-            
+
             Example use:
                 >>> initialize_by_function(y=self._asd.iloc[0].to_numpy())
 
             """
-            return np.fromiter([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)], 
+            return np.fromiter([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)],
                                dtype=np.float64)
 
         # Function to update the secondary state variables based on the primary state variables.
         funcs2 = np.array(list(self._global_ssv_update_fun.values()))
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
-        
-        # @nb.njit(cache=True) 
+
+        # @nb.njit(cache=True)
         def s_u_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
             """
             Updates the secondary state variables based on the current values of the primary state variables.
@@ -250,21 +250,21 @@ class Solver():
             Example use:
                 >>> s_u_update(t=0.0, y=self._asd.iloc[0].to_numpy())
             """
-            return np.fromiter([fi(t=t, y=yi) for fi, yi in zip(funcs2, y[ids2])], 
+            return np.fromiter([fi(t=t, y=yi) for fi, yi in zip(funcs2, y[ids2])],
                                dtype=np.float64)
-        
+
         def s_u_residual(y, yall, keys):
             """ Function to compute the residual of the secondary state variables."""
             yall[keys] = y
             return (y - s_u_update(0.0, yall))
-        
+
         def optimize(y:np.ndarray, keys):
             """ Function to optimize the secondary state variables."""
             yk = y[keys]
             sol = least_squares(   # root
-                s_u_residual, 
-                yk, 
-                args=(y, keys), 
+                s_u_residual,
+                yk,
+                args=(y, keys),
                 ftol=1.0e-5,
                 xtol=1.0e-15,
                 loss='linear',
@@ -285,7 +285,7 @@ class Solver():
 
         # indexes of the primary state variables dependencies.
         ids3   = np.stack(list(self._global_psv_update_ind.values()))
-        
+
         T = self._to.tcycle
         N_zeros_0 = len(self._global_sv_id)
         _n_sub_iter = self._n_sub_iter
@@ -316,9 +316,9 @@ class Solver():
                     keys3_dict2[key].update({val,})
                 else:
                     keys3_dict2[key].update(keys4_dict[val])
-        
+
         sparsity_map = dict()
-        
+
         for i, key in enumerate(keys3):
             sparsity_map[i] = set()
             for val in keys3_dict2[key]:
@@ -335,7 +335,7 @@ class Solver():
         perm_mat = np.zeros((len(perm), len(perm)))
         for i,j in enumerate(perm):
             perm_mat[i,j] = 1
-            
+
         self.perm_mat = perm_mat
 
         # reorders the sparse matrix to reduce the bandwidth
@@ -349,7 +349,7 @@ class Solver():
 
         self.lband = lband
         self.uband = uband
-        
+
         def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
 
             """ Function to compute the derivatives of the primary state variables over time."""
@@ -372,20 +372,20 @@ class Solver():
 
             # updates the secondary state variables, and optimises them if necessary
             for _ in range(_n_sub_iter):
-                y_temp[keys4] = s_u_update(t, y_temp)  
+                y_temp[keys4] = s_u_update(t, y_temp)
             if _optimize_secondary_sv:
                 y_temp[keys4] = optimize(y_temp, keys4)
             # returns the derivatives of the primary state variables, reordered back to the original order
             return perm_mat @ np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
-            
-        
-        self.initialize_by_function = initialize_by_function    
+
+
+        self.initialize_by_function = initialize_by_function
         self.pv_dfdt_global = pv_dfdt_update
         self.s_u_update     = s_u_update
-                
+
         self.optimize = optimize
         self.s_u_residual = s_u_residual
-    
+
 
     def advance_cycle(self, y0, cycleID, step = 1):
 
@@ -399,9 +399,9 @@ class Solver():
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             if self._method != 'LSODA':
-                res = solve_ivp(fun=self.pv_dfdt_global, 
-                                t_span=(t[0], t[-1]), 
-                                y0=self.perm_mat @ y0, 
+                res = solve_ivp(fun=self.pv_dfdt_global,
+                                t_span=(t[0], t[-1]),
+                                y0=self.perm_mat @ y0,
                                 t_eval=t,
                                 max_step=self.dt,
                                 method=self._method,
@@ -409,9 +409,9 @@ class Solver():
                                 rtol=self._rtol,
                                 )
             else:
-                res = solve_ivp(fun=self.pv_dfdt_global, 
-                                t_span=(t[0], t[-1]), 
-                                y0=self.perm_mat @ y0, 
+                res = solve_ivp(fun=self.pv_dfdt_global,
+                                t_span=(t[0], t[-1]),
+                                y0=self.perm_mat @ y0,
                                 t_eval=t,
                                 method=self._method,
                                 atol=self._atol,
@@ -431,29 +431,29 @@ class Solver():
         ids = list(self._global_psv_update_fun.keys())
         inds= list(range(len(ids)))
         self._asd.iloc[cycleID*n_t:(end_cycle)*n_t+1, ids] = y[inds, 0:n_t*step+1].T
-            
+
         if cycleID == 0: return False
 
         cycleP = end_cycle - 1
 
         cs   = self._asd[self._cols].iloc[cycleP*n_t:end_cycle*n_t, :].values
         cp   = self._asd[self._cols].iloc[(cycleP-1) *n_t:(cycleP)*n_t, :].values
-        
+
         cp_ptp = np.max(np.abs(cp), axis=0)
         cp_r   = np.max(np.abs(cs - cp), axis=0)
-        
+
         test = cp_r / cp_ptp
         test[cp_ptp <= 1e-10] = cp_r[cp_ptp <= 1e-10]
         if np.max(test) > self._step_tol : return False
         return True
-    
-    
+
+
     def solve(self):
-        
+
         # initialize the solution fields
         self._asd.loc[0, self._initialize_by_function.index] = \
             self.initialize_by_function(y=self._asd.loc[0].to_numpy()).T
-        
+
         # Solve the main system of ODEs..
 
         for i in range(0, self._to.ncycles, self.step): # step is a pulse, we might wabnt to do it in all pulses
@@ -474,66 +474,55 @@ class Solver():
             if i + self.step - 1 == self._to.ncycles - 1:
                 self._Nconv = i + self.step - 1
                 self.converged = False
-        
+
         self._to.n_t = (self.Nconv+1)*(self._to.n_c-1) + 1
-        
+
         self._asd = self._asd.iloc[:self._to.n_t]
         self._to._sym_t   = self._to._sym_t.head(self._to.n_t)
         self._to._cycle_t = self._to._cycle_t.head(self._to.n_t)
-        
-            
-        keys4  = np.array(list(self._global_ssv_update_fun.keys()))      
-        temp   = np.zeros(self._asd.iloc[:,keys4].shape)  
+
+
+        keys4  = np.array(list(self._global_ssv_update_fun.keys()))
+        temp   = np.zeros(self._asd.iloc[:,keys4].shape)
         for i, line in enumerate(self._asd.values) :
             line[keys4] = self.s_u_update(0.0, line)
             if self._optimize_secondary_sv:
                 temp[i,:] = self.optimize(line, keys4)
             else:
-                temp[i,:] = line[keys4] 
-        self._asd.iloc[:,keys4] = temp  
-        
-        for key in self._vd.keys():
-            self._vd[key]._u = self._asd[key] 
+                temp[i,:] = line[keys4]
+        self._asd.iloc[:,keys4] = temp
 
-    
+        for key in self._vd.keys():
+            self._vd[key]._u = self._asd[key]
+
+
     @property
     def vd(self) -> Series[StateVariable]:
         return self._vd
-    
+
 
     @property
     def dt(self) -> float:
         return self._to.dt
-    
+
 
     @property
     def Nconv(self) -> float:
         return self._Nconv
-    
+
 
     @property
     def optimize_secondary_sv(self)->bool:
         return self._optimize_secondary_sv
-    
-    
+
+
     @property
     def n_sub_iter(self)->int:
-        return self._n_sub_iter    
-    
-    
+        return self._n_sub_iter
+
+
     @n_sub_iter.setter
     def n_sub_iter(self, value):
         assert isinstance(value, int)
         assert value > 0
         self._n_sub_iter = value
-
-            
-        
-        
-        
-        
-    
-    
-    
-    
-    

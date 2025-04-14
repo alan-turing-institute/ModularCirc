@@ -9,11 +9,11 @@ The scope of this package is to provide a framework for building **0D models** a
 2. **Valves**
 3. **Vessels**
 
-The current version of the published package contains two models: 
+The current version of the published package contains two models:
 1. Naghavi model.
 2. Korakianitis Mixed model.
 
-For other models currently under development, see the `dev` branch. 
+For other models currently under development, see the `dev` branch.
 
 ## Setup Conda or python virtual environment
 
@@ -23,7 +23,7 @@ Before installation of the ModularCirc package, please setup a virtual environme
 
 Install Conda from https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html
 
-Run: 
+Run:
 
 ```
 conda create --name <yourenvname>
@@ -34,7 +34,7 @@ Proceed to installing the ModularCirc package.
 
 ### Python virtual environment setup
 
-Run `python3 -m venv venv`. This creates a virtual environment called `venv` in your base directory. 
+Run `python3 -m venv venv`. This creates a virtual environment called `venv` in your base directory.
 
 Activate the python environment: `source venv/bin/activate`
 
@@ -44,7 +44,7 @@ Proceed to installing the ModularCirc package.
 
 ### pip install
 
-To install the pip package: 
+To install the pip package:
 
 ```bash
 python -m pip install ModularCirc
@@ -87,14 +87,14 @@ TEMPLATE_TIME_SETUP_DICT = {
     'name'       :  'TimeTest',
     'ncycles'    :  40,
     'tcycle'     :  1.0,
-    'dt'         :  0.001, 
+    'dt'         :  0.001,
     'export_min' :  1
  }
 ```
 Here, `ncycles` indicates the maximum number of heart cycles to run, before the simulation finishes.
-If the simulation reaches steady state faster than that, the simulation will end provided the number of cycles is higher than `export_min`. 
-`tcycle` indicates the duration of the heart beat and `dt` represent the time step size used in the temporal discretization. 
-These measurements assume that time is measured in **seconds**. 
+If the simulation reaches steady state faster than that, the simulation will end provided the number of cycles is higher than `export_min`.
+`tcycle` indicates the duration of the heart beat and `dt` represent the time step size used in the temporal discretization.
+These measurements assume that time is measured in **seconds**.
 If the units used are different, ensure this is done consistently in line with other parameters.
 
 4. Create an instance of the parameter object and used it to change the default values:
