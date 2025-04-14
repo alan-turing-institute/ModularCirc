@@ -16,31 +16,31 @@ RELATIVE_TOLERANCE = 1e-3
 
 class TestSolver(unittest.TestCase):
     """
-    TestSolver is a unittest.TestCase class designed to test the functionality of the Solver class and its 
+    TestSolver is a unittest.TestCase class designed to test the functionality of the Solver class and its
     integration with the KorakianitisMixedModel.
 
     Methods
     -------
     setUp():
-        Initializes the test environment, including setting a random seed, defining the time setup dictionary, 
+        Initializes the test environment, including setting a random seed, defining the time setup dictionary,
         initializing the parameter object, model, and solver, and setting up the solver.
     test_solver_initialization():
         Verifies that the solver is correctly initialized and that the model is correctly assigned to the solver.
     test_solver_setup():
         Verifies the setup attributes of the solver and ensures that the generated functions are not None.
     test_initialize_by_function():
-        Tests the initialize_by_function() method of the solver, ensuring it accepts the expected input and 
+        Tests the initialize_by_function() method of the solver, ensuring it accepts the expected input and
         returns the expected output.
     test_optimize():
         Tests the optimize() method of the solver, ensuring it accepts the expected input and can run with it.
     test_pv_dfdt_update():
-        Tests the pv_dfdt_update() method of the solver, ensuring it accepts the expected input and the output 
+        Tests the pv_dfdt_update() method of the solver, ensuring it accepts the expected input and the output
         matches the expected output.
     test_s_u_update():
-        Tests the s_u_update() method of the solver, ensuring it accepts the expected input and the output 
+        Tests the s_u_update() method of the solver, ensuring it accepts the expected input and the output
         matches the expected output.
     test_solver_solve():
-        Tests the solve() method of the solver, ensuring the solver converges and the output matches the 
+        Tests the solve() method of the solver, ensuring the solver converges and the output matches the
         expected values.
     """
 
@@ -80,22 +80,22 @@ class TestSolver(unittest.TestCase):
         self.parobj = KorakianitisMixedModel_parameters()
 
         # Initialize the model
-        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, 
-                                            parobj=self.parobj, 
+        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict,
+                                            parobj=self.parobj,
                                             suppress_printing=True)
- 
+
         # Initialize the solver
         self.solver = Solver(model=self.model)
 
         # Setup the solver
-        self.solver.setup(suppress_output=True, method='LSODA', step=1)        
+        self.solver.setup(suppress_output=True, method='LSODA', step=1)
 
 
     def test_solver_initialization(self):
         """
         Test the initialization of the solver.
 
-        This test verifies that the solver is correctly initialized as an instance of the 
+        This test verifies that the solver is correctly initialized as an instance of the
         Solver class and that the model is correctly assigned to the solver.
 
         Assertions:
@@ -129,8 +129,8 @@ class TestSolver(unittest.TestCase):
         # Verify the generated functions
         self.assertIsNotNone(self.solver.pv_dfdt_global)
         self.assertIsNotNone(self.solver.s_u_update)
-        self.assertIsNotNone(self.solver.optimize)     
-        self.assertIsNotNone(self.solver.initialize_by_function)                
+        self.assertIsNotNone(self.solver.optimize)
+        self.assertIsNotNone(self.solver.initialize_by_function)
 
 
     def test_initialize_by_function(self):
@@ -184,10 +184,10 @@ class TestSolver(unittest.TestCase):
         2. Verify that the optimize() method can run with the expected input.
 
         Expected input:
-        - y_temp: Temporary y values for optimization. Called y_temp to reflect the 
+        - y_temp: Temporary y values for optimization. Called y_temp to reflect the
                     name of the variable in the optimize() method.
         - keys4: Keys required for optimization. Called keys4 to reflect the name of the
-                    variable in the optimize() method.  
+                    variable in the optimize() method.
 
         Raises:
             AssertionError: If the optimize() method does not accept the expected input
@@ -244,7 +244,7 @@ class TestSolver(unittest.TestCase):
         y0 = np.load(input_file_path)
 
         # Verify the function can run with the expected input
-        pv_dfdt_result = self.solver.pv_dfdt_global(t=0, y=y0) 
+        pv_dfdt_result = self.solver.pv_dfdt_global(t=0, y=y0)
 
         # Verify the output matches the expected output
 
@@ -313,11 +313,11 @@ class TestSolver(unittest.TestCase):
         1. Configures the solver with the given step size.
         2. Solves the system using the solver.
         3. Verifies that the solver has converged.
-        7. Compares the new solution dictionary values with the expected values and asserts that they are 
+        7. Compares the new solution dictionary values with the expected values and asserts that they are
         within an acceptable tolerance.
 
         Raises:
-            AssertionError: If the solver did not converge or if the computed values do not match the expected 
+            AssertionError: If the solver did not converge or if the computed values do not match the expected
             values within the tolerance.
         """
 
@@ -343,10 +343,10 @@ class TestSolver(unittest.TestCase):
                 self.parobj = KorakianitisMixedModel_parameters()
 
                 # Initialize the model
-                self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, 
-                                                    parobj=self.parobj, 
+                self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict,
+                                                    parobj=self.parobj,
                                                     suppress_printing=True)
-        
+
                 # Initialize the solver
                 self.solver = Solver(model=self.model)
 
@@ -354,10 +354,10 @@ class TestSolver(unittest.TestCase):
                 self.solver.setup(suppress_output=True, method='LSODA', step=i_cycle_step_size)
 
                 # Running the model
-                self.solver.solve()     
+                self.solver.solve()
 
                 # Verify the solver converged
-                self.assertTrue(self.solver.converged or self.solver._Nconv is not None)                
+                self.assertTrue(self.solver.converged or self.solver._Nconv is not None)
 
                 # Redefine tind based on how many heart cycle have actually been necessary to reach steady state
                 tind_fin  = np.arange(start=self.model.time_object.n_t-self.model.time_object.n_c,
@@ -372,7 +372,7 @@ class TestSolver(unittest.TestCase):
                         'P_i': value.P_i.values[tind_fin].mean(),
                         'Q_i': value.Q_i.values[tind_fin].mean()
                     }
-                
+
                 # Check that the values are the same as the expected values
                 expected_ndarray = np.array(
                     [self.expected_values["results"][str(i_cycle_step_size)][key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()]
@@ -383,7 +383,7 @@ class TestSolver(unittest.TestCase):
                     np.abs((expected_ndarray - new_ndarray) / expected_ndarray),
                     np.abs((expected_ndarray - new_ndarray))
                 )
-                self.assertTrue((test_ndarray < RELATIVE_TOLERANCE).all(), 
+                self.assertTrue((test_ndarray < RELATIVE_TOLERANCE).all(),
                                 f"Test failed for step size {i_cycle_step_size}: {test_ndarray}")
 
 

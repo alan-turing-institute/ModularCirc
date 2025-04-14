@@ -17,8 +17,8 @@ RELATIVE_TOLERANCE = 1e-3
 class TestNaghaviModel(unittest.TestCase):
     """
     Unit tests for the NaghaviModel and its associated Solver.
-    This test suite verifies the correct initialization, configuration, and functionality of the 
-    NaghaviModel and Solver classes. It ensures that the model behaves as expected under various 
+    This test suite verifies the correct initialization, configuration, and functionality of the
+    NaghaviModel and Solver classes. It ensures that the model behaves as expected under various
     conditions and that the computed results match the expected outputs.
     Classes:
         TestNaghaviModel: A unittest.TestCase subclass containing tests for the NaghaviModel and Solver.
@@ -47,7 +47,7 @@ class TestNaghaviModel(unittest.TestCase):
         Raises:
             AssertionError: If the expected output file does not exist at the specified path.
         """
-        
+
         # Set a random seed for reproducibility
         np.random.seed(42)
 
@@ -64,14 +64,14 @@ class TestNaghaviModel(unittest.TestCase):
 
         self.parobj = NaghaviModelParameters()
 
-        self.model = NaghaviModel(time_setup_dict=self.time_setup_dict, 
-                                  parobj=self.parobj, 
+        self.model = NaghaviModel(time_setup_dict=self.time_setup_dict,
+                                  parobj=self.parobj,
                                   suppress_printing=True)
-        
+
         # Initializing the solver
         self.solver = Solver(model=self.model)
-        
-        # Solver is being setup: switching off console printing and setting the solver method to "LSODA"  
+
+        # Solver is being setup: switching off console printing and setting the solver method to "LSODA"
         self.solver.setup(
             optimize_secondary_sv=False,
             suppress_output=True,
@@ -79,7 +79,7 @@ class TestNaghaviModel(unittest.TestCase):
             conv_cols=['p_lv', 'v_lv'],
             method='LSODA',
             step=1
-        )   
+        )
 
         # Load expected values from a JSON file
         output_file_path = os.path.join(self.base_dir, 'expected_outputs', 'NaghaviModel_expected_output.json')
@@ -98,7 +98,7 @@ class TestNaghaviModel(unittest.TestCase):
         self.assertIsInstance(self.model, NaghaviModel)
         # Verify model has attribute <components>
         self.assertTrue(hasattr(self.solver.model, 'components'))
-        # Verify <lv> is a component 
+        # Verify <lv> is a component
         self.assertIn('lv', self.solver.model.components)
         # Verify correct assignment of parameters from parobj to model
         self.assertEqual(self.solver.model.components['lv'].E_pas, self.parobj.components['lv']['E_pas'])
@@ -120,9 +120,9 @@ class TestNaghaviModel(unittest.TestCase):
         2. The solver converges successfully for each step size.
         3. The state variables of the model components are updated after solving.
         4. The computed results match the expected values within a specified tolerance.
-   
+
         """
-        
+
         cycle_step_sizes = [1, 3, 5, 7]  # Define the step sizes to test
 
         for i_cycle_step_size in cycle_step_sizes:
@@ -135,11 +135,11 @@ class TestNaghaviModel(unittest.TestCase):
                 # Initializing the parameter object
                 self.parobj = NaghaviModelParameters()
 
-                # Initializing the model 
-                self.model = NaghaviModel(time_setup_dict=self.time_setup_dict, 
-                                          parobj=self.parobj, 
+                # Initializing the model
+                self.model = NaghaviModel(time_setup_dict=self.time_setup_dict,
+                                          parobj=self.parobj,
                                           suppress_printing=True)
-                
+
                 # Initializing the solver
                 self.solver = Solver(model=self.model)
 
@@ -151,13 +151,13 @@ class TestNaghaviModel(unittest.TestCase):
                     conv_cols=['p_lv', 'v_lv'],
                     method='LSODA',
                     step=i_cycle_step_size
-                )   
+                )
 
                 # Running the model
-                self.solver.solve()     
+                self.solver.solve()
 
                 # Verify the solver converged
-                self.assertTrue(self.solver.converged or self.solver._Nconv is not None) 
+                self.assertTrue(self.solver.converged or self.solver._Nconv is not None)
 
                 # Verifying the model changed the state variables stored within components.
                 self.assertTrue(len(self.solver.model.components['lv'].V.values) > 0)
@@ -183,8 +183,8 @@ class TestNaghaviModel(unittest.TestCase):
                     [self.expected_values["results"][str(i_cycle_step_size)][key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()]
                     )
                 new_ndarray = np.array([new_dict[key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
-                test_ndarray = np.where(np.abs(expected_ndarray) > 1e-6, 
-                                        np.abs((expected_ndarray - new_ndarray) / expected_ndarray),  
+                test_ndarray = np.where(np.abs(expected_ndarray) > 1e-6,
+                                        np.abs((expected_ndarray - new_ndarray) / expected_ndarray),
                                         np.abs((expected_ndarray - new_ndarray)))
                 self.assertTrue((test_ndarray < RELATIVE_TOLERANCE).all())
 
