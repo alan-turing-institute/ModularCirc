@@ -7,8 +7,8 @@ The models presented here are made of three types of components:
 
 ## 1. Naghavi et al. model
 Relevant files and classes:
-- `ModularCirc/Models/NaghaviModel.py`, where the `NaghaviModel` class is defined
-- `ModularCirc/Models/NaghaviModelParameters.py`, where the `NaghaviModelParameters` class is defined.
+- `src/ModularCirc/Models/NaghaviModel.py`, where the `NaghaviModel` class is defined
+- `src/ModularCirc/Models/NaghaviModelParameters.py`, where the `NaghaviModelParameters` class is defined.
 
 A CV model described in Rapid Estimation of Left Ventricular Contractility with a Physics-Informed Neural Network Inverse Modeling Approach (https://arxiv.org/html/2401.07331v1).
 The model is comprised of the following components:
@@ -26,21 +26,19 @@ The model is comprised of the following components:
 
 ## 2. Korakianitis and Shi model
 Relevant files and classes:
-- `ModularCirc/Models/KorakianitisMixedModel.py`, where the `KorakianitisModel` class is defined
-- `ModularCirc/Models/KorakianitisMixedModel_parameters.py`, where the `KorakianitisModel_parameters` class is defined
-
-(TO BE EDITED BY MAX)
+- `src/ModularCirc/Models/KorakianitisMixedModel.py`, where the `KorakianitisMixedModel` class is defined
+- `src/ModularCirc/Models/KorakianitisMixedModel_parameters.py`, where the `KorakianitisMixedModel_parameters` class is defined
 
 A simplified CV model described in A concentrated parameter model for the human cardiovascular system
 including heart valve dynamics and atrioventricular interaction (https://www.sciencedirect.com/science/article/pii/S1350453305002195?via%3Dihub).
-**Here, we simplified the model by eliminating (1) the motion of the annulus fibrosus and (2) the motion of the leaflets, replaced with a simple Bernoulli model.**
+**In KorakianitisMixedModel, we simplified the model by eliminating (1) the motion of the annulus fibrosus, (2) the motion of the leaflets, replaced with a simple Bernoulli model and (3) the cardiac chamber laws are replaced with mixed law (exponential for the passive filling and linear for contraction).**
 This model is comprised of the following components:
-- left atrium: linear time-varying elastance model
-    - **6 parameters**
+- left atrium: time-varying elastance model, based on weighted sum of passive (exponential) and active (linear) laws
+    - **7 parameters**
 - mitral valve: simple Bernoulli model
     - **2 parameters**
-- left ventricle: linear time-varying elastance model
-    - **5 parameters**
+- left ventricle: time-varying elastance model, based on weighted sum of passive (exponential) and active (linear) laws
+    - **6 parameters**
 - aortic valve: simple Bernoulli model
     - **2 parameters**
 - aortic sinus (RLC 3 component windkessel)
@@ -50,12 +48,12 @@ This model is comprised of the following components:
     - **4 parameters**
 -  systemic venous system (RLC 3 component windkessel)
     - **3 parameters** (assume that venous impedance is zero)
-- right atrium: linear time-varying elastance model
-    - **6 parameters**
+- right atrium: time-varying elastance model, based on weighted sum of passive (exponential) and active (linear) laws
+    - **7 parameters**
 - tricuspid valve: simple Bernoulli model
     - **2 parameters**
-- right ventricle: linear time-varying elastance model
-    - **5 parameters** 
+- right ventricle: time-varying elastance model, based on weighted sum of passive (exponential) and active (linear) laws
+    - **6 parameters** 
 - pulmonary valve: simple Bernoulli model
     - **2 parameters**
 - pulmonary artery sinus (RLC 3 component windkessel)
@@ -65,6 +63,6 @@ This model is comprised of the following components:
 - pulmonary venous system (RLC 3 component windessel)
     - **3 parameters** (assume that venous impedance is zero)
 
-**Total set of parameters sums up to 55.**
+**Total set of parameters sums up to 57.**
 
 [<img src=Figures/KorakianitisModel_circuit.png>]()
