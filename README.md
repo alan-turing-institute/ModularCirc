@@ -1,9 +1,13 @@
 # ModularCirc
 
+[![Actions Status][actions-badge]][actions-link]
+[![PyPI version][pypi-version]][pypi-link]
+[![PyPI platforms][pypi-platforms]][pypi-link]
+
 The scope of this package is to provide a framework for building **0D models** and **simulating cardiovascular flow** and **mechanics**. Conceptually, the models can be split into three types of components:
 1. **Heart chambers**
 2. **Valves**
-3. **Vessels**
+3. **Vessels** 
 
 ## Clone the ModularCirc GitHub repo locally
 
@@ -41,13 +45,22 @@ Proceed to installing the ModularCirc package.
 
 ## Installation
 
-From the repo directory, run:
+To install the pip package: 
+
+```bash
+python -m pip install ModularCirc_LevanBokeria
+```
+
+From source:
+
+After downloading the GitHub repository, from the repo directory run:
 
 ```bash
 pip install ./
 ```
 
-This will install the package based on the `pyproject.toml` file specifications. 
+This will install the package based on the `pyproject.toml` file specifications.
+
 
 ## Steps for running basic models
 1. Load the classes for the model of interest and the parameter object used to paramterise the said model:
@@ -116,3 +129,11 @@ You can run locally the tests by running the following command:
   python -m unittest discover -s tests
 ```
 there is also a autamtated test pipeline that runs the tests on every push to the repository (see [here](.github/workflows/ci.yml)).
+
+<!-- prettier-ignore-start -->
+[actions-badge]:            https://github.com/alan-turing-institute/ModularCirc/workflows/CI/badge.svg
+[actions-link]:             https://github.com/alan-turing-institute/ModularCirc/actions
+[pypi-link]:                https://test.pypi.org/project/ModularCirc-LevanBokeria/
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/ModularCirc-LevanBokeria
+[pypi-version]:             https://img.shields.io/pypi/v/ModularCirc-LevanBokeria
+<!-- prettier-ignore-end -->

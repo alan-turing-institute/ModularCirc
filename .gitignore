@@ -166,3 +166,9 @@ cython_debug/
 /playground_files
 
 *.pyc
+
+# Ignore the PyPI configuration file
+.pypirc
+
+# Ignore vscode settings
+.vscode/
