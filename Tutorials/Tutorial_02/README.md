@@ -1,6 +1,6 @@
 # A short  overview of Modularcirc
 
-**ModularCirc** is intended to be a versatile platform of 0D models of the cardiovascular system. 
+**ModularCirc** is intended to be a versatile platform of 0D models of the cardiovascular system.
 It is users are envisioned to have different levels of expertise/experience coding.
 
 ![Main figure](./Figures/Slides.png)
@@ -15,7 +15,5 @@ This will cover:
     4) How to generate quick plots of the data/retrieve basic values from the model
 - ### *Part II*:
     1) What is the structure of a model and supporting classes
-    2) How to retrieve predefined components 
+    2) How to retrieve predefined components
     3) How to modify existing models with new components?
-
- 

@@ -53,7 +53,7 @@ This model is comprised of the following components:
 - tricuspid valve: simple Bernoulli model
     - **2 parameters**
 - right ventricle: linear time-varying elastance model
-    - **5 parameters** 
+    - **5 parameters**
 - pulmonary valve: simple Bernoulli model
     - **2 parameters**
 - pulmonary artery sinus (RLC 3 component windkessel)

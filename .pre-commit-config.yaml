@@ -1,0 +1,56 @@
+ci:
+  autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autofix_commit_msg: "style: pre-commit fixes"
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+    - id: trailing-whitespace # remove trailing whitespace
+    - id: end-of-file-fixer # ensure files end with a newline
+    - id: check-yaml # check YAML files for syntax errors
+    - id: check-json # check JSON files for syntax errors
+    - id: check-added-large-files # check for large files
+      args: ['--maxkb=500'] # set the max file size to 500KB
+    - id: check-case-conflict # check for case conflicts in filenames.
+    - id: check-merge-conflict # This hook checks for merge conflict markers in files.
+    # It ensures that there are no unresolved merge conflicts in the codebase.
+    - id: check-symlinks # check for broken symlinks
+    # - id: debug-statements
+    - id: mixed-line-ending # check for mixed line endings, meaning that
+      # a file contains both CRLF and LF line endings. This can cause issues
+      # when working with files across different operating systems.
+
+# - repo: https://github.com/psf/black
+#   rev: 25.1.0  # Use the latest stable version
+#   hooks:
+#     - id: black
+
+# - repo: https://github.com/PyCQA/flake8
+#   rev: 7.1.1  # Use the latest stable version
+#   hooks:
+#     - id: flake8
+
+# - repo: https://github.com/pre-commit/mirrors-isort
+#   rev: 6.0.0  # Use the latest stable version
+#   hooks:
+#     - id: isort
+
+# - repo: https://github.com/astral-sh/ruff-pre-commit
+#   rev: "v0.11.5"
+#   hooks:
+#     # first, lint + autofix
+#     - id: ruff
+#       types_or: [python, pyi, jupyter]
+#       args: ["--fix", "--show-fixes"]
+#     # then, format
+#     - id: ruff-format
+
+# - repo: https://github.com/pre-commit/mirrors-mypy
+#   rev: "v1.15.0"
+#   hooks:
+#     - id: mypy
+#       files: src
+#       args: []
+#       additional_dependencies:
+#         - pytest

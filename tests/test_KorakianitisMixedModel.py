@@ -19,20 +19,20 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         """
         Set up the test environment for the KorakianitisMixedModel.
 
-        This method initializes the necessary components and configurations 
+        This method initializes the necessary components and configurations
         required for testing the KorakianitisMixedModel. It performs the following:
-        
+
         - Sets a random seed for reproducibility.
         - Defines the base directory for file paths.
-        - Configures the simulation time setup parameters, including the number 
+        - Configures the simulation time setup parameters, including the number
           of cycles, cycle duration, time step size, and minimum export cycles.
         - Initializes the parameter object for the KorakianitisMixedModel.
-        - Creates an instance of the KorakianitisMixedModel with the specified 
+        - Creates an instance of the KorakianitisMixedModel with the specified
           time setup and parameter object, suppressing console output.
-        - Initializes the solver for the model and configures it with the 
+        - Initializes the solver for the model and configures it with the
           "LSODA" method, suppressing console output.
         - Loads expected output values from a JSON file for validation during tests.
-        - Verifies the existence of the expected output file and raises an 
+        - Verifies the existence of the expected output file and raises an
           assertion error if the file is not found.
 
         Raises:
@@ -57,14 +57,14 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         # Initializing the parameter object
         self.parobj = KorakianitisMixedModel_parameters()
 
-        # Initializing the model 
-        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, 
-                                            parobj=self.parobj, 
+        # Initializing the model
+        self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict,
+                                            parobj=self.parobj,
                                             suppress_printing=True)
-        
+
         # Initializing the solver
         self.solver = Solver(model=self.model)
-        
+
         # Solver is being setup: switching off console printing and setting the solver method to "LSODA"
         self.solver.setup(suppress_output=True, method='LSODA',step=1)
 
@@ -85,7 +85,7 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         self.assertIsInstance(self.model, KorakianitisMixedModel)
         # Verify model has attribute <components>
         self.assertTrue(hasattr(self.solver.model, 'components'))
-        # Verify <lv> is a component 
+        # Verify <lv> is a component
         self.assertIn('lv', self.solver.model.components)
         # Verify correct assignment of parameters from parobj to model
         self.assertEqual(self.solver.model.components['lv'].E_pas, self.parobj.components['lv']['E_pas'])
@@ -105,9 +105,9 @@ class TestKorakianitisMixedModel(unittest.TestCase):
         2. The solver converges successfully for each step size.
         3. The state variables of the model components are updated correctly after solving.
         4. The computed results match the expected values within a specified tolerance.
-   
+
         """
-        
+
         cycle_step_sizes = [1, 3, 5, 7]  # Define the step sizes to test
 
         for i_cycle_step_size in cycle_step_sizes:
@@ -120,11 +120,11 @@ class TestKorakianitisMixedModel(unittest.TestCase):
                 # Initializing the parameter object
                 self.parobj = KorakianitisMixedModel_parameters()
 
-                # Initializing the model 
-                self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict, 
-                                                    parobj=self.parobj, 
+                # Initializing the model
+                self.model = KorakianitisMixedModel(time_setup_dict=self.time_setup_dict,
+                                                    parobj=self.parobj,
                                                     suppress_printing=True)
-                
+
                 # Initializing the solver
                 self.solver = Solver(model=self.model)
 
@@ -132,10 +132,10 @@ class TestKorakianitisMixedModel(unittest.TestCase):
                 self.solver.setup(suppress_output=True, method='LSODA', step=i_cycle_step_size)
 
                 # Running the model
-                self.solver.solve()     
+                self.solver.solve()
 
                 # Verify the solver converged
-                self.assertTrue(self.solver.converged or self.solver._Nconv is not None) 
+                self.assertTrue(self.solver.converged or self.solver._Nconv is not None)
 
                 # Verifying the model changed the state variables stored within components.
                 self.assertTrue(len(self.solver.model.components['lv'].V.values) > 0)
@@ -161,8 +161,8 @@ class TestKorakianitisMixedModel(unittest.TestCase):
                     [self.expected_values["results"][str(i_cycle_step_size)][key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()]
                     )
                 new_ndarray = np.array([new_dict[key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
-                test_ndarray = np.where(np.abs(expected_ndarray) > 1e-6, 
-                                        np.abs((expected_ndarray - new_ndarray) / expected_ndarray),  
+                test_ndarray = np.where(np.abs(expected_ndarray) > 1e-6,
+                                        np.abs((expected_ndarray - new_ndarray) / expected_ndarray),
                                         np.abs((expected_ndarray - new_ndarray)))
                 self.assertTrue((test_ndarray < RELATIVE_TOLERANCE).all())
 
