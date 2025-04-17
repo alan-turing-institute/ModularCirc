@@ -26,8 +26,8 @@ def signal_get_pulse(signal, dt, num=100):
     Returns:
             _type_: _description_
     """
-    
-    ind = np.argmin(signal)        
+
+    ind = np.argmin(signal)
     ncycle = len(signal)
     new_signal = np.interp(np.linspace(0, ncycle, num), np.arange(ncycle), np.roll(signal, -ind))
     new_dt = ncycle / (num - 1) * dt
@@ -80,8 +80,8 @@ def run_case(row, output_path, N_cycles, dt):
     )  # replace the .. with the correct Class and inputs if applicable
 
     solver.setup(
-        suppress_output=True, 
-        optimize_secondary_sv=False, 
+        suppress_output=True,
+        optimize_secondary_sv=False,
         conv_cols=["p_ao"],
         method='LSODA'
         )
@@ -138,7 +138,7 @@ def simulation_loader(input_directory):
 
     file_series.sort_values('Index', inplace=True)
     file_series.set_index('Index', inplace=True)
-    
+
     # Define a dataframe for the values collected from the simulation...
     signal_df  = file_series.apply(
         lambda row: list(pd.read_csv(os.path.join(input_directory, row['file']), index_col='Index').to_numpy().reshape((-1))),
@@ -147,7 +147,7 @@ def simulation_loader(input_directory):
     signal_df.rename(columns=template_columns, inplace=True)
 
     return signal_df
- 
+
 
 dict_parameters_condensed_range = dict()
 dict_parameters_condensed_single = dict()
@@ -166,7 +166,7 @@ def condense_dict_parameters(dict_param:dict, prev=""):
                 dict_parameters_condensed_range[new_key] = tuple(np.array(r) * value)
             else:
                 dict_parameters_condensed_single[new_key] = val[0]
-    return  
+    return
 
 
 ######## DEFINED A FUNCTION TO PLOT THE VARIANCE
@@ -186,7 +186,7 @@ def plot_variance(pca, width=8, dpi=100):
     cumulative_explained_variance = np.cumsum(explained_variance_ratio)
     axs[1].semilogy(grid, cumulative_explained_variance, "o-")
     axs[1].set(
-        xlabel="Component", title="% Cumulative Variance", 
+        xlabel="Component", title="% Cumulative Variance",
     )
     # Set up figure
     fig.set(figwidth=8, dpi=100)
@@ -207,13 +207,13 @@ def scale_time_parameters_and_asign_to_components(df):
 # 800 ms in this case
 
     df['la.delay'] = df['la.delay'] * df['T'] / 800.
-    
+
     df['la.t_tr'] = df['la.t_tr'] * df['T'] / 800.
     df['lv.t_tr'] = df['lv.t_tr'] * df['T'] / 800.
-    
+
     df['la.tau'] = df['la.tau'] * df['T'] / 800.
     df['lv.tau'] = df['lv.tau'] * df['T'] / 800.
 
     df['la.t_max'] = df['la.t_max']  * df['T'] / 800.
     df['lv.t_max'] = df['lv.t_max']  * df['T'] / 800.
-    return 
+    return

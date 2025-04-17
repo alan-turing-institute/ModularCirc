@@ -7,16 +7,13 @@
 The scope of this package is to provide a framework for building **0D models** and **simulating cardiovascular flow** and **mechanics**. Conceptually, the models can be split into three types of components:
 1. **Heart chambers**
 2. **Valves**
-3. **Vessels** 
+3. **Vessels**
 
-## Clone the ModularCirc GitHub repo locally
+The current version of the published package contains two models:
+1. Naghavi model.
+2. Korakianitis Mixed model.
 
-Run:
-
-```
-git clone https://github.com/alan-turing-institute/ModularCirc
-cd ModularCirc
-```
+For other models currently under development, see the `dev` branch.
 
 ## Setup Conda or python virtual environment
 
@@ -26,7 +23,7 @@ Before installation of the ModularCirc package, please setup a virtual environme
 
 Install Conda from https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html
 
-Run: 
+Run:
 
 ```
 conda create --name <yourenvname>
@@ -37,21 +34,32 @@ Proceed to installing the ModularCirc package.
 
 ### Python virtual environment setup
 
-Run `python3 -m venv venv`. This creates a virtual environment called `venv` in your base directory. 
+Run `python3 -m venv venv`. This creates a virtual environment called `venv` in your base directory.
 
 Activate the python environment: `source venv/bin/activate`
 
 Proceed to installing the ModularCirc package.
 
-## Installation
+## Installing ModularCirc
 
-To install the pip package: 
+### pip install
+
+To install the pip package:
 
 ```bash
-python -m pip install ModularCirc_LevanBokeria
+python -m pip install ModularCirc
 ```
 
-From source:
+### Installation from source:
+
+Clone the ModularCirc GitHub repo locally.
+
+Run:
+
+```
+git clone https://github.com/alan-turing-institute/ModularCirc
+cd ModularCirc
+```
 
 After downloading the GitHub repository, from the repo directory run:
 
@@ -79,14 +87,14 @@ TEMPLATE_TIME_SETUP_DICT = {
     'name'       :  'TimeTest',
     'ncycles'    :  40,
     'tcycle'     :  1.0,
-    'dt'         :  0.001, 
+    'dt'         :  0.001,
     'export_min' :  1
  }
 ```
 Here, `ncycles` indicates the maximum number of heart cycles to run, before the simulation finishes.
-If the simulation reaches steady state faster than that, the simulation will end provided the number of cycles is higher than `export_min`. 
-`tcycle` indicates the duration of the heart beat and `dt` represent the time step size used in the temporal discretization. 
-These measurements assume that time is measured in **seconds**. 
+If the simulation reaches steady state faster than that, the simulation will end provided the number of cycles is higher than `export_min`.
+`tcycle` indicates the duration of the heart beat and `dt` represent the time step size used in the temporal discretization.
+These measurements assume that time is measured in **seconds**.
 If the units used are different, ensure this is done consistently in line with other parameters.
 
 4. Create an instance of the parameter object and used it to change the default values:
@@ -122,18 +130,10 @@ p_lv = solver.model.components['lv'].P_i.values
 ## Example values pv loops for all 4 chambers:
 ![Example PV loops!](Figures/PV_loops.png)
 
-## Run tests
-
-You can run locally the tests by running the following command:
-```bash
-  python -m unittest discover -s tests
-```
-there is also a autamtated test pipeline that runs the tests on every push to the repository (see [here](.github/workflows/ci.yml)).
-
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/alan-turing-institute/ModularCirc/workflows/CI/badge.svg
 [actions-link]:             https://github.com/alan-turing-institute/ModularCirc/actions
-[pypi-link]:                https://test.pypi.org/project/ModularCirc-LevanBokeria/
-[pypi-platforms]:           https://img.shields.io/pypi/pyversions/ModularCirc-LevanBokeria
-[pypi-version]:             https://img.shields.io/pypi/v/ModularCirc-LevanBokeria
+[pypi-link]:                https://pypi.org/project/ModularCirc
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/ModularCirc
+[pypi-version]:             https://img.shields.io/pypi/v/ModularCirc
 <!-- prettier-ignore-end -->

@@ -6,7 +6,7 @@ Involved in a larger project involving patients with pulmonary arterial hyperten
 
 Currently, while the monitors provide a lot of cardiac data, the usefulness of the data that they provide is limited, as it is difficult to interpret and use the information to make approprate changes to patient management.
 
-The project focuses on the development of a digital twin to aid with interpretation of the cardiac data from these monitors. 
+The project focuses on the development of a digital twin to aid with interpretation of the cardiac data from these monitors.
 
 The sensitivity analysis aims to focus in on the parameters from the model that most affect pulmonary arterial pressure and cardiac output.
 

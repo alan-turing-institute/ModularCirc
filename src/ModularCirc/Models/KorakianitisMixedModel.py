@@ -25,12 +25,12 @@ class KorakianitisMixedModel(OdeModel):
     def __init__(self, time_setup_dict, parobj:po=KorakianitisMixedModel_parameters, suppress_printing:bool=False) -> None:
         super().__init__(time_setup_dict)
         self.name = 'KorakianitisModel'
-        
+
         if not suppress_printing: print(parobj)
-        
+
         # The components...
         for key, name in zip(parobj.components.keys(), FULL_NAMES):
-            if key in parobj._vessels: 
+            if key in parobj._vessels:
                 class_ = Rlc_component
             elif key in parobj._valves:
                 class_ = Valve_simple_bernoulli
@@ -39,14 +39,14 @@ class KorakianitisMixedModel(OdeModel):
             else:
                 raise Exception(f'Component name {key} not in the model list.')
             self.components[key] = class_(name=name,
-                                    time_object=self.time_object, 
+                                    time_object=self.time_object,
                                     **parobj[key].to_dict())
-            if key not in parobj._valves: 
+            if key not in parobj._valves:
                 self.set_v_sv(key)
             # else:
             #     self.set_phi_sv(key)
             self.components[key].setup()
-            
+
         self.connect_modules(self.components['lv'],
                              self.components['ao'],
                              plabel='p_lv',
@@ -103,10 +103,10 @@ class KorakianitisMixedModel(OdeModel):
                              self.components['lv'],
                              plabel='p_lv',
                              qlabel='q_mi')
-        
+
         for component in self.components.values():
             component.setup()
-            
+
     # def set_phi_sv(self, comp_key:str) -> None:
     #     phi_key = 'phi_' + comp_key
     #     self._state_variable_dict[phi_key] = self.components[comp_key]._PHI
