@@ -1,5 +1,9 @@
 # ModularCirc
 
+[![Actions Status][actions-badge]][actions-link]
+[![PyPI version][pypi-version]][pypi-link]
+[![PyPI platforms][pypi-platforms]][pypi-link]
+
 The scope of this package is to provide a framework for building **0D models** and **simulating cardiovascular flow** and **mechanics**. Conceptually, the models can be split into three types of components:
 1. **Heart chambers**
 2. **Valves**
@@ -22,7 +26,7 @@ Before installation of the ModularCirc package, please setup a virtual environme
 
 Install Conda from https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html
 
-Run: 
+Run:
 
 ```
 conda create --name <yourenvname>
@@ -33,7 +37,7 @@ Proceed to installing the ModularCirc package.
 
 ### Python virtual environment setup
 
-Run `python3 -m venv venv`. This creates a virtual environment called `venv` in your base directory. 
+Run `python3 -m venv venv`. This creates a virtual environment called `venv` in your base directory.
 
 Activate the python environment: `source venv/bin/activate`
 
@@ -41,13 +45,22 @@ Proceed to installing the ModularCirc package.
 
 ## Installation
 
-From the repo directory, run:
+To install the pip package:
+
+```bash
+python -m pip install ModularCirc_LevanBokeria
+```
+
+From source:
+
+After downloading the GitHub repository, from the repo directory run:
 
 ```bash
 pip install ./
 ```
 
-This will install the package based on the `pyproject.toml` file specifications. 
+This will install the package based on the `pyproject.toml` file specifications.
+
 
 ## Steps for running basic models
 1. Load the classes for the model of interest and the parameter object used to paramterise the said model:
@@ -66,14 +79,14 @@ TEMPLATE_TIME_SETUP_DICT = {
     'name'       :  'TimeTest',
     'ncycles'    :  40,
     'tcycle'     :  1.0,
-    'dt'         :  0.001, 
+    'dt'         :  0.001,
     'export_min' :  1
  }
 ```
 Here, `ncycles` indicates the maximum number of heart cycles to run, before the simulation finishes.
-If the simulation reaches steady state faster than that, the simulation will end provided the number of cycles is higher than `export_min`. 
-`tcycle` indicates the duration of the heart beat and `dt` represent the time step size used in the temporal discretization. 
-These measurements assume that time is measured in **seconds**. 
+If the simulation reaches steady state faster than that, the simulation will end provided the number of cycles is higher than `export_min`.
+`tcycle` indicates the duration of the heart beat and `dt` represent the time step size used in the temporal discretization.
+These measurements assume that time is measured in **seconds**.
 If the units used are different, ensure this is done consistently in line with other parameters.
 
 4. Create an instance of the parameter object and used it to change the default values:
@@ -116,3 +129,11 @@ You can run locally the tests by running the following command:
   python -m unittest discover -s tests
 ```
 there is also a autamtated test pipeline that runs the tests on every push to the repository (see [here](.github/workflows/ci.yml)).
+
+<!-- prettier-ignore-start -->
+[actions-badge]:            https://github.com/alan-turing-institute/ModularCirc/workflows/CI/badge.svg
+[actions-link]:             https://github.com/alan-turing-institute/ModularCirc/actions
+[pypi-link]:                https://pypi.org/project/ModularCirc
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/ModularCirc
+[pypi-version]:             https://img.shields.io/pypi/v/ModularCirc
+<!-- prettier-ignore-end -->

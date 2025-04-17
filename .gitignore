@@ -164,3 +164,11 @@ cython_debug/
 /Tutorials
 .DS_Store
 /playground_files
+
+*.pyc
+
+# Ignore the PyPI configuration file
+.pypirc
+
+# Ignore vscode settings
+.vscode/
