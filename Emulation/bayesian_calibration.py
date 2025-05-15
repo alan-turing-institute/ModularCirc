@@ -5,11 +5,12 @@ from scipy.stats import norm
 import pandas as pd
 import math
 
+
 class BayesianCalibration:
-    def __init__(self, input, selected_output, filtered_output, which_obs, 
-                 epsilon_obs_scale=0.05, epsilon_alt=None):
+    def __init__(self, input, emulator_output, filtered_output, which_obs, 
+                 epsilon_obs_scale, epsilon_alt=None):
         self.input = input
-        self.selected_output = selected_output
+        self.emulator_output = emulator_output
         self.filtered_output = filtered_output
         self.which_obs = which_obs
         self.epsilon_alt = epsilon_alt 
@@ -27,7 +28,7 @@ class BayesianCalibration:
         self.param_names = input.loc[:, :'T'].columns.to_list()
 
         # Model error
-        self.epsilon_model = np.diag(selected_output['RSE']**2) 
+        self.epsilon_model = np.diag(emulator_output['RSE']**2) 
        
         
         # Observation error
@@ -35,16 +36,18 @@ class BayesianCalibration:
         default_epsilon_obs = np.diag(np.std(filtered_output) * self.obs_error_scale)  
         self.epsilon_obs = default_epsilon_obs if epsilon_alt is None else self.epsilon_alt*self.obs_error_scale
         
+      
+        
         # Compute posterior
         self.compute_posterior()
     
     def compute_posterior(self):
         full_error = self.epsilon_obs + self.epsilon_model
-        
+       
         # Construct beta matrix and intercepts
         beta_matrix = []
         intercept = []
-        for _, row_entry in self.selected_output.iterrows():
+        for _, row_entry in self.emulator_output.iterrows():
             model = row_entry['Model']
             beta_matrix.append(model.coef_)
             intercept.append(model.intercept_)

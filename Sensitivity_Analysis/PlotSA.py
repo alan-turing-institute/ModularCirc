@@ -76,7 +76,7 @@ class PlotSA:
         combined_df['means'] = combined_df.mean(axis=1)
         cols = 0.5 * len(combined_df.index)
         plt.figure(figsize=(25, cols))
-        sns.heatmap(combined_df, annot=True, cmap="coolwarm", linewidths=0.5)
+        sns.heatmap(combined_df, annot=True, cmap="coolwarm", linewidths=0.5, cbar_kws={"shrink": 0.5})
         plt.title("Sensitivity Heatmap")
         plt.xlabel("Parameters")
         plt.ylabel("CSV Files")
