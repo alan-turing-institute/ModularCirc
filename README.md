@@ -9,14 +9,11 @@ The scope of this package is to provide a framework for building **0D models** a
 2. **Valves**
 3. **Vessels**
 
-## Clone the ModularCirc GitHub repo locally
+The current version of the published package contains two models:
+1. Naghavi model.
+2. Korakianitis Mixed model.
 
-Run:
-
-```
-git clone https://github.com/alan-turing-institute/ModularCirc
-cd ModularCirc
-```
+For other models currently under development, see the `dev` branch.
 
 ## Setup Conda or python virtual environment
 
@@ -43,15 +40,26 @@ Activate the python environment: `source venv/bin/activate`
 
 Proceed to installing the ModularCirc package.
 
-## Installation
+## Installing ModularCirc
+
+### pip install
 
 To install the pip package:
 
 ```bash
-python -m pip install ModularCirc_LevanBokeria
+python -m pip install ModularCirc
 ```
 
-From source:
+### Installation from source:
+
+Clone the ModularCirc GitHub repo locally.
+
+Run:
+
+```
+git clone https://github.com/alan-turing-institute/ModularCirc
+cd ModularCirc
+```
 
 After downloading the GitHub repository, from the repo directory run:
 
@@ -121,14 +129,6 @@ p_lv = solver.model.components['lv'].P_i.values
 
 ## Example values pv loops for all 4 chambers:
 ![Example PV loops!](Figures/PV_loops.png)
-
-## Run tests
-
-You can run locally the tests by running the following command:
-```bash
-  python -m unittest discover -s tests
-```
-there is also a autamtated test pipeline that runs the tests on every push to the repository (see [here](.github/workflows/ci.yml)).
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/alan-turing-institute/ModularCirc/workflows/CI/badge.svg
