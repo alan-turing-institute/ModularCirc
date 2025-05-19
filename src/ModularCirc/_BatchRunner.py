@@ -98,7 +98,7 @@ class _BatchRunner:
 
     def run_batch(self, n_jobs=1, **kwargs):
         if n_jobs == 1:
-            success = self._samples.apply(lambda row : self._run_case(row, **kwargs), axis=0)
+            success = self._samples.apply(lambda row : self._run_case(row, **kwargs), axis=1)
         else:
             success = joblib.Parallel(n_jobs=n_jobs)(
                                         joblib.delayed(self._run_case)(row, **kwargs)
