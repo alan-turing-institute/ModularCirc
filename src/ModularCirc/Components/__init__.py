@@ -1,6 +1,7 @@
 from .ComponentBase import ComponentBase
 from .HC_constant_elastance import HC_constant_elastance
 from .HC_mixed_elastance import HC_mixed_elastance
+from .HC_mixed_elastance_pp import HC_mixed_elastance_pp
 from .R_component import R_component
 from .Rc_component import Rc_component
 from .Rlc_component import Rlc_component
