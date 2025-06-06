@@ -303,6 +303,17 @@ class BaseAnalysis():
     
     
     def compute_chamber_work(self, component:str):
+        """"
+        Method for computing the work done by a component.
+
+        ## Inputs
+        component : str
+            name of the component for which we are computing the end systolic pressure
+
+        ## Ouputs
+        work : float
+            integral of p over v in a cycle
+        """
         c  = self.model.components[component]
         p  = c.P_i.values[self.tind]
         dv = c.V.values[self.tind] - c.V.values[self.tind-1]
