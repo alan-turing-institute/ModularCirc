@@ -22,11 +22,12 @@ dependencies = [
     "scipy",
     "joblib",
     "pandera",
-    "tdqm"
+    "tdqm",
+    "SALib"
 ]
 
 [project.optional-dependencies]
-notebooks = ["ipykernel","SALib"]
+notebooks = ["ipykernel"]
 dev = ["pre-commit", "black", "flake8", "isort"]
 
 [project.urls]
