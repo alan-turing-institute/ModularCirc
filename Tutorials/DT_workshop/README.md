@@ -3,7 +3,7 @@
 **ModularCirc** is intended to be a versatile platform of 0D models of the cardiovascular system.
 It is users are envisioned to have different levels of expertise/experience coding.
 
-![Main figure](../Tutorial_01/Figures/Slides.png)
+![Main figure](../Tutorial_02/Figures/Slides.png)
 
 ## Goals
 The main goal of this tutorial is to give you a flavour of the high and mid level uses **ModularCirc**.
