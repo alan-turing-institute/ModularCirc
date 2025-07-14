@@ -20,10 +20,13 @@ sampler_dictionary = {
 }
 
 class _BatchRunner:
-    def __init__(self, sampler:str='LHS', seed=DEFAULT_RANDOM_SEED) -> None:
+    def __init__(self,
+                 sampler:str='LHS',
+                 seed=DEFAULT_RANDOM_SEED) -> None:
         self._sample_generator = sampler_dictionary[sampler]
-        self._seed      = seed
+        self._seed = seed
         return
+
 
     def setup_sampler(self, template_json):
         with open(template_json) as file:
@@ -38,6 +41,7 @@ class _BatchRunner:
 
         self._sampler : QMCEngine = self._sample_generator(d=self._d, seed=self._seed)
         return
+
 
     def condense_dict_parameters(self, dict_param, prev=''):
         for key, val in dict_param.items():
@@ -55,6 +59,7 @@ class _BatchRunner:
                     self._parameters_constant[new_key] = val[0]
         return
 
+
     def sample(self, nsamples:int):
         samples  = self._sampler.random(nsamples)
         samples_scaled = scale(sample=samples, l_bounds=self._l_bounds, u_bounds=self._u_bounds)
@@ -63,9 +68,11 @@ class _BatchRunner:
             self._samples[key] = val
         return
 
+
     @property
     def samples(self):
         return self._samples.copy()
+
 
     def map_sample_timings(self, map:dict = dict(), ref_time=1.0):
         for key, mappings in map.items():
@@ -75,6 +82,7 @@ class _BatchRunner:
             if key not in mappings: self._samples.drop(key, inplace=True, axis=1)
         self._ref_time = ref_time
         return
+
 
     def map_vessel_volume(self):
         vessels = list(self._template['VESSELS'].keys())
@@ -105,6 +113,7 @@ class _BatchRunner:
                                         for _, row in tqdm(self._samples.iterrows(), total=len(self._samples))
                                      )
         return success
+
 
     def _run_case(self, row, **kwargs):
         time_setup = self._tst.copy()
