@@ -127,6 +127,7 @@ def run_in_parallel(
 
     return successful_runs
 
+
 def simulation_loader(input_directory):
 
     file_list = os.listdir(input_directory)
@@ -151,6 +152,7 @@ def simulation_loader(input_directory):
 
 dict_parameters_condensed_range = dict()
 dict_parameters_condensed_single = dict()
+
 
 def condense_dict_parameters(dict_param:dict, prev=""):
     for key, val in dict_param.items():
@@ -200,6 +202,7 @@ def get_component(X, component_matrix, component_id, scaler):
         @ component_matrix[component_id, :].T.reshape((-1, 1))
         * component_matrix[component_id, :].reshape((1, -1))
     )
+
 
 def scale_time_parameters_and_asign_to_components(df):
 
