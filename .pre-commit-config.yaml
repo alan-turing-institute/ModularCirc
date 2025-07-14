@@ -11,7 +11,7 @@ repos:
     - id: check-yaml # check YAML files for syntax errors
     - id: check-json # check JSON files for syntax errors
     - id: check-added-large-files # check for large files
-      args: ['--maxkb=500'] # set the max file size to 500KB
+      args: ['--maxkb=2048'] # set the max file size to 2MB
     - id: check-case-conflict # check for case conflicts in filenames.
     - id: check-merge-conflict # This hook checks for merge conflict markers in files.
     # It ensures that there are no unresolved merge conflicts in the codebase.

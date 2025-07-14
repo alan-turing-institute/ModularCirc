@@ -15,22 +15,9 @@ The current version of the published package contains two models:
 
 For other models currently under development, see the `dev` branch.
 
-## Setup Conda or python virtual environment
+## Setup a python virtual environment
 
-Before installation of the ModularCirc package, please setup a virtual environment using either Conda or python virtual environment.
-
-### Conda setup
-
-Install Conda from https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html
-
-Run:
-
-```
-conda create --name <yourenvname>
-conda activate <yourenvname>
-```
-
-Proceed to installing the ModularCirc package.
+Before installation of the ModularCirc package, please setup a virtual environment using python virtual environment.
 
 ### Python virtual environment setup
 
@@ -41,14 +28,6 @@ Activate the python environment: `source venv/bin/activate`
 Proceed to installing the ModularCirc package.
 
 ## Installing ModularCirc
-
-### pip install
-
-To install the pip package:
-
-```bash
-python -m pip install ModularCirc
-```
 
 ### Installation from source:
 
@@ -64,7 +43,7 @@ cd ModularCirc
 After downloading the GitHub repository, from the repo directory run:
 
 ```bash
-pip install ./
+pip install -e ".[notebooks]"
 ```
 
 This will install the package based on the `pyproject.toml` file specifications.

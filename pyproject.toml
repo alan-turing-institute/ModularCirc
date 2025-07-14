@@ -22,7 +22,8 @@ dependencies = [
     "scipy",
     "joblib",
     "pandera",
-    "tdqm"
+    "tdqm",
+    "SALib"
 ]
 
 [project.optional-dependencies]
