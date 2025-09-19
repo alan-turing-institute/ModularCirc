@@ -312,10 +312,10 @@ class BaseAnalysis():
 
         ## Ouputs
         work : float
-            integral of p over v in a cycle
+            integral of p over v in a cycle (measure in J)
         """
         c  = self.model.components[component]
         p  = c.P_i.values[self.tind]
         dv = c.V.values[self.tind] - c.V.values[self.tind-1]
-        work = (p*dv).sum / self.model.time_object.export_min
-        return work
+        work = (p*dv).sum() / np.float64(self.model.time_object.export_min) * 1.33e-4
+        return np.abs(work)
