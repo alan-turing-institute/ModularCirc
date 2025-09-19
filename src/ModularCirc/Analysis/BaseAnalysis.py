@@ -276,6 +276,7 @@ class BaseAnalysis():
         p = c.P_i.values[self.tind]
         return (np.min(p), np.max(p))
 
+
     def compute_end_systolic_pressure(self, component:str, upstream:str):
         """"
         Method for computing the end systolic pressure in the aorta and pulmonary artery.
@@ -299,3 +300,22 @@ class BaseAnalysis():
         flag = up > p
         ind = np.arange(len(flag))[flag]
         return p[ind[-1]]
+    
+    
+    def compute_chamber_work(self, component:str):
+        """"
+        Method for computing the work done by a component.
+
+        ## Inputs
+        component : str
+            name of the component for which we are computing the end systolic pressure
+
+        ## Ouputs
+        work : float
+            integral of p over v in a cycle (measure in J)
+        """
+        c  = self.model.components[component]
+        p  = c.P_i.values[self.tind]
+        dv = c.V.values[self.tind] - c.V.values[self.tind-1]
+        work = (p*dv).sum() / np.float64(self.model.time_object.export_min) * 1.33e-4
+        return np.abs(work)
