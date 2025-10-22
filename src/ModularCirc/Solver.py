@@ -204,8 +204,6 @@ class Solver():
 
         T = self._to.tcycle
         N_zeros_0 = len(self._global_sv_id)
-        _n_sub_iter = self._n_sub_iter
-        _optimize_secondary_sv = self._optimize_secondary_sv
 
         # stores the dependencies of primary variables
         keys3_dict = dict()
