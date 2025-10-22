@@ -240,7 +240,8 @@ class Solver():
                     valid_values = y[valid_indices]
                 else:
                     valid_values = y[inds]
-                result[i] = fun(t=0.0, y=valid_values)
+                func_result = fun(t=0.0, y=valid_values)
+                result[i] = func_result.item() if hasattr(func_result, 'item') else func_result
             return result
 
         # Function to update the secondary state variables based on the primary state variables.
@@ -271,7 +272,8 @@ class Solver():
                 # Remove padding (-1 values) and get only valid indices
                 valid_indices = row_indices[row_indices != -1]
                 valid_values = y[valid_indices]
-                result[i] = fi(t=t, y=valid_values)
+                func_result = fi(t=t, y=valid_values)
+                result[i] = func_result.item() if hasattr(func_result, 'item') else func_result
             return result
 
         def s_u_residual(y, yall, keys):
@@ -410,7 +412,8 @@ class Solver():
             # Optimized version: direct loop instead of list comprehension
             result = np.empty(len(funcs3), dtype=np.float64)
             for i, (fi, yi) in enumerate(zip(funcs3, y_temp[ids3])):
-                result[i] = fi(t=ht, y=yi)
+                func_result = fi(t=ht, y=yi)
+                result[i] = func_result.item() if hasattr(func_result, 'item') else func_result
             # Use matrix multiplication for inverse permutation
             return self.perm_mat @ result
 

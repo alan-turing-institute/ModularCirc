@@ -378,10 +378,19 @@ class TestSolver(unittest.TestCase):
                     [self.expected_values["results"][str(i_cycle_step_size)][key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()]
                     )
                 new_ndarray = np.array([new_dict[key1][key2] for key1 in new_dict.keys() for key2 in new_dict[key1].keys()])
+                # Use relative error for non-zero expected values, absolute error otherwise
+                # Handle division by zero by using np.divide with where parameter
+                relative_error = np.divide(
+                    np.abs(expected_ndarray - new_ndarray),
+                    np.abs(expected_ndarray),
+                    out=np.zeros_like(expected_ndarray),
+                    where=np.abs(expected_ndarray) > 1e-12
+                )
+                absolute_error = np.abs(expected_ndarray - new_ndarray)
                 test_ndarray = np.where(
-                    np.abs(expected_ndarray) > 1e-6,
-                    np.abs((expected_ndarray - new_ndarray) / expected_ndarray),
-                    np.abs((expected_ndarray - new_ndarray))
+                    np.abs(expected_ndarray) > 1e-12,
+                    relative_error,
+                    absolute_error
                 )
                 self.assertTrue((test_ndarray < RELATIVE_TOLERANCE).all(),
                                 f"Test failed for step size {i_cycle_step_size}: {test_ndarray}")
