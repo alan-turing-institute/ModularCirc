@@ -227,14 +227,15 @@ class Solver():
                 >>> initialize_by_function(y=self._asd.iloc[0].to_numpy())
 
             """
-            # Optimized version with safe scalar extraction
+            # Optimized version with safe scalar extraction using pre-allocated arrays
             def _safe_extract(func_result):
                 return func_result.item() if hasattr(func_result, 'item') and func_result.ndim > 0 else func_result
             
-            return np.fromiter(
-                (_safe_extract(fun(t=0.0, y=y[inds])) for fun, inds in zip(funcs1, ids1)),
-                dtype=np.float64
-            )
+            # Use pre-allocated array to avoid memory allocation
+            for i, (fun, inds) in enumerate(zip(funcs1, ids1)):
+                self._initialization_temp[i] = _safe_extract(fun(t=0.0, y=y[inds]))
+            
+            return self._initialization_temp
 
         # Function to update the secondary state variables based on the primary state variables.
         funcs2 = np.array(list(self._global_ssv_update_fun.values()))
@@ -255,14 +256,15 @@ class Solver():
             Example use:
                 >>> s_u_update(t=0.0, y=self._asd.iloc[0].to_numpy())
             """
-            # Optimized version with safe scalar extraction
+            # Optimized version with safe scalar extraction using pre-allocated arrays
             def _safe_extract(func_result):
                 return func_result.item() if hasattr(func_result, 'item') and func_result.ndim > 0 else func_result
             
-            return np.fromiter(
-                (_safe_extract(fi(t=t, y=yi)) for fi, yi in zip(funcs2, y[ids2])),
-                dtype=np.float64
-            )
+            # Use pre-allocated array to avoid memory allocation
+            for i, (fi, yi) in enumerate(zip(funcs2, y[ids2])):
+                self._secondary_temp[i] = _safe_extract(fi(t=t, y=yi))
+            
+            return self._secondary_temp
 
         def s_u_residual(y, yall, keys):
             """ Function to compute the residual of the secondary state variables."""
@@ -343,11 +345,10 @@ class Solver():
         # uses the reverse cuthill mckee algorithm to reduce the bandwidth of the matrix
         sparse_mat = csr_matrix(mat)
         perm = reverse_cuthill_mckee(sparse_mat, symmetric_mode=False)
-        perm_mat = np.zeros((len(perm), len(perm)))
-        for i,j in enumerate(perm):
-            perm_mat[i,j] = 1
-
-        self.perm_mat = perm_mat
+        
+        # Store permutation as indices instead of dense matrix for better performance
+        self.perm_indices = perm.astype(np.int32)
+        self.inv_perm_indices = np.argsort(perm).astype(np.int32)
 
         # reorders the sparse matrix to reduce the bandwidth
         sparse_mat_reordered = sparse_mat[perm, :][:, perm]
@@ -361,6 +362,13 @@ class Solver():
         self.lband = lband
         self.uband = uband
 
+        # Pre-allocate working arrays to avoid repeated memory allocation
+        self._work_array_1d = np.zeros(N_zeros_0, dtype=np.float64)
+        self._work_array_2d = None  # Will be allocated when needed
+        self._derivatives_temp = np.zeros(len(funcs3), dtype=np.float64)
+        self._secondary_temp = np.zeros(len(funcs2), dtype=np.float64)
+        self._initialization_temp = np.zeros(len(funcs1), dtype=np.float64)
+
         def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
 
             """ Function to compute the derivatives of the primary state variables over time."""
@@ -369,14 +377,21 @@ class Solver():
             # calculates the current time within the heart cycle
             ht = t%T
 
-            # permutes the primary state variables
-            y2 = perm_mat.T @ y
+            # permutes the primary state variables using index-based operation
+            y2 = y[self.inv_perm_indices]
 
-            # initialises the temporary array to store the state variables
+            # Use pre-allocated working arrays to avoid repeated memory allocation
             if len(y.shape) == 2:
-                y_temp = np.zeros((N_zeros_0,y.shape[1]))
+                # For 2D arrays, allocate/resize as needed
+                if self._work_array_2d is None or self._work_array_2d.shape != (N_zeros_0, y.shape[1]):
+                    self._work_array_2d = np.zeros((N_zeros_0, y.shape[1]), dtype=np.float64)
+                else:
+                    self._work_array_2d.fill(0.0)  # Reset instead of allocating
+                y_temp = self._work_array_2d
             else:
-                y_temp = np.zeros((N_zeros_0))
+                # For 1D arrays, use pre-allocated array
+                self._work_array_1d.fill(0.0)  # Reset instead of allocating
+                y_temp = self._work_array_1d
 
             # assings reordered primary state variables to the temporary array
             y_temp[keys3] = y2
@@ -387,14 +402,16 @@ class Solver():
             if _optimize_secondary_sv:
                 y_temp[keys4] = optimize(y_temp, keys4)
             # returns the derivatives of the primary state variables, reordered back to the original order
-            # Optimized version with safe scalar extraction
+            # Optimized version with safe scalar extraction using pre-allocated arrays
             def _safe_extract(func_result):
                 return func_result.item() if hasattr(func_result, 'item') and func_result.ndim > 0 else func_result
             
-            return perm_mat @ np.fromiter(
-                (_safe_extract(fi(t=ht, y=yi)) for fi, yi in zip(funcs3, y_temp[ids3])),
-                dtype=np.float64
-            )
+            # Compute derivatives using pre-allocated array to avoid memory allocation
+            for i, (fi, yi) in enumerate(zip(funcs3, y_temp[ids3])):
+                self._derivatives_temp[i] = _safe_extract(fi(t=ht, y=yi))
+            
+            # Apply inverse permutation using index-based operation
+            return self._derivatives_temp[self.perm_indices]
 
 
         self.initialize_by_function = initialize_by_function
@@ -419,7 +436,7 @@ class Solver():
             if self._method != 'LSODA':
                 res = solve_ivp(fun=self.pv_dfdt_global,
                                 t_span=(t[0], t[-1]),
-                                y0=self.perm_mat @ y0,
+                                y0=np.array(y0)[self.perm_indices],
                                 t_eval=t,
                                 max_step=self.dt,
                                 method=self._method,
@@ -429,7 +446,7 @@ class Solver():
             else:
                 res = solve_ivp(fun=self.pv_dfdt_global,
                                 t_span=(t[0], t[-1]),
-                                y0=self.perm_mat @ y0,
+                                y0=np.array(y0)[self.perm_indices],
                                 t_eval=t,
                                 method=self._method,
                                 atol=self._atol,
@@ -443,7 +460,7 @@ class Solver():
 
         # updates the primary state variables
         y = res.y
-        y = self.perm_mat.T @ y
+        y = y[self.inv_perm_indices]
 
         # updates the state variables in the DataFrame
         ids = list(self._global_psv_update_fun.keys())
