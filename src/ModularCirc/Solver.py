@@ -270,12 +270,20 @@ class Solver():
         self._T = T
         self._N_zeros_0 = N_zeros_0
 
+
+
         # Pre-allocate working arrays to avoid repeated memory allocation
         self._work_array_1d = np.zeros(N_zeros_0, dtype=np.float64)
         self._work_array_2d = None  # Will be allocated when needed
         self._derivatives_temp = np.zeros(len(funcs3), dtype=np.float64)
         self._secondary_temp = np.zeros(len(funcs2), dtype=np.float64)
         self._initialization_temp = np.zeros(len(funcs1), dtype=np.float64)
+
+        # Pre-compute function-index pairs for hot path optimization
+        # Since _funcs3 and _ids3 never change, compute the pairs once
+        self._func_index_pairs3 = list(zip(self._funcs3, self._ids3))
+        self._func_index_pairs2 = list(zip(self._funcs2, range(len(self._funcs2))))
+        self._func_index_pairs1 = list(zip(self._funcs1, range(len(self._funcs1))))
 
         # Assign method references directly for backward compatibility
         self.initialize_by_function = self.initialize_by_function_method
@@ -401,22 +409,29 @@ class Solver():
     def initialize_by_function_method(self, y: np.ndarray[float]) -> np.ndarray[float]:
         """
         Initialize the state variables using a set of initialization functions.
-        Class method version for better organization and potential optimization.
+        Vectorized version for better performance.
         """
-        # Use pre-allocated array to avoid memory allocation
-        for i, (fun, inds) in enumerate(zip(self._funcs1, self._ids1)):
-            self._initialization_temp[i] = self._safe_extract(fun(t=0.0, y=y[inds]))
+        # Use pre-computed function-index pairs for consistent optimization
+        results = [self._safe_extract(fi(t=0.0, y=y[self._ids1[i]])) for fi, i in self._func_index_pairs1]
+        
+        # Copy results to pre-allocated array
+        self._initialization_temp[:] = results
         
         return self._initialization_temp
 
     def s_u_update_method(self, t: float, y: np.ndarray[float]) -> np.ndarray[float]:
         """
         Updates the secondary state variables based on the current values of the primary state variables.
-        Class method version for better organization and potential optimization.
+        Vectorized version for better performance.
         """
-        # Use pre-allocated array to avoid memory allocation
-        for i, (fi, yi) in enumerate(zip(self._funcs2, y[self._ids2])):
-            self._secondary_temp[i] = self._safe_extract(fi(t=t, y=yi))
+        # Create input arrays in one vectorized operation
+        y_inputs = y[self._ids2]
+        
+        # Vectorized function calls using pre-computed pairs (hot path optimization)
+        results = [self._safe_extract(fi(t=t, y=y_inputs[i])) for fi, i in self._func_index_pairs2]
+        
+        # Copy results to pre-allocated array
+        self._secondary_temp[:] = results
         
         return self._secondary_temp
 
@@ -474,9 +489,9 @@ class Solver():
         if self._optimize_secondary_sv:
             y_temp[self._keys4] = self.optimize_method(y_temp, self._keys4)
 
-        # Compute derivatives using pre-allocated array to avoid memory allocation
-        for i, (fi, yi) in enumerate(zip(self._funcs3, y_temp[self._ids3])):
-            self._derivatives_temp[i] = self._safe_extract(fi(t=ht, y=yi))
+        # Compute derivatives using pre-computed function-index pairs (hot path optimization)
+        results = [self._safe_extract(fi(t=ht, y=y_temp[indices])) for fi, indices in self._func_index_pairs3]
+        self._derivatives_temp[:] = results
         
         # Apply inverse permutation using index-based operation
         return self._derivatives_temp[self.perm_indices]
