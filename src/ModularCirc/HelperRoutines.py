@@ -40,7 +40,7 @@ def resistor_upstream_pressure(t:float,
 def resistor_model_dp(q_in:float, r:float) -> float:
     return q_in * r
 
-# @nb.njit(cache=True)  # Disabled: compilation overhead exceeds benefits
+@nb.njit(cache=True)
 def resistor_impedance_flux_rate(t:float,
                                  p_in:float=None,
                                  p_out:float=None,
@@ -99,7 +99,7 @@ def grounded_capacitor_model_volume(t:float,
         p = y
     return v_ref + p * c
 
-# @nb.njit(cache=True)  # Disabled: compilation overhead exceeds benefits  
+@nb.njit(cache=True)
 def grounded_capacitor_model_dpdt(t:float,
                                   q_in:float=None,
                                   q_out:float=None,
@@ -110,7 +110,7 @@ def grounded_capacitor_model_dpdt(t:float,
         q_in, q_out = y[:2]
     return (q_in - q_out) / c
 
-# @nb.njit(cache=True)  # Disabled: compilation overhead exceeds benefits
+@nb.njit(cache=True)
 def chamber_volume_rate_change(t:float,
                                q_in:float=None,
                                q_out:float=None,
@@ -130,7 +130,7 @@ def chamber_volume_rate_change(t:float,
         q_in, q_out = y[:2]
     return q_in - q_out
 
-# @nb.njit(cache=True)  # Disabled: compilation overhead exceeds benefits
+@nb.njit(cache=True)
 def relu_max(val:float) -> float:
     return np.maximum(val, 0.0)
 
@@ -223,7 +223,7 @@ def maynard_valve_flow(t:float,
     aeff = (1.0 - RRA) * phi + RRA
     return np.where(dp >= 0.0, aeff, -aeff) * CQ * np.sqrt(np.abs(dp))
 
-# @nb.njit(cache=True)  # Disabled: compilation overhead exceeds benefits
+@nb.njit(cache=True)
 def maynard_phi_law(t:float,
                     p_in:nb.types.Array =None,
                     p_out:nb.types.Array=None,
@@ -237,7 +237,7 @@ def maynard_phi_law(t:float,
     dp = p_in - p_out
     return np.where(dp >= 0.0, Ko * (1.0 - phi) * dp, Kc * phi * dp)
 
-# @nb.njit(cache=True)  # Disabled: compilation overhead exceeds benefits
+@nb.njit(cache=True)
 def maynard_impedance_dqdt(t:float,
                            p_in:nb.types.Array =None,
                            p_out:nb.types.Array =None,
