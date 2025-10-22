@@ -198,6 +198,9 @@ class Solver():
         funcs1 = self._global_sv_init_fun.values()
         # Indexes of the state variables to be initialized.
         ids1   = self._global_sv_init_ind.values()
+        
+        # Pre-allocate result array for initialize_by_function
+        self._init_result_array = np.empty(len(funcs1), dtype=np.float64)
 
         def initialize_by_function(y:np.ndarray[float]) -> np.ndarray[float]:
             """
@@ -228,12 +231,24 @@ class Solver():
                 >>> initialize_by_function(y=self._asd.iloc[0].to_numpy())
 
             """
-            return np.fromiter([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)],
-                               dtype=np.float64)
+            # Optimized version: direct loop with proper index handling
+            result = np.empty(len(funcs1), dtype=np.float64)
+            for i, (fun, inds) in enumerate(zip(funcs1, ids1)):
+                # Handle case where inds might be padded with -1 values
+                if hasattr(inds, '__len__') and len(inds) > 1:
+                    valid_indices = inds[inds != -1] if hasattr(inds, '__getitem__') else inds
+                    valid_values = y[valid_indices]
+                else:
+                    valid_values = y[inds]
+                result[i] = fun(t=0.0, y=valid_values)
+            return result
 
         # Function to update the secondary state variables based on the primary state variables.
         funcs2 = np.array(list(self._global_ssv_update_fun.values()))
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
+        
+        # Pre-allocate result array for s_u_update
+        self._s_u_result_array = np.empty(len(funcs2), dtype=np.float64)
 
         # @nb.njit(cache=True)
         def s_u_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
@@ -250,8 +265,14 @@ class Solver():
             Example use:
                 >>> s_u_update(t=0.0, y=self._asd.iloc[0].to_numpy())
             """
-            return np.fromiter([fi(t=t, y=yi) for fi, yi in zip(funcs2, y[ids2])],
-                               dtype=np.float64)
+            # Optimized version: direct loop with proper index handling
+            result = np.empty(len(funcs2), dtype=np.float64)
+            for i, (fi, row_indices) in enumerate(zip(funcs2, ids2)):
+                # Remove padding (-1 values) and get only valid indices
+                valid_indices = row_indices[row_indices != -1]
+                valid_values = y[valid_indices]
+                result[i] = fi(t=t, y=valid_values)
+            return result
 
         def s_u_residual(y, yall, keys):
             """ Function to compute the residual of the secondary state variables."""
@@ -337,6 +358,11 @@ class Solver():
             perm_mat[i,j] = 1
 
         self.perm_mat = perm_mat
+        
+        # Store permutation indices for efficient reordering without matrix multiplication
+        self.perm_indices = perm
+        self.inv_perm_indices = np.empty_like(perm)
+        self.inv_perm_indices[perm] = np.arange(len(perm))
 
         # reorders the sparse matrix to reduce the bandwidth
         sparse_mat_reordered = sparse_mat[perm, :][:, perm]
@@ -349,6 +375,11 @@ class Solver():
 
         self.lband = lband
         self.uband = uband
+        
+        # Pre-allocate arrays for performance optimization
+        self._y_temp_1d = np.zeros(N_zeros_0, dtype=np.float64)
+        self._y_temp_2d = None  # Will be allocated dynamically if needed for 2D case
+        self._result_array = np.empty(len(funcs3), dtype=np.float64)
 
         def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
 
@@ -359,13 +390,13 @@ class Solver():
             ht = t%T
 
             # permutes the primary state variables
-            y2 = perm_mat.T @ y
+            y2 = self.perm_mat.T @ y
 
-            # initialises the temporary array to store the state variables
+            # Create temporary array to store the state variables (safer than reuse for now)
             if len(y.shape) == 2:
-                y_temp = np.zeros((N_zeros_0,y.shape[1]))
+                y_temp = np.zeros((N_zeros_0, y.shape[1]), dtype=np.float64)
             else:
-                y_temp = np.zeros((N_zeros_0))
+                y_temp = np.zeros(N_zeros_0, dtype=np.float64)
 
             # assings reordered primary state variables to the temporary array
             y_temp[keys3] = y2
@@ -376,7 +407,12 @@ class Solver():
             if _optimize_secondary_sv:
                 y_temp[keys4] = optimize(y_temp, keys4)
             # returns the derivatives of the primary state variables, reordered back to the original order
-            return perm_mat @ np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
+            # Optimized version: direct loop instead of list comprehension
+            result = np.empty(len(funcs3), dtype=np.float64)
+            for i, (fi, yi) in enumerate(zip(funcs3, y_temp[ids3])):
+                result[i] = fi(t=ht, y=yi)
+            # Use matrix multiplication for inverse permutation
+            return self.perm_mat @ result
 
 
         self.initialize_by_function = initialize_by_function
@@ -458,7 +494,9 @@ class Solver():
 
         for i in range(0, self._to.ncycles, self.step): # step is a pulse, we might wabnt to do it in all pulses
             # print(i)
-            y0 = self._asd.iloc[i * (self._to.n_c-1), list(self._global_psv_update_fun.keys())].to_list()
+            # Direct numpy array access is faster than iloc 
+            psv_keys = list(self._global_psv_update_fun.keys())
+            y0 = self._asd.values[i * (self._to.n_c-1), psv_keys].tolist()
             try:
                 # advances the cycle one step at the time, and only that step,
                 #changes are to select a range of cycles up to to ith, + dept of cycle instead of selecting that index.
