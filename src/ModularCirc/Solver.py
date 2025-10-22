@@ -85,6 +85,14 @@ class Solver():
         # flag for checking if the model is converged or not...
         self.converged = False
 
+    def _pad_index_array(self, index_array):
+        """
+        Helper method to pad index arrays to the length of the state variable array.
+        This eliminates code duplication between primary and secondary variable processing.
+        """
+        return np.pad(index_array,
+                     (0, self._N_sv - len(index_array)),
+                     mode='constant', constant_values=-1)
 
     def setup(self,
               optimize_secondary_sv:bool=False,
@@ -142,9 +150,7 @@ class Solver():
                 self._global_psv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
 
                 # Pad the index array to the length of the state variable array.
-                self._global_psv_update_ind[mkey]   = np.pad(self._global_psv_update_ind[mkey],
-                                                             (0, self._N_sv-len(self._global_psv_update_ind[mkey])),
-                                                             mode='constant', constant_values=-1)
+                self._global_psv_update_ind[mkey]   = self._pad_index_array(self._global_psv_update_ind[mkey])
 
                 # Add the state variable name to the global primary state variable list.
                 self._global_psv_names.append(key)
@@ -158,9 +164,7 @@ class Solver():
                 self._global_ssv_update_fun[mkey]   = component.u_func
                 self._global_ssv_update_fun_n[mkey] = component.u_name
                 self._global_ssv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
-                self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey],
-                                                             (0, self._N_sv-len(self._global_ssv_update_ind[mkey])),
-                                                             mode='constant', constant_values=-1)
+                self._global_ssv_update_ind[mkey]   = self._pad_index_array(self._global_ssv_update_ind[mkey])
             else:
                 continue
 
@@ -270,6 +274,10 @@ class Solver():
         self._T = T
         self._N_zeros_0 = N_zeros_0
 
+        # Pre-compute frequently used key arrays to avoid repeated computation
+        self._cached_keys4 = keys4  # Already computed above
+        self._cached_psv_keys = list(self._global_psv_update_fun.keys())  # Primary state variable keys
+
 
 
         # Pre-allocate working arrays to avoid repeated memory allocation
@@ -334,7 +342,7 @@ class Solver():
         y = y[self.inv_perm_indices]
 
         # updates the state variables in the DataFrame
-        ids = list(self._global_psv_update_fun.keys())
+        ids = self._cached_psv_keys  # Use pre-computed primary state variable keys
         inds= list(range(len(ids)))
         self._asd.iloc[cycleID*n_t:(end_cycle)*n_t+1, ids] = y[inds, 0:n_t*step+1].T
 
@@ -364,7 +372,7 @@ class Solver():
 
         for i in range(0, self._to.ncycles, self.step): # step is a pulse, we might wabnt to do it in all pulses
             # print(i)
-            y0 = self._asd.iloc[i * (self._to.n_c-1), list(self._global_psv_update_fun.keys())].to_list()
+            y0 = self._asd.iloc[i * (self._to.n_c-1), self._cached_psv_keys].to_list()
             try:
                 # advances the cycle one step at the time, and only that step,
                 #changes are to select a range of cycles up to to ith, + dept of cycle instead of selecting that index.
@@ -388,7 +396,8 @@ class Solver():
         self._to._cycle_t = self._to._cycle_t.head(self._to.n_t)
 
 
-        keys4  = np.array(list(self._global_ssv_update_fun.keys()))
+        # Use pre-computed keys4 array to avoid recomputation
+        keys4 = self._cached_keys4
         temp   = np.zeros(self._asd.iloc[:,keys4].shape)
         for i, line in enumerate(self._asd.values) :
             line[keys4] = self.s_u_update(0.0, line)
