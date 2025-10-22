@@ -6,6 +6,7 @@ import numba as nb
 # from numba import jit
 from collections.abc import Callable
 
+@nb.njit(cache=True)
 def resistor_model_flow(t:float,
                         p_in:float=None,
                         p_out:float=None,
@@ -27,6 +28,7 @@ def resistor_model_flow(t:float,
         p_in, p_out= y[:2]
     return (p_in - p_out) / r
 
+@nb.njit(cache=True)
 def resistor_upstream_pressure(t:float,
                                q_in:float=None,
                                p_out:float=None,
@@ -37,6 +39,7 @@ def resistor_upstream_pressure(t:float,
         q_in, p_out = y[:2]
     return p_out + r * q_in
 
+@nb.njit(cache=True)
 def resistor_model_dp(q_in:float, r:float) -> float:
     return q_in * r
 
@@ -66,6 +69,7 @@ def resistor_impedance_flux_rate(t:float,
         p_in, p_out, q_out = y[:3]
     return (p_in - p_out - q_out * r ) / l
 
+@nb.njit(cache=True)
 def grounded_capacitor_model_pressure(t:float,
                                       v:float=None,
                                       v_ref:float=None,
@@ -89,6 +93,7 @@ def grounded_capacitor_model_pressure(t:float,
         v = y
     return (v - v_ref) / c
 
+@nb.njit(cache=True)
 def grounded_capacitor_model_volume(t:float,
                                     p:float=None,
                                     v_ref:float=None,
@@ -134,13 +139,10 @@ def chamber_volume_rate_change(t:float,
 def relu_max(val:float) -> float:
     return np.maximum(val, 0.0)
 
+@nb.njit(cache=True)
 def softplus(val:float, alpha:float=0.2) -> float:
-    if isinstance(val, float):
-        return 1/ alpha * np.log(1 + np.exp(alpha * val)) if alpha * val <= 20.0 else val
-    else:
-        y = val.copy()
-        y[alpha * y <= 20.0] = 1/ alpha * np.log(1 + np.exp(alpha * y[alpha * y <=20.0]))
-        return y
+    """Softplus function used as a smooth rectifier (differentiable approximation to max(0, x))."""
+    return np.log(1.0 + np.exp(alpha * val)) / alpha
 
 def get_softplus_max(alpha:float):
     """
@@ -180,7 +182,7 @@ def non_ideal_diode_flow(t:float,
         p_in, p_out = y[:2]
     return (max_func((p_in - p_out)/ r))
 
-# @jit(cache=True, nopython=True)
+@nb.njit(cache=True)
 def simple_bernoulli_diode_flow(t:float,
                          p_in:float=None,
                          p_out:float=None,
@@ -255,6 +257,7 @@ def maynard_impedance_dqdt(t:float,
     aeff = (1.0 - RRA) * phi + RRA
     return np.where(aeff > 1.0e-5, (dp * aeff - q_in * R * aeff  - q_in * np.abs(q_in) / CQ**2.0 * aeff**(-1.0)  ) / L, 0.0)
 
+@nb.njit(cache=True)
 def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     """
     Leaky diode model that outputs the flow rate through a leaky diode
@@ -409,8 +412,9 @@ def chamber_pressure_function(t:float, v:float, v_ref:float, E_pas:float, E_act:
     return (a * active_law(v=v, v_ref=v_ref,t=t, E=E_act, **kwargs)
             + (1 - a) * passive_law(v=v, v_ref=v_ref, t=t, E=E_pas, **kwargs))
 
+@nb.njit(cache=True)
 def time_shift(t:float, shift:float=np.nan, tcycle:float=0.0):
-    if shift is np.nan:
+    if np.isnan(shift):
         return t
     elif t < tcycle - shift:
         return t + shift
