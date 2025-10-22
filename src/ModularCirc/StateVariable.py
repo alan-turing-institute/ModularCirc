@@ -1,5 +1,4 @@
 from .Time import TimeClass
-from pandera.typing import Series, DataFrame
 import numpy as np
 import pandas as pd
 
@@ -33,7 +32,7 @@ class StateVariable():
         self._ode_sys_mapping['u_name'] = function_name
         return
 
-    def set_inputs(self, inputs:Series[str]):
+    def set_inputs(self, inputs:pd.Series):
         self._ode_sys_mapping['inputs'] = inputs
         return
 
@@ -45,7 +44,7 @@ class StateVariable():
         self._ode_sys_mapping['i_func'] = function
         self._ode_sys_mapping['i_name'] = function_name
 
-    def set_i_inputs(self, inputs:Series[str])->None:
+    def set_i_inputs(self, inputs:pd.Series)->None:
         self._ode_sys_mapping['i_inputs'] = inputs
 
     @property
@@ -61,7 +60,7 @@ class StateVariable():
         return self._ode_sys_mapping['dudt_name']
 
     @property
-    def inputs(self) -> Series[str]:
+    def inputs(self) -> pd.Series:
         return self._ode_sys_mapping['inputs']
 
     @property

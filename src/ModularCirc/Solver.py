@@ -2,7 +2,6 @@ from .Time import TimeClass
 from .StateVariable import StateVariable
 from .Models.OdeModel import OdeModel
 from .HelperRoutines import bold_text
-from pandera.typing import DataFrame, Series
 from .Models.OdeModel import OdeModel
 
 import pandas as pd
@@ -516,7 +515,7 @@ class Solver():
 
 
     @property
-    def vd(self) -> Series[StateVariable]:
+    def vd(self):
         return self._vd
 
 
