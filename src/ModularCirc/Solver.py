@@ -192,111 +192,14 @@ class Solver():
         """ Generating the functions needed to compute the derivatives of the state variables over time. These functions are
         used during the numerical integration process to update the state variables."""
 
-
-        # Function to initialize the state variables using the initialization functions.
-        funcs1 = self._global_sv_init_fun.values()
-        # Indexes of the state variables to be initialized.
-        ids1   = self._global_sv_init_ind.values()
-
-        def initialize_by_function(y:np.ndarray[float]) -> np.ndarray[float]:
-            """
-            Initialize the state variables using a set of initialization functions.
-
-            This function applies a list of initialization functions (`funcs1`) to
-            specific subsets of the input array `y`, as determined by the indices
-            in `ids1`. Each function is called with `t=0.0` and the corresponding
-            subset of `y`, and the results are combined into a single NumPy array.
-            The input array `y` is usually the initial state variable array, so
-            the 0th row of the self._asd DataFrame.
-
-            Args:
-                y (np.ndarray[float]): A 1D NumPy array representing the state
-                variables to be initialized. Each subset of `y` is passed to
-                the corresponding initialization function.
-
-            Returns:
-                np.ndarray[float]: A 1D NumPy array containing the initialized
-                state variables, with the same length as the input array `y`.
-
-            Note:
-                - Each function in `funcs1` is expected to accept two arguments:
-                  `t` (a float, representing time) and `y` (a NumPy array,
-                  representing the subset of state variables).
-
-            Example use:
-                >>> initialize_by_function(y=self._asd.iloc[0].to_numpy())
-
-            """
-            # Optimized version with safe scalar extraction using pre-allocated arrays
-            def _safe_extract(func_result):
-                return func_result.item() if hasattr(func_result, 'item') and func_result.ndim > 0 else func_result
-            
-            # Use pre-allocated array to avoid memory allocation
-            for i, (fun, inds) in enumerate(zip(funcs1, ids1)):
-                self._initialization_temp[i] = _safe_extract(fun(t=0.0, y=y[inds]))
-            
-            return self._initialization_temp
-
-        # Function to update the secondary state variables based on the primary state variables.
+        # Extract function arrays and indices for class attribute storage
+        funcs1 = list(self._global_sv_init_fun.values())
+        ids1   = list(self._global_sv_init_ind.values())
         funcs2 = np.array(list(self._global_ssv_update_fun.values()))
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
-
-        # @nb.njit(cache=True)
-        def s_u_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
-            """
-            Updates the secondary state variables based on the current values of the primary state variables.
-
-            Args:
-                t (float): The current time step.
-                y (np.ndarray[float]): A NumPy array containing the current values of the primary state variables.
-
-            Returns:
-                np.ndarray[float]: A NumPy array containing the updated values of the secondary state variables.
-
-            Example use:
-                >>> s_u_update(t=0.0, y=self._asd.iloc[0].to_numpy())
-            """
-            # Optimized version with safe scalar extraction using pre-allocated arrays
-            def _safe_extract(func_result):
-                return func_result.item() if hasattr(func_result, 'item') and func_result.ndim > 0 else func_result
-            
-            # Use pre-allocated array to avoid memory allocation
-            for i, (fi, yi) in enumerate(zip(funcs2, y[ids2])):
-                self._secondary_temp[i] = _safe_extract(fi(t=t, y=yi))
-            
-            return self._secondary_temp
-
-        def s_u_residual(y, yall, keys):
-            """ Function to compute the residual of the secondary state variables."""
-            yall[keys] = y
-            return (y - s_u_update(0.0, yall))
-
-        def optimize(y:np.ndarray, keys):
-            """ Function to optimize the secondary state variables."""
-            yk = y[keys]
-            sol = least_squares(   # root
-                s_u_residual,
-                yk,
-                args=(y, keys),
-                ftol=1.0e-5,
-                xtol=1.0e-15,
-                loss='linear',
-                method='lm',
-                max_nfev=int(1e6)
-                )
-            y[keys] = sol.x
-            return sol.x  # sol.x
-
-        # indexes of the primary state variables.
         keys3  = np.array(list(self._global_psv_update_fun.keys()))
-
-        # indexes of the secondary state variables.
         keys4  = np.array(list(self._global_ssv_update_fun.keys()))
-
-        # functions to update the primary state variables.
         funcs3 = np.array(list(self._global_psv_update_fun.values()))
-
-        # indexes of the primary state variables dependencies.
         ids3   = np.stack(list(self._global_psv_update_ind.values()))
 
         T = self._to.tcycle
@@ -362,6 +265,18 @@ class Solver():
         self.lband = lband
         self.uband = uband
 
+        # Store function arrays and indices as class attributes
+        self._funcs1 = list(funcs1)
+        self._ids1 = list(ids1)
+        self._funcs2 = funcs2
+        self._ids2 = ids2
+        self._funcs3 = funcs3
+        self._ids3 = ids3
+        self._keys3 = keys3
+        self._keys4 = keys4
+        self._T = T
+        self._N_zeros_0 = N_zeros_0
+
         # Pre-allocate working arrays to avoid repeated memory allocation
         self._work_array_1d = np.zeros(N_zeros_0, dtype=np.float64)
         self._work_array_2d = None  # Will be allocated when needed
@@ -369,57 +284,12 @@ class Solver():
         self._secondary_temp = np.zeros(len(funcs2), dtype=np.float64)
         self._initialization_temp = np.zeros(len(funcs1), dtype=np.float64)
 
-        def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
-
-            """ Function to compute the derivatives of the primary state variables over time."""
-
-
-            # calculates the current time within the heart cycle
-            ht = t%T
-
-            # permutes the primary state variables using index-based operation
-            y2 = y[self.inv_perm_indices]
-
-            # Use pre-allocated working arrays to avoid repeated memory allocation
-            if len(y.shape) == 2:
-                # For 2D arrays, allocate/resize as needed
-                if self._work_array_2d is None or self._work_array_2d.shape != (N_zeros_0, y.shape[1]):
-                    self._work_array_2d = np.zeros((N_zeros_0, y.shape[1]), dtype=np.float64)
-                else:
-                    self._work_array_2d.fill(0.0)  # Reset instead of allocating
-                y_temp = self._work_array_2d
-            else:
-                # For 1D arrays, use pre-allocated array
-                self._work_array_1d.fill(0.0)  # Reset instead of allocating
-                y_temp = self._work_array_1d
-
-            # assings reordered primary state variables to the temporary array
-            y_temp[keys3] = y2
-
-            # updates the secondary state variables, and optimises them if necessary
-            for _ in range(_n_sub_iter):
-                y_temp[keys4] = s_u_update(t, y_temp)
-            if _optimize_secondary_sv:
-                y_temp[keys4] = optimize(y_temp, keys4)
-            # returns the derivatives of the primary state variables, reordered back to the original order
-            # Optimized version with safe scalar extraction using pre-allocated arrays
-            def _safe_extract(func_result):
-                return func_result.item() if hasattr(func_result, 'item') and func_result.ndim > 0 else func_result
-            
-            # Compute derivatives using pre-allocated array to avoid memory allocation
-            for i, (fi, yi) in enumerate(zip(funcs3, y_temp[ids3])):
-                self._derivatives_temp[i] = _safe_extract(fi(t=ht, y=yi))
-            
-            # Apply inverse permutation using index-based operation
-            return self._derivatives_temp[self.perm_indices]
-
-
-        self.initialize_by_function = initialize_by_function
-        self.pv_dfdt_global = pv_dfdt_update
-        self.s_u_update     = s_u_update
-
-        self.optimize = optimize
-        self.s_u_residual = s_u_residual
+        # Assign method references directly for backward compatibility
+        self.initialize_by_function = self.initialize_by_function_method
+        self.pv_dfdt_global = self.pv_dfdt_update_method
+        self.s_u_update = self.s_u_update_method
+        self.optimize = self.optimize_method
+        self.s_u_residual = self.s_u_residual_method
 
 
     def advance_cycle(self, y0, cycleID, step = 1):
@@ -530,6 +400,93 @@ class Solver():
         for key in self._vd.keys():
             self._vd[key]._u = self._asd[key]
 
+    # Class methods for better organization and potential optimization
+    def _safe_extract(self, func_result):
+        """Safe scalar extraction helper method"""
+        return func_result.item() if hasattr(func_result, 'item') and func_result.ndim > 0 else func_result
+
+    def initialize_by_function_method(self, y: np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Initialize the state variables using a set of initialization functions.
+        Class method version for better organization and potential optimization.
+        """
+        # Use pre-allocated array to avoid memory allocation
+        for i, (fun, inds) in enumerate(zip(self._funcs1, self._ids1)):
+            self._initialization_temp[i] = self._safe_extract(fun(t=0.0, y=y[inds]))
+        
+        return self._initialization_temp
+
+    def s_u_update_method(self, t: float, y: np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Updates the secondary state variables based on the current values of the primary state variables.
+        Class method version for better organization and potential optimization.
+        """
+        # Use pre-allocated array to avoid memory allocation
+        for i, (fi, yi) in enumerate(zip(self._funcs2, y[self._ids2])):
+            self._secondary_temp[i] = self._safe_extract(fi(t=t, y=yi))
+        
+        return self._secondary_temp
+
+    def s_u_residual_method(self, y, yall, keys):
+        """Function to compute the residual of the secondary state variables."""
+        yall[keys] = y
+        return (y - self.s_u_update_method(0.0, yall))
+
+    def optimize_method(self, y: np.ndarray, keys):
+        """Function to optimize the secondary state variables."""
+        yk = y[keys]
+        sol = least_squares(
+            self.s_u_residual_method,
+            yk,
+            args=(y, keys),
+            ftol=1.0e-5,
+            xtol=1.0e-15,
+            loss='linear',
+            method='lm',
+            max_nfev=int(1e6)
+        )
+        y[keys] = sol.x
+        return sol.x
+
+    def pv_dfdt_update_method(self, t: float, y: np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Function to compute the derivatives of the primary state variables over time.
+        Class method version for better organization and potential optimization.
+        """
+        # calculates the current time within the heart cycle
+        ht = t % self._T
+
+        # permutes the primary state variables using index-based operation
+        y2 = y[self.inv_perm_indices]
+
+        # Use pre-allocated working arrays to avoid repeated memory allocation
+        if len(y.shape) == 2:
+            # For 2D arrays, allocate/resize as needed
+            if self._work_array_2d is None or self._work_array_2d.shape != (self._N_zeros_0, y.shape[1]):
+                self._work_array_2d = np.zeros((self._N_zeros_0, y.shape[1]), dtype=np.float64)
+            else:
+                self._work_array_2d.fill(0.0)  # Reset instead of allocating
+            y_temp = self._work_array_2d
+        else:
+            # For 1D arrays, use pre-allocated array
+            self._work_array_1d.fill(0.0)  # Reset instead of allocating
+            y_temp = self._work_array_1d
+
+        # assigns reordered primary state variables to the temporary array
+        y_temp[self._keys3] = y2
+
+        # updates the secondary state variables, and optimizes them if necessary
+        for _ in range(self._n_sub_iter):
+            y_temp[self._keys4] = self.s_u_update_method(t, y_temp)
+        if self._optimize_secondary_sv:
+            y_temp[self._keys4] = self.optimize_method(y_temp, self._keys4)
+
+        # Compute derivatives using pre-allocated array to avoid memory allocation
+        for i, (fi, yi) in enumerate(zip(self._funcs3, y_temp[self._ids3])):
+            self._derivatives_temp[i] = self._safe_extract(fi(t=ht, y=yi))
+        
+        # Apply inverse permutation using index-based operation
+        return self._derivatives_temp[self.perm_indices]
 
     @property
     def vd(self):
