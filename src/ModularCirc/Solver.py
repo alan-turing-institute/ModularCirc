@@ -398,14 +398,13 @@ class Solver():
 
         # Use pre-computed keys4 array to avoid recomputation
         keys4 = self._cached_keys4
-        temp   = np.zeros(self._asd.iloc[:,keys4].shape)
-        for i, line in enumerate(self._asd.values) :
-            line[keys4] = self.s_u_update(0.0, line)
-            if self._optimize_secondary_sv:
-                temp[i,:] = self.optimize(line, keys4)
-            else:
-                temp[i,:] = line[keys4]
-        self._asd.iloc[:,keys4] = temp
+        
+        # Vectorized batch processing for secondary state variables
+        data_array = self._asd.values  # Convert DataFrame to numpy array for faster access
+        secondary_results = self.process_secondary_variables_batch(data_array, keys4, batch_size=1000)
+        
+        # Update the DataFrame with processed results
+        self._asd.iloc[:,keys4] = secondary_results
 
         for key in self._vd.keys():
             self._vd[key]._u = self._asd[key]
@@ -443,6 +442,75 @@ class Solver():
         self._secondary_temp[:] = results
         
         return self._secondary_temp
+
+    def s_u_update_batch_method(self, t: float, y_batch: np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Batch version of s_u_update_method that processes multiple rows simultaneously.
+        
+        Args:
+            t: Time parameter
+            y_batch: 2D array where each row is a state vector (shape: [n_rows, n_state_vars])
+            
+        Returns:
+            2D array of secondary state variable updates (shape: [n_rows, n_secondary_vars])
+        """
+        n_rows = y_batch.shape[0]
+        n_secondary = len(self._funcs2)
+        
+        # Pre-allocate result array
+        results_batch = np.zeros((n_rows, n_secondary), dtype=np.float64)
+        
+        # Process each secondary function across all rows
+        for func_idx, (fi, _) in enumerate(self._func_index_pairs2):
+            # Extract input indices for this function
+            input_indices = self._ids2[func_idx]
+            
+            # Get inputs for all rows for this function (vectorized slicing)
+            y_inputs_batch = y_batch[:, input_indices]
+            
+            # Apply function to each row (still need individual calls due to function signature)
+            for row_idx in range(n_rows):
+                result = self._safe_extract(fi(t=t, y=y_inputs_batch[row_idx]))
+                results_batch[row_idx, func_idx] = result
+        
+        return results_batch
+
+    def process_secondary_variables_batch(self, data_batch: np.ndarray[float], keys4: np.ndarray, batch_size: int = 1000) -> np.ndarray[float]:
+        """
+        Process secondary state variables in batches for improved performance.
+        
+        Args:
+            data_batch: 2D array of state variable data (shape: [n_rows, n_state_vars])
+            keys4: Array of secondary state variable column indices
+            batch_size: Number of rows to process simultaneously
+            
+        Returns:
+            2D array of processed secondary state variables (shape: [n_rows, n_secondary_vars])
+        """
+        n_rows = data_batch.shape[0]
+        n_secondary = len(keys4)
+        result = np.zeros((n_rows, n_secondary), dtype=np.float64)
+        
+        # Process data in batches to manage memory usage
+        for start_idx in range(0, n_rows, batch_size):
+            end_idx = min(start_idx + batch_size, n_rows)
+            batch = data_batch[start_idx:end_idx].copy()  # Work on a copy to avoid side effects
+            
+            # Update secondary variables for this batch
+            secondary_updates = self.s_u_update_batch_method(t=0.0, y_batch=batch)
+            
+            # Apply updates back to batch data
+            batch[:, keys4] = secondary_updates
+            
+            if self._optimize_secondary_sv:
+                # For optimization, we still need row-by-row processing due to least_squares API
+                for i, row in enumerate(batch):
+                    result[start_idx + i, :] = self.optimize_method(row, keys4)
+            else:
+                # Direct assignment for non-optimized case
+                result[start_idx:end_idx, :] = secondary_updates
+        
+        return result
 
     def s_u_residual_method(self, y, yall, keys):
         """Function to compute the residual of the secondary state variables."""
