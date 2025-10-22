@@ -21,49 +21,49 @@ class ComponentFunctionFactory:
     def gen_resistor_upstream_pressure(r: float):
         """Generate resistor upstream pressure function."""
         def func(t, y):
-            return resistor_upstream_pressure(t, y=y, r=r)
+            return resistor_upstream_pressure(t, y, r)
         return func
     
     @staticmethod
     def gen_resistor_flow(r: float):
         """Generate resistor flow function."""
         def func(t, y):
-            return resistor_model_flow(t=t, y=y, r=r)
+            return resistor_model_flow(t, y, r)
         return func
     
     @staticmethod
     def gen_capacitor_dpdt(c: float):
         """Generate capacitor pressure derivative function."""
         def func(t, y):
-            return grounded_capacitor_model_dpdt(t, y=y, c=c)
+            return grounded_capacitor_model_dpdt(t, y, c)
         return func
     
     @staticmethod
     def gen_capacitor_pressure(v_ref: float, c: float):
         """Generate capacitor pressure initialization function."""
         def func(t, y):
-            return grounded_capacitor_model_pressure(t, y=y, v_ref=v_ref, c=c)
+            return grounded_capacitor_model_pressure(t, y, v_ref, c)
         return func
     
     @staticmethod
     def gen_capacitor_volume(v_ref: float, c: float):
         """Generate capacitor volume function."""
         def func(t, y):
-            return grounded_capacitor_model_volume(t, y=y, v_ref=v_ref, c=c)
+            return grounded_capacitor_model_volume(t, y, v_ref, c)
         return func
     
     @staticmethod
     def gen_impedance_flow_rate(r: float, l: float):
         """Generate resistor-impedance flow rate function."""
         def func(t, y):
-            return resistor_impedance_flux_rate(t, y=y, r=r, l=l)
+            return resistor_impedance_flux_rate(t, y, r, l)
         return func
     
     @staticmethod
     def gen_simple_bernoulli_flow(CQ: float, RRA: float = 0.0):
         """Generate simple Bernoulli diode flow function."""
         def func(t, y):
-            return simple_bernoulli_diode_flow(t, y=y, CQ=CQ, RRA=RRA)
+            return simple_bernoulli_diode_flow(t, y, CQ, RRA)
         return func
     
     @staticmethod
@@ -77,21 +77,21 @@ class ComponentFunctionFactory:
     def gen_maynard_valve_flow(CQ: float, RRA: float = 0.0):
         """Generate Maynard valve flow function."""
         def func(t, y):
-            return maynard_valve_flow(t, y=y, CQ=CQ, RRA=RRA)
+            return maynard_valve_flow(t, y, CQ, RRA)
         return func
     
     @staticmethod
     def gen_maynard_impedance_dqdt(CQ: float, RRA: float, L: float, R: float):
         """Generate Maynard impedance derivative function."""
         def func(t, y):
-            return maynard_impedance_dqdt(t, y=y, CQ=CQ, RRA=RRA, L=L, R=R)
+            return maynard_impedance_dqdt(t, y, CQ, R, L, RRA)
         return func
     
     @staticmethod
     def gen_maynard_phi_law(Ko: float, Kc: float):
         """Generate Maynard phi law function."""
         def func(t, y):
-            return maynard_phi_law(t, y=y, Ko=Ko, Kc=Kc)
+            return maynard_phi_law(t, y, Ko, Kc)
         return func
     
     @staticmethod

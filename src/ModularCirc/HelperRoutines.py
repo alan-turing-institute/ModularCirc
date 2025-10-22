@@ -8,10 +8,8 @@ from collections.abc import Callable
 
 @nb.njit(cache=True)
 def resistor_model_flow(t:float,
-                        p_in:float=None,
-                        p_out:float=None,
-                        r:float=None,
-                        y:np.ndarray[float]=None
+                        y:np.ndarray[float],
+                        r:float
                         ) -> float:
     """
     Resistor model.
@@ -24,19 +22,15 @@ def resistor_model_flow(t:float,
     Returns:
         float: q (flow rate through resistive unit)
     """
-    if y is not None:
-        p_in, p_out= y[:2]
+    p_in, p_out = y[:2]
     return (p_in - p_out) / r
 
 @nb.njit(cache=True)
 def resistor_upstream_pressure(t:float,
-                               q_in:float=None,
-                               p_out:float=None,
-                               r:float=None,
-                               y:np.ndarray[float]=None
+                               y:np.ndarray[float],
+                               r:float
                                )->float:
-    if y is not None:
-        q_in, p_out = y[:2]
+    q_in, p_out = y[:2]
     return p_out + r * q_in
 
 @nb.njit(cache=True)
@@ -45,12 +39,9 @@ def resistor_model_dp(q_in:float, r:float) -> float:
 
 @nb.njit(cache=True)
 def resistor_impedance_flux_rate(t:float,
-                                 p_in:float=None,
-                                 p_out:float=None,
-                                 q_out:float=None,
-                                 r:float=None,
-                                 l:float=None,
-                                 y:np.ndarray[float]=None) -> float:
+                                 y:np.ndarray[float],
+                                 r:float,
+                                 l:float) -> float:
     """
     Resistor and impedance in series flux rate of change model.
 
@@ -65,16 +56,14 @@ def resistor_impedance_flux_rate(t:float,
     Returns:
         float: flux rate of change
     """
-    if y is not None:
-        p_in, p_out, q_out = y[:3]
+    p_in, p_out, q_out = y[:3]
     return (p_in - p_out - q_out * r ) / l
 
 @nb.njit(cache=True)
 def grounded_capacitor_model_pressure(t:float,
-                                      v:float=None,
-                                      v_ref:float=None,
-                                      c:float=None,
-                                      y:np.ndarray[float]=None
+                                      y:np.ndarray[float],
+                                      v_ref:float,
+                                      c:float
                                       ) -> float:
     """
     Capacitor model with constant capacitance.
@@ -89,37 +78,29 @@ def grounded_capacitor_model_pressure(t:float,
     --------
         float: pressure at input node
     """
-    if y is not None:
-        v = y
+    v = y
     return (v - v_ref) / c
 
 @nb.njit(cache=True)
 def grounded_capacitor_model_volume(t:float,
-                                    p:float=None,
-                                    v_ref:float=None,
-                                    c:float=None,
-                                    y:np.ndarray[float]=None
+                                    y:np.ndarray[float],
+                                    v_ref:float,
+                                    c:float
                                     )->float:
-    if y is not None:
-        p = y
+    p = y
     return v_ref + p * c
 
 @nb.njit(cache=True)
 def grounded_capacitor_model_dpdt(t:float,
-                                  q_in:float=None,
-                                  q_out:float=None,
-                                  c:float=None,
-                                  y:np.ndarray[float]=None
+                                  y:np.ndarray[float],
+                                  c:float
                                   ) -> float:
-    if y is not None:
-        q_in, q_out = y[:2]
+    q_in, q_out = y[:2]
     return (q_in - q_out) / c
 
 @nb.njit(cache=True)
 def chamber_volume_rate_change(t:float,
-                               q_in:float=None,
-                               q_out:float=None,
-                               y:np.ndarray[float]=None
+                               y:np.ndarray[float]
                                ) -> float:
     """
     Volume change rate in chamber
@@ -131,8 +112,7 @@ def chamber_volume_rate_change(t:float,
     Returns:
         float: _description_
     """
-    if y is not None:
-        q_in, q_out = y[:2]
+    q_in, q_out = y[:2]
     return q_in - q_out
 
 @nb.njit(cache=True)
@@ -184,11 +164,9 @@ def non_ideal_diode_flow(t:float,
 
 @nb.njit(cache=True)
 def simple_bernoulli_diode_flow(t:float,
-                         p_in:float=None,
-                         p_out:float=None,
-                         CQ:float=None,
-                         RRA:float=0.0,
-                         y:np.ndarray[float]=None,
+                         y:np.ndarray[float],
+                         CQ:float,
+                         RRA:float=0.0
                          ) -> float:
     """
     Non-ideal diode model with the option to choose the re
@@ -203,8 +181,7 @@ def simple_bernoulli_diode_flow(t:float,
     Returns:
         float: q (flow rate through valve)
     """
-    if y is not None:
-        p_in, p_out = y[:2]
+    p_in, p_out = y[:2]
     dp   = p_in - p_out
     return np.where(dp >= 0.0,
                     CQ * np.sqrt(np.abs(dp)),
@@ -212,47 +189,34 @@ def simple_bernoulli_diode_flow(t:float,
 
 # @jit(cache=True, nopython=True)
 def maynard_valve_flow(t:float,
-                       p_in:np.ndarray[float]=None,
-                       p_out:np.ndarray[float]=None,
-                       phi:np.ndarray[float]=None,
-                       CQ:float=None,
-                       RRA:float=0.0,
-                       y:np.ndarray[float]=None
+                       y:np.ndarray[float],
+                       CQ:float,
+                       RRA:float=0.0
                        )->np.ndarray[float]:
-    if y is not None:
-        p_in, p_out, phi = y[:3]
+    p_in, p_out, phi = y[:3]
     dp = p_in - p_out
     aeff = (1.0 - RRA) * phi + RRA
     return np.where(dp >= 0.0, aeff, -aeff) * CQ * np.sqrt(np.abs(dp))
 
 @nb.njit(cache=True)
 def maynard_phi_law(t:float,
-                    p_in:nb.types.Array =None,
-                    p_out:nb.types.Array=None,
-                    phi:nb.types.Array  =None,
-                    Ko:float            =None,
-                    Kc:float            =None,
-                    y:nb.types.Array    =None
+                    y:nb.types.Array,
+                    Ko:float,
+                    Kc:float
                     )->nb.types.Array:
-    if y is not None:
-        p_in, p_out, phi = y[:3]
+    p_in, p_out, phi = y[:3]
     dp = p_in - p_out
     return np.where(dp >= 0.0, Ko * (1.0 - phi) * dp, Kc * phi * dp)
 
 @nb.njit(cache=True)
 def maynard_impedance_dqdt(t:float,
-                           p_in:nb.types.Array =None,
-                           p_out:nb.types.Array =None,
-                           q_in:nb.types.Array =None,
-                           phi:nb.types.Array =None,
-                           CQ:float=None,
-                           R :float=None,
-                           L :float=None,
-                           RRA:float=0.0,
-                           y:nb.types.Array =None
+                           y:nb.types.Array,
+                           CQ:float,
+                           R:float,
+                           L:float,
+                           RRA:float=0.0
                            )->nb.types.Array:
-    if y is not None:
-        p_in, p_out, q_in, phi = y[:4]
+    p_in, p_out, q_in, phi = y[:4]
     dp   = p_in - p_out
     aeff = (1.0 - RRA) * phi + RRA
     return np.where(aeff > 1.0e-5, (dp * aeff - q_in * R * aeff  - q_in * np.abs(q_in) / CQ**2.0 * aeff**(-1.0)  ) / L, 0.0)
