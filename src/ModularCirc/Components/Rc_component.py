@@ -72,7 +72,7 @@ class Rc_component(ComponentBase):
         # Set the mapping betwen the local input names and the global names of the state variables
         self._P_i.set_inputs(pd.Series({'q_in' :self._Q_i.name,
                                         'q_out':self._Q_o.name}))
-        if self.p0 is None or self.p0 is np.NaN:
+        if self.p0 is None or self.p0 is np.nan:
             # Set the initialization function for the input pressure state variable
             self._P_i.set_i_func(gen_p_i_i_func(v_ref=v_ref, c=c),
                                  function_name='grounded_capacitor_model_pressure')
@@ -89,7 +89,7 @@ class Rc_component(ComponentBase):
                               function_name='chamber_volume_rate_change')
         self._V.set_inputs(pd.Series({'q_in':self._Q_i.name,
                                       'q_out':self._Q_o.name}))
-        if self.v0 is None or self.v0 is np.NaN:
+        if self.v0 is None or self.v0 is np.nan:
             # Set the initialization function for the input volume state variable
             self._V.set_i_func(self.v_i_func, function='grounded_capacitor_model_volume')
             self._V.set_i_inputs(pd.Series({'p':self._P_i.name}))
