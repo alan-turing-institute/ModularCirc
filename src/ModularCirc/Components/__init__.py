@@ -1,4 +1,5 @@
 from .ComponentBase import ComponentBase
+from ._ComponentFactories import ComponentFunctionFactory, ElastanceFactory
 from .HC_constant_elastance import HC_constant_elastance
 from .HC_mixed_elastance import HC_mixed_elastance
 from .HC_mixed_elastance_pp import HC_mixed_elastance_pp
