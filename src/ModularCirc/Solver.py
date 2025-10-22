@@ -1,5 +1,3 @@
-from .Time import TimeClass
-from .StateVariable import StateVariable
 from .Models.OdeModel import OdeModel
 from .HelperRoutines import bold_text
 from .Models.OdeModel import OdeModel
@@ -9,13 +7,10 @@ import numpy as np
 import numba as nb
 
 from scipy.integrate import solve_ivp
-from scipy.linalg import solve
-from scipy.optimize import newton, approx_fprime, root, least_squares
+from scipy.optimize import least_squares
 
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import reverse_cuthill_mckee
-from scipy.linalg import bandwidth
-from scipy.integrate import LSODA
 
 import warnings
 
