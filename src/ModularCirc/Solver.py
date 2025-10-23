@@ -76,6 +76,10 @@ class Solver():
         # Number of sub-iterations for the solver. <- is this right? LB.
         self._N_sv = len(self._global_sv_id)
 
+        # Number of primary and secondary state variables (initialized in setup)
+        self._N_psv = 0  # Number of primary state variables
+        self._N_ssv = 0  # Number of secondary state variables
+
         # Variable to store the number of converged cycles.
         self._Nconv = None
 
@@ -170,6 +174,16 @@ class Solver():
 
         if not suppress_output: print(' ')
 
+        # Update counts of primary and secondary state variables
+        self._N_psv = len(self._global_psv_update_fun)
+        self._N_ssv = len(self._global_ssv_update_fun)
+        self._N_sv = len(self._global_sv_id)
+        
+        if not suppress_output: 
+            print(f" -- Total primary state variables: {bold_text(str(self._N_psv))}")
+            print(f" -- Total secondary state variables: {bold_text(str(self._N_ssv))}")
+            print(' ')
+
         self.generate_dfdt_functions()
 
 
@@ -202,7 +216,6 @@ class Solver():
         ids3   = np.stack(list(self._global_psv_update_ind.values()))
 
         T = self._to.tcycle
-        N_zeros_0 = len(self._global_sv_id)
 
         # stores the dependencies of primary variables
         keys3_dict = dict()
@@ -272,7 +285,6 @@ class Solver():
         self._keys3 = keys3
         self._keys4 = keys4
         self._T = T
-        self._N_zeros_0 = N_zeros_0
 
         # Pre-compute frequently used key arrays to avoid repeated computation
         self._cached_keys4 = keys4  # Already computed above
@@ -281,10 +293,9 @@ class Solver():
 
 
         # Pre-allocate working arrays to avoid repeated memory allocation
-        self._work_array_1d = np.zeros(N_zeros_0, dtype=np.float64)
-        self._work_array_2d = None  # Will be allocated when needed
-        self._derivatives_temp = np.zeros(len(funcs3), dtype=np.float64)
-        self._secondary_temp = np.zeros(len(funcs2), dtype=np.float64)
+        self._work_array_1d = np.zeros(self._N_sv, dtype=np.float64)
+        self._derivatives_temp = np.zeros(self.N_psv, dtype=np.float64)
+        self._secondary_temp = np.zeros(self.N_ssv, dtype=np.float64)
         self._initialization_temp = np.zeros(len(funcs1), dtype=np.float64)
 
         # Pre-compute function-index pairs for hot path optimization
@@ -292,6 +303,14 @@ class Solver():
         self._func_index_pairs3 = list(zip(self._funcs3, self._ids3))
         self._func_index_pairs2 = list(zip(self._funcs2, range(len(self._funcs2))))
         self._func_index_pairs1 = list(zip(self._funcs1, range(len(self._funcs1))))
+
+        # Pre-compute constants for advance_cycle optimization
+        self._n_t_minus_1 = self._to.n_c - 1  # Time points per cycle minus 1
+        self._primary_indices = np.arange(len(self._cached_psv_keys))  # Avoid list(range()) 
+        
+        # Pre-allocate arrays for advance_cycle to avoid repeated allocations
+        self._y0_permuted = np.zeros(len(self._cached_psv_keys), dtype=np.float64)
+        self._convergence_tolerance = 1e-10  # Cache tolerance value
 
         # Assign method references directly for backward compatibility
         self.initialize_by_function = self.initialize_by_function_method
@@ -302,12 +321,21 @@ class Solver():
 
 
     def advance_cycle(self, y0, cycleID, step = 1):
-
-        # computes the current time within the cycle
-        n_t = self._to.n_c - 1
+        """
+        Optimized advance_cycle method with reduced allocations and computations.
+        """
+        # Use pre-computed constants to avoid repeated calculations
+        n_t = self._n_t_minus_1
         end_cycle = cycleID + step
-        # retrieves the time points for the current cycle, n_t is the step size
-        t = self._to._sym_t.values[cycleID*n_t:end_cycle*n_t+1]
+        
+        # More efficient time slice extraction (single slice operation)
+        start_idx = cycleID * n_t
+        end_idx = end_cycle * n_t + 1
+        t = self._to._sym_t.values[start_idx:end_idx]
+
+        # Optimize initial condition preparation - reuse pre-allocated array
+        np.copyto(self._y0_permuted, y0)  # Copy to pre-allocated array
+        y0_permuted = self._y0_permuted[self.perm_indices]  # Then permute
 
         # solves the system of ODEs
         with warnings.catch_warnings():
@@ -315,7 +343,7 @@ class Solver():
             if self._method != 'LSODA':
                 res = solve_ivp(fun=self.pv_dfdt_global,
                                 t_span=(t[0], t[-1]),
-                                y0=np.array(y0)[self.perm_indices],
+                                y0=y0_permuted,
                                 t_eval=t,
                                 max_step=self.dt,
                                 method=self._method,
@@ -325,7 +353,7 @@ class Solver():
             else:
                 res = solve_ivp(fun=self.pv_dfdt_global,
                                 t_span=(t[0], t[-1]),
-                                y0=np.array(y0)[self.perm_indices],
+                                y0=y0_permuted,
                                 t_eval=t,
                                 method=self._method,
                                 atol=self._atol,
@@ -337,29 +365,40 @@ class Solver():
         if res.status == -1:
             return False
 
-        # updates the primary state variables
-        y = res.y
-        y = y[self.inv_perm_indices]
+        # Optimize state variable updates - reduce array operations
+        y = res.y[self.inv_perm_indices]  # Combine permutation with result extraction
 
-        # updates the state variables in the DataFrame
-        ids = self._cached_psv_keys  # Use pre-computed primary state variable keys
-        inds= list(range(len(ids)))
-        self._asd.iloc[cycleID*n_t:(end_cycle)*n_t+1, ids] = y[inds, 0:n_t*step+1].T
+        # Use pre-computed indices to avoid list creation
+        ids = self._cached_psv_keys
+        n_time_steps = n_t * step + 1
+        self._asd.iloc[start_idx:end_idx, ids] = y[self._primary_indices, :n_time_steps].T
 
-        if cycleID == 0: return False
+        # Early return for first cycle
+        if cycleID == 0: 
+            return False
 
+        # Optimized convergence check with reduced DataFrame operations
         cycleP = end_cycle - 1
+        
+        # Single iloc call per DataFrame section (more efficient)
+        current_start = cycleP * n_t
+        current_end = end_cycle * n_t
+        previous_start = (cycleP - 1) * n_t
+        previous_end = cycleP * n_t
+        
+        # Extract convergence data in one operation each
+        cs = self._asd[self._cols].iloc[current_start:current_end, :].values
+        cp = self._asd[self._cols].iloc[previous_start:previous_end, :].values
 
-        cs   = self._asd[self._cols].iloc[cycleP*n_t:end_cycle*n_t, :].values
-        cp   = self._asd[self._cols].iloc[(cycleP-1) *n_t:(cycleP)*n_t, :].values
-
+        # Vectorized convergence test with cached tolerance
         cp_ptp = np.max(np.abs(cp), axis=0)
-        cp_r   = np.max(np.abs(cs - cp), axis=0)
+        cp_r = np.max(np.abs(cs - cp), axis=0)
 
-        test = cp_r / cp_ptp
-        test[cp_ptp <= 1e-10] = cp_r[cp_ptp <= 1e-10]
-        if np.max(test) > self._step_tol : return False
-        return True
+        # Optimized convergence calculation using pre-cached tolerance
+        test = np.divide(cp_r, cp_ptp, out=cp_r.copy(), where=(cp_ptp > self._convergence_tolerance))
+        test[cp_ptp <= self._convergence_tolerance] = cp_r[cp_ptp <= self._convergence_tolerance]
+        
+        return np.max(test) <= self._step_tol
 
 
     def solve(self):
@@ -419,18 +458,14 @@ class Solver():
         Optimized derivative computation that minimizes Python overhead.
         Uses vectorized input extraction - the fastest approach tested.
         """
-        # Optimal approach: direct vectorized indexing is fastest
-        # Avoids both allocation and copying overhead
         all_inputs = y_temp[self._ids3]  # NumPy's optimized vectorized indexing
         
-        # Fast loop with local references and optimized scalar handling
         results = self._derivatives_temp
         funcs = self._funcs3
         
-        for i in range(len(funcs)):
+        for i in range(self.N_psv):
             func_result = funcs[i](t=ht, y=all_inputs[i])
-            # Optimized for Numba functions which typically return scalars
-            results[i] = func_result if np.isscalar(func_result) else func_result.item()
+            results[i] = func_result
 
     def initialize_by_function_method(self, y: np.ndarray[float]) -> np.ndarray[float]:
         """
@@ -438,7 +473,7 @@ class Solver():
         Vectorized version for better performance.
         """
         # Use pre-computed function-index pairs for consistent optimization
-        results = [self._safe_extract(fi(t=0.0, y=y[self._ids1[i]])) for fi, i in self._func_index_pairs1]
+        results = [fi(t=0.0, y=y[self._ids1[i]]) for fi, i in self._func_index_pairs1]
         
         # Copy results to pre-allocated array
         self._initialization_temp[:] = results
@@ -453,11 +488,11 @@ class Solver():
         # Create input arrays in one vectorized operation
         y_inputs = y[self._ids2]
         
-        # Vectorized function calls using pre-computed pairs (hot path optimization)
-        results = [self._safe_extract(fi(t=t, y=y_inputs[i])) for fi, i in self._func_index_pairs2]
+        funcs = self._funcs2
+        results = self._secondary_temp
         
-        # Copy results to pre-allocated array
-        self._secondary_temp[:] = results
+        for i in range(self.N_ssv):
+            results[i] = funcs[i](t=t, y=y_inputs[i])
         
         return self._secondary_temp
 
@@ -488,7 +523,7 @@ class Solver():
             
             # Apply function to each row (still need individual calls due to function signature)
             for row_idx in range(n_rows):
-                result = self._safe_extract(fi(t=t, y=y_inputs_batch[row_idx]))
+                result = fi(t=t, y=y_inputs_batch[row_idx])
                 results_batch[row_idx, func_idx] = result
         
         return results_batch
@@ -563,17 +598,8 @@ class Solver():
         y2 = y[self.inv_perm_indices]
 
         # Use pre-allocated working arrays to avoid repeated memory allocation
-        if len(y.shape) == 2:
-            # For 2D arrays, allocate/resize as needed
-            if self._work_array_2d is None or self._work_array_2d.shape != (self._N_zeros_0, y.shape[1]):
-                self._work_array_2d = np.zeros((self._N_zeros_0, y.shape[1]), dtype=np.float64)
-            else:
-                self._work_array_2d.fill(0.0)  # Reset instead of allocating
-            y_temp = self._work_array_2d
-        else:
-            # For 1D arrays, use pre-allocated array
-            self._work_array_1d.fill(0.0)  # Reset instead of allocating
-            y_temp = self._work_array_1d
+        self._work_array_1d.fill(0.0)  # Reset instead of allocating
+        y_temp = self._work_array_1d
 
         # assigns reordered primary state variables to the temporary array
         y_temp[self._keys3] = y2
@@ -618,6 +644,20 @@ class Solver():
     def n_sub_iter(self)->int:
         return self._n_sub_iter
 
+    @property
+    def N_psv(self) -> int:
+        """Number of primary state variables."""
+        return self._N_psv
+
+    @property
+    def N_ssv(self) -> int:
+        """Number of secondary state variables."""
+        return self._N_ssv
+
+    @property
+    def N_sv(self) -> int:
+        """Total number of state variables."""
+        return self._N_sv
 
     @n_sub_iter.setter
     def n_sub_iter(self, value):
