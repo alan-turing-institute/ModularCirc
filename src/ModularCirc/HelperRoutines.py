@@ -257,107 +257,93 @@ def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     else:
         return dp/r_r
 
-@nb.njit(cache=True)
-def activation_function_1_numba(t:float, t_max:float, t_tr:float, tau:float, dt: bool=False) -> float:
-    """
-    Numba-optimized activation function with explicit type signature.
-    """
-    if not dt:
-        if t <= t_tr:
-            return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
-        else:
-            coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
-            return  np.exp(-(t - t_tr)/tau) * coeff
-    else:
-        if t <= t_tr:
-            return 0.5 * np.pi / t_max * np.sin(np.pi * t / t_max)
-        else:
-            coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
-            return - np.exp(-(t - t_tr)/tau) * coeff / tau
-
+@nb.njit(['float64(float64, float64, float64, float64, boolean)'], cache=True)
 def activation_function_1(t:float, t_max:float, t_tr:float, tau:float, dt: bool=False) -> float:
     """
-    Activation function that dictates the transition between the passive and active behaviors.
-    Based on the definition used in Naghavi et al (2024).
+    Numba-optimized activation function that dictates the transition between 
+    the passive and active behaviors. Based on the definition used in Naghavi et al (2024).
 
     Args:
         t (float):     current time within the cardiac cycle
         t_max (float): time to peak tension
         t_tr (float):  transition time
         tau (float):   the relaxation time constant
+        dt (bool):     if True, return derivative
 
     Returns:
-        float: activation function value
+        float: activation function value or derivative
     """
     if not dt:
         if t <= t_tr:
             return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
         else:
             coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
-            return  np.exp(-(t - t_tr)/tau) * coeff
+            return np.exp(-(t - t_tr)/tau) * coeff
     else:
         if t <= t_tr:
             return 0.5 * np.pi / t_max * np.sin(np.pi * t / t_max)
         else:
             coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
-            return - np.exp(-(t - t_tr)/tau) * coeff / tau
+            return -np.exp(-(t - t_tr)/tau) * coeff / tau
 
-def activation_function_2(t:float, tr:float, td:float, dt: bool=True) -> float:
-    if not dt:
-        result = (
-            0.5 * (1.0 - np.cos(np.pi * t / tr)) if t < tr else
-            0.5 * (1.0 + np.cos(np.pi * (t - tr) / (td - tr))) if t < td else
-            0.0
-        )
-    else:
-        result = (
-            0.5 * np.pi / tr * np.sin(np.pi * t / tr) if t < tr else
-           -0.5 * np.pi /(td - tr) * np.sin(np.pi * (t - tr) / (td - tr)) if t < td else
-            0.0
-        )
-    return result
-
-def activation_function_3(t:float, tpwb:float, tpww:float, dt: bool=True) -> float:
-    if not dt:
-        result = (
-            0.0 if t < tpwb else
-            0.5 * (1 - np.cos(2.0 * np.pi * (t - tpwb) / tpww)) if t < tpwb + tpww else
-            0.0
-        )
-    else:
-        result = (
-            0.0 if t < tpwb else
-            np.pi /tpww * np.sin(2.0 * np.pi * (t - tpwb) / tpww) if t < tpwb + tpww else
-            0.0
-        )
-    return result
-
-def activation_function_4(t:float, t_max:float, t_tr:float, tau:float, dt: bool=True) -> float:
+@nb.njit(['float64(float64, float64, float64, boolean)'], cache=True)
+def activation_function_2(t:float, tr:float, td:float, dt: bool=False) -> float:
     """
-    Activation function that dictates the transition between the passive and active behaviors.
-    Based on the definition used in Naghavi et al (2024).
-
+    Numba-optimized activation function with rise and decay phases.
+    
     Args:
-        t (float):     current time within the cardiac cycle
-        t_max (float): time to peak tension
-        t_tr (float):  transition time
-        tau (float):   the relaxation time constant
-
+        t (float): current time
+        tr (float): rise time
+        td (float): decay time
+        dt (bool): if True, return derivative
+        
     Returns:
-        float: activation function value
+        float: activation function value or derivative
     """
     if not dt:
-        return (
-            0.5 * (1.0 - np.cos(np.pi * t / t_max)) if 0 <= t <= t_tr else
-            np.exp(-(t - t_tr) / tau) if t >= 0 else
-            0.0
-        )
+        if t < tr:
+            return 0.5 * (1.0 - np.cos(np.pi * t / tr))
+        elif t < td:
+            return 0.5 * (1.0 + np.cos(np.pi * (t - tr) / (td - tr)))
+        else:
+            return 0.0
     else:
-        return (
-            0.5 * np.sin(np.pi * t / t_max) / t_max if 0 <= t <= t_tr else
-            - np.exp(-(t - t_tr) / tau) / tau if t >= 0 else
-            0.0
-        )
+        if t < tr:
+            return 0.5 * np.pi / tr * np.sin(np.pi * t / tr)
+        elif t < td:
+            return -0.5 * np.pi / (td - tr) * np.sin(np.pi * (t - tr) / (td - tr))
+        else:
+            return 0.0
+
+@nb.njit(['float64(float64, float64, float64, boolean)'], cache=True)
+def activation_function_3(t:float, tpwb:float, tpww:float, dt: bool=False) -> float:
+    """
+    Numba-optimized pulse wave activation function.
+    
+    Args:
+        t (float): current time
+        tpwb (float): pulse wave begin time
+        tpww (float): pulse wave width
+        dt (bool): if True, return derivative
+        
+    Returns:
+        float: activation function value or derivative
+    """
+    if not dt:
+        if t < tpwb:
+            return 0.0
+        elif t < tpwb + tpww:
+            return 0.5 * (1.0 - np.cos(2.0 * np.pi * (t - tpwb) / tpww))
+        else:
+            return 0.0
+    else:
+        if t < tpwb:
+            return 0.0
+        elif t < tpwb + tpww:
+            return np.pi / tpww * np.sin(2.0 * np.pi * (t - tpwb) / tpww)
+        else:
+            return 0.0
+
 
 def chamber_linear_elastic_law(v:float, E:float, v_ref:float, *args, **kwargs) -> float:
     """
