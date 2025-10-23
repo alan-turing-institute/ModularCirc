@@ -3,7 +3,6 @@ from .Time import TimeClass
 
 import numba as nb
 
-# from numba import jit
 from collections.abc import Callable
 
 @nb.njit(['float64(float64, float64[:], float64)'], cache=True)
