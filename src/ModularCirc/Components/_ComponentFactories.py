@@ -11,7 +11,9 @@ from ..HelperRoutines import (
     grounded_capacitor_model_pressure, grounded_capacitor_model_volume,
     resistor_model_flow, chamber_volume_rate_change, resistor_impedance_flux_rate,
     simple_bernoulli_diode_flow, non_ideal_diode_flow, maynard_valve_flow,
-    maynard_impedance_dqdt, maynard_phi_law, time_shift, activation_function_1
+    maynard_impedance_dqdt, maynard_phi_law, time_shift, activation_function_1,
+    active_pressure_law, passive_pressure_law, active_dpdt_law, passive_dpdt_law,
+    volume_from_pressure_nonlinear
 )
 
 
@@ -56,9 +58,7 @@ class ComponentFunctionFactory:
     @staticmethod
     def gen_non_ideal_diode_flow(r: float, max_func):
         """Generate non-ideal diode flow function."""
-        def func(t, y):
-            return non_ideal_diode_flow(t, y=y, r=r, max_func=max_func)
-        return func
+        return partial(non_ideal_diode_flow, r=r, max_func=max_func)
     
     @staticmethod
     def gen_maynard_valve_flow(CQ: float, RRA: float = 0.0):
@@ -142,30 +142,22 @@ class ElastanceFactory:
     @staticmethod
     def gen_active_pressure(E_act: float, v_ref: float):
         """Generate active pressure function."""
-        def func(t, y):
-            return E_act * (y - v_ref)
-        return func
+        return partial(active_pressure_law, E_act=E_act, v_ref=v_ref)
     
     @staticmethod
     def gen_active_dpdt(E_act: float):
         """Generate active pressure derivative."""
-        def func(t, y):
-            return E_act * (y[1] - y[2])
-        return func
+        return partial(active_dpdt_law, E_act=E_act)
     
     @staticmethod
     def gen_passive_pressure(E_pas: float, k_pas: float, v_ref: float):
         """Generate passive pressure function."""
-        def func(t, y):
-            return E_pas * (np.exp(k_pas * (y - v_ref)) - 1.0)
-        return func
+        return partial(passive_pressure_law, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
     
     @staticmethod
     def gen_passive_dpdt(E_pas: float, k_pas: float, v_ref: float):
         """Generate passive pressure derivative."""
-        def func(t, y):
-            return E_pas * k_pas * np.exp(k_pas * (y[0] - v_ref)) * (y[1] - y[2])
-        return func
+        return partial(passive_dpdt_law, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
     
     @staticmethod
     def gen_total_pressure(_af, active_p, passive_p):
@@ -187,78 +179,69 @@ class ElastanceFactory:
     @staticmethod
     def gen_volume_from_pressure_nonlinear(E_pas: float, v_ref: float, k_pas: float):
         """Generate volume from pressure for nonlinear case."""
-        def func(t, y):
-            return v_ref + np.log(y[0] / E_pas + 1.0) / k_pas
-        return func
+        return partial(volume_from_pressure_nonlinear, E_pas=E_pas, v_ref=v_ref, k_pas=k_pas)
     
-    # Fixed interface versions of mixed elastance functions
+    # Consolidated mixed elastance functions - eliminates redundant gen_*_fixed methods
     @staticmethod
-    def gen_active_pressure_fixed(E_act: float, v_ref: float):
-        """Generate active pressure function with fixed interface."""
-        def func(v):
-            return E_act * (v - v_ref)
-        return func
-    
-    @staticmethod
-    def gen_active_dpdt_fixed(E_act: float):
-        """Generate active pressure derivative with fixed interface."""
-        def func(q_i, q_o):
-            return E_act * (q_i - q_o)
-        return func
-    
-    @staticmethod
-    def gen_passive_pressure_fixed(E_pas: float, k_pas: float, v_ref: float):
-        """Generate passive pressure function with fixed interface."""
-        def func(v):
-            return E_pas * (np.exp(k_pas * (v - v_ref)) - 1.0)
-        return func
-    
-    @staticmethod
-    def gen_passive_dpdt_fixed(E_pas: float, k_pas: float, v_ref: float):
-        """Generate passive pressure derivative with fixed interface."""
-        def func(v, q_i, q_o):
-            return E_pas * k_pas * np.exp(k_pas * (v - v_ref)) * (q_i - q_o)
-        return func
-    
-    @staticmethod
-    def gen_total_pressure_fixed(_af, active_p, passive_p):
-        """Generate total pressure function with fixed interface."""
+    def gen_total_pressure_fixed(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
+        """Generate total pressure function directly using law functions."""
         def func(t, y):
             _af_t = _af(t)
-            active_val = active_p(y)
-            passive_val = passive_p(y) 
+            # Use law functions directly - they extract y[0] internally
+            active_val = active_pressure_law(t=0.0, y=y, E_act=E_act, v_ref=v_ref)
+            passive_val = passive_pressure_law(t=0.0, y=y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
             return _af_t * active_val + (1.0 - _af_t) * passive_val
         return func
     
     @staticmethod
-    def gen_total_dpdt_fixed(active_p, passive_p, _af, active_dpdt, passive_dpdt):
-        """Generate total pressure derivative with fixed interface."""
+    def gen_total_dpdt_fixed(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
+        """Generate total pressure derivative function directly using law functions."""
         def func(t, y):
             _af_t = _af(t)
             _d_af_dt = _af(t, dt=True)
-            return (_d_af_dt * (active_p(y[0]) - passive_p(y[0])) +
-                   _af_t * active_dpdt(y[1], y[2]) +
-                   (1. - _af_t) * passive_dpdt(y[0], y[1], y[2]))
+            
+            # Use law functions directly - they extract needed values internally
+            active_p_val = active_pressure_law(t=0.0, y=y, E_act=E_act, v_ref=v_ref)
+            passive_p_val = passive_pressure_law(t=0.0, y=y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
+            
+            # For derivatives, use the full y array (functions extract y[0], y[1], y[2] as needed)
+            active_dpdt_val = active_dpdt_law(t=0.0, y=y, E_act=E_act)
+            passive_dpdt_val = passive_dpdt_law(t=0.0, y=y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
+            
+            return (_d_af_dt * (active_p_val - passive_p_val) +
+                   _af_t * active_dpdt_val +
+                   (1. - _af_t) * passive_dpdt_val)
         return func
     
-    # PP variants (pure passive component always included)
+    # PP variants (pure passive component always included) - simplified
     @staticmethod
-    def gen_total_pressure_pp(_af, active_p, passive_p):
+    def gen_total_pressure_pp(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
         """Generate total pressure function for PP variant (passive always included)."""
         def func(t, y):
             _af_t = _af(t)
-            return _af_t * active_p(y) + passive_p(y)
+            # Use law functions directly - they extract y[0] internally
+            active_val = active_pressure_law(t=0.0, y=y, E_act=E_act, v_ref=v_ref)
+            passive_val = passive_pressure_law(t=0.0, y=y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
+            return _af_t * active_val + passive_val  # PP: passive always included
         return func
     
     @staticmethod
-    def gen_total_dpdt_pp(active_p, passive_p, _af, active_dpdt, passive_dpdt):
+    def gen_total_dpdt_pp(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
         """Generate total pressure derivative for PP variant."""
         def func(t, y):
             _af_t = _af(t)
             _d_af_dt = _af(t, dt=True)
-            return (_d_af_dt * active_p(y[0]) + 
-                   _af_t * active_dpdt(y[1], y[2]) + 
-                   passive_dpdt(y[0], y[1], y[2]))
+            
+            # Use law functions directly - they extract needed values internally
+            active_p_val = active_pressure_law(t=0.0, y=y, E_act=E_act, v_ref=v_ref)
+            
+            # For derivatives, use the full y array
+            active_dpdt_val = active_dpdt_law(t=0.0, y=y, E_act=E_act)
+            passive_dpdt_val = passive_dpdt_law(t=0.0, y=y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
+            
+            return (_d_af_dt * active_p_val + 
+                   _af_t * active_dpdt_val + 
+                   passive_dpdt_val)  # PP: passive dpdt always included
         return func
 
 
