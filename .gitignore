@@ -172,3 +172,5 @@ cython_debug/
 
 # Ignore vscode settings
 .vscode/
+
+*prof
