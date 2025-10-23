@@ -345,34 +345,7 @@ def activation_function_3(t:float, tpwb:float, tpww:float, dt: bool=False) -> fl
             return 0.0
 
 
-def chamber_linear_elastic_law(v:float, E:float, v_ref:float, *args, **kwargs) -> float:
-    """
-    Linear elastance model
 
-    Args:
-        v (float): volume
-        E (float): Elastance
-        v_ref (float): reference volume
-
-    Returns:
-        float: chamber pressure
-    """
-    return E * (v - v_ref)
-
-def chamber_exponential_law(v:float, E:float, k:float, v_ref:float, *args, **kwargs) -> float:
-    """
-    Exponential chamber law
-
-    Args:
-        v (float): volume
-        E (float): elastance constant
-        k (float): exponential factor
-        v_ref (float): reference volume
-
-    Returns:
-        float: chamber pressure
-    """
-    return E * np.exp(k * (v - v_ref) - 1)
 
 @nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
 def active_pressure_law(t:float, y:np.ndarray[float], E_act:float, v_ref:float) -> float:
@@ -465,30 +438,7 @@ def volume_from_pressure_nonlinear(t:float, y:np.ndarray[float], E_pas:float, v_
     p = y[0]
     return v_ref + np.log(p / E_pas + 1.0) / k_pas
 
-def chamber_pressure_function(t:float, v:float, v_ref:float, E_pas:float, E_act:float,
-                              activation_function = activation_function_1,
-                              active_law = chamber_linear_elastic_law,
-                              passive_law = chamber_linear_elastic_law,
-                              *args, **kwargs) ->float:
-    """
-    Generic function returning the chamber pressure at a given time for a given imput
 
-    Args:
-    -----
-        t (float): current time
-        v (float): current volume
-        v_ref (float) : reference volume
-        activation_function (procedure): activation function
-        active_law (procedure): active p-v relation
-        passive_law (procedure): passive p-v relation
-
-    Returns:
-    --------
-        float: pressure
-    """
-    a = activation_function(t)
-    return (a * active_law(v=v, v_ref=v_ref,t=t, E=E_act, **kwargs)
-            + (1 - a) * passive_law(v=v, v_ref=v_ref, t=t, E=E_pas, **kwargs))
 
 @nb.njit(['float64(float64, float64, float64)'], cache=True)
 def time_shift(t:float, shift:float=np.nan, tcycle:float=0.0):
