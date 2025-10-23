@@ -6,7 +6,7 @@ import numba as nb
 # from numba import jit
 from collections.abc import Callable
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64[:], float64)'], cache=True)
 def resistor_model_flow(t:float,
                         y:np.ndarray[float],
                         r:float
@@ -25,7 +25,7 @@ def resistor_model_flow(t:float,
     p_in, p_out = y[:2]
     return (p_in - p_out) / r
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64[:], float64)'], cache=True)
 def resistor_upstream_pressure(t:float,
                                y:np.ndarray[float],
                                r:float
@@ -33,11 +33,11 @@ def resistor_upstream_pressure(t:float,
     q_in, p_out = y[:2]
     return p_out + r * q_in
 
-@nb.njit(cache=True, inline='always')
+@nb.njit(['float64(float64, float64)'], cache=True, inline='always')
 def resistor_model_dp(q_in:float, r:float) -> float:
     return q_in * r
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
 def resistor_impedance_flux_rate(t:float,
                                  y:np.ndarray[float],
                                  r:float,
@@ -59,7 +59,7 @@ def resistor_impedance_flux_rate(t:float,
     p_in, p_out, q_out = y[:3]
     return (p_in - p_out - q_out * r ) / l
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
 def grounded_capacitor_model_pressure(t:float,
                                       y:np.ndarray[float],
                                       v_ref:float,
@@ -78,19 +78,19 @@ def grounded_capacitor_model_pressure(t:float,
     --------
         float: pressure at input node
     """
-    v = y
+    v = y[0]  # Extract scalar from array
     return (v - v_ref) / c
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
 def grounded_capacitor_model_volume(t:float,
                                     y:np.ndarray[float],
                                     v_ref:float,
                                     c:float
                                     )->float:
-    p = y
+    p = y[0]  # Extract scalar from array
     return v_ref + p * c
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64[:], float64)'], cache=True)
 def grounded_capacitor_model_dpdt(t:float,
                                   y:np.ndarray[float],
                                   c:float
@@ -98,7 +98,7 @@ def grounded_capacitor_model_dpdt(t:float,
     q_in, q_out = y[:2]
     return (q_in - q_out) / c
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64[:])'], cache=True)
 def chamber_volume_rate_change(t:float,
                                y:np.ndarray[float]
                                ) -> float:
@@ -115,7 +115,7 @@ def chamber_volume_rate_change(t:float,
     q_in, q_out = y[:2]
     return q_in - q_out
 
-@nb.njit(cache=True, parallel=True)
+@nb.njit(['float64[:](float64, float64[:,:])'], cache=True, parallel=True)
 def chamber_volume_rate_change_vectorized(t:float, y_batch:np.ndarray[float]) -> np.ndarray[float]:
     """Vectorized version for batch processing multiple chambers simultaneously."""
     n_samples = y_batch.shape[0]
@@ -125,11 +125,11 @@ def chamber_volume_rate_change_vectorized(t:float, y_batch:np.ndarray[float]) ->
         result[i] = q_in - q_out
     return result
 
-@nb.njit(cache=True, inline='always')
+@nb.njit(['float64(float64)'], cache=True, inline='always')
 def relu_max(val:float) -> float:
     return np.maximum(val, 0.0)
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64)'], cache=True)
 def softplus(val:float, alpha:float=0.2) -> float:
     """Softplus function used as a smooth rectifier (differentiable approximation to max(0, x))."""
     return np.log(1.0 + np.exp(alpha * val)) / alpha
@@ -172,7 +172,7 @@ def non_ideal_diode_flow(t:float,
         p_in, p_out = y[:2]
     return (max_func((p_in - p_out)/ r))
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
 def simple_bernoulli_diode_flow(t:float,
                          y:np.ndarray[float],
                          CQ:float,
@@ -192,10 +192,11 @@ def simple_bernoulli_diode_flow(t:float,
         float: q (flow rate through valve)
     """
     p_in, p_out = y[:2]
-    dp   = p_in - p_out
-    return np.where(dp >= 0.0,
-                    CQ * np.sqrt(np.abs(dp)),
-                   -CQ * RRA *np.sqrt(np.abs(dp)))
+    dp = p_in - p_out
+    if dp >= 0.0:
+        return CQ * np.sqrt(np.abs(dp))
+    else:
+        return -CQ * RRA * np.sqrt(np.abs(dp))
 
 # @jit(cache=True, nopython=True)
 def maynard_valve_flow(t:float,
@@ -237,7 +238,7 @@ def maynard_impedance_dqdt(t:float,
                    (dp * aeff - q_in * R * aeff - q_abs * q_in * aeff_inv / CQ_squared) / L, 
                    0.0)
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64, float64, float64)'], cache=True)
 def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     """
     Leaky diode model that outputs the flow rate through a leaky diode
@@ -252,7 +253,10 @@ def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
         float: q flow rate through diode
     """
     dp = p_in - p_out
-    return np.where(dp >= 0.0, dp/r_o, dp/r_r)
+    if dp >= 0.0:
+        return dp/r_o
+    else:
+        return dp/r_r
 
 @nb.njit(cache=True)
 def activation_function_1_numba(t:float, t_max:float, t_tr:float, tau:float, dt: bool=False) -> float:
@@ -410,7 +414,7 @@ def chamber_pressure_function(t:float, v:float, v_ref:float, E_pas:float, E_act:
     return (a * active_law(v=v, v_ref=v_ref,t=t, E=E_act, **kwargs)
             + (1 - a) * passive_law(v=v, v_ref=v_ref, t=t, E=E_pas, **kwargs))
 
-@nb.njit(cache=True)
+@nb.njit(['float64(float64, float64, float64)'], cache=True)
 def time_shift(t:float, shift:float=np.nan, tcycle:float=0.0):
     if np.isnan(shift):
         return t
@@ -419,7 +423,7 @@ def time_shift(t:float, shift:float=np.nan, tcycle:float=0.0):
     else:
         return t + shift - tcycle
 
-@nb.njit(cache=True, parallel=True)
+@nb.njit(['void(float64[:], float64, float64, float64[:])'], cache=True, parallel=True)
 def time_shift_inplace(t_array:np.ndarray[float], shift:float, tcycle:float, output:np.ndarray[float]):
     """In-place vectorized time shift to avoid memory allocation."""
     for i in nb.prange(len(t_array)):
