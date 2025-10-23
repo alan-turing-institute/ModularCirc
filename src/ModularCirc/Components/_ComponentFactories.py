@@ -5,6 +5,7 @@ This module eliminates code duplication by providing reusable function generator
 
 import numpy as np
 import pandas as pd
+from functools import partial
 from ..HelperRoutines import (
     resistor_upstream_pressure, grounded_capacitor_model_dpdt,
     grounded_capacitor_model_pressure, grounded_capacitor_model_volume,
@@ -20,51 +21,37 @@ class ComponentFunctionFactory:
     @staticmethod
     def gen_resistor_upstream_pressure(r: float):
         """Generate resistor upstream pressure function."""
-        def func(t, y):
-            return resistor_upstream_pressure(t, y, r)
-        return func
+        return partial(resistor_upstream_pressure, r=r)
     
     @staticmethod
     def gen_resistor_flow(r: float):
         """Generate resistor flow function."""
-        def func(t, y):
-            return resistor_model_flow(t, y, r)
-        return func
+        return partial(resistor_model_flow, r=r)
     
     @staticmethod
     def gen_capacitor_dpdt(c: float):
         """Generate capacitor pressure derivative function."""
-        def func(t, y):
-            return grounded_capacitor_model_dpdt(t, y, c)
-        return func
+        return partial(grounded_capacitor_model_dpdt, c=c)
     
     @staticmethod
     def gen_capacitor_pressure(v_ref: float, c: float):
         """Generate capacitor pressure initialization function."""
-        def func(t, y):
-            return grounded_capacitor_model_pressure(t, y, v_ref, c)
-        return func
+        return partial(grounded_capacitor_model_pressure, v_ref=v_ref, c=c)
     
     @staticmethod
     def gen_capacitor_volume(v_ref: float, c: float):
         """Generate capacitor volume function."""
-        def func(t, y):
-            return grounded_capacitor_model_volume(t, y, v_ref, c)
-        return func
+        return partial(grounded_capacitor_model_volume, v_ref=v_ref, c=c)
     
     @staticmethod
     def gen_impedance_flow_rate(r: float, l: float):
         """Generate resistor-impedance flow rate function."""
-        def func(t, y):
-            return resistor_impedance_flux_rate(t, y, r, l)
-        return func
+        return partial(resistor_impedance_flux_rate, r=r, l=l)
     
     @staticmethod
     def gen_simple_bernoulli_flow(CQ: float, RRA: float = 0.0):
         """Generate simple Bernoulli diode flow function."""
-        def func(t, y):
-            return simple_bernoulli_diode_flow(t, y, CQ, RRA)
-        return func
+        return partial(simple_bernoulli_diode_flow, CQ=CQ, RRA=RRA)
     
     @staticmethod
     def gen_non_ideal_diode_flow(r: float, max_func):
@@ -76,37 +63,33 @@ class ComponentFunctionFactory:
     @staticmethod
     def gen_maynard_valve_flow(CQ: float, RRA: float = 0.0):
         """Generate Maynard valve flow function."""
-        def func(t, y):
-            return maynard_valve_flow(t, y, CQ, RRA)
-        return func
+        return partial(maynard_valve_flow, CQ=CQ, RRA=RRA)
     
     @staticmethod
     def gen_maynard_impedance_dqdt(CQ: float, RRA: float, L: float, R: float):
         """Generate Maynard impedance derivative function."""
-        def func(t, y):
-            return maynard_impedance_dqdt(t, y, CQ, R, L, RRA)
-        return func
+        return partial(maynard_impedance_dqdt, CQ=CQ, R=R, L=L, RRA=RRA)
     
     @staticmethod
     def gen_maynard_phi_law(Ko: float, Kc: float):
         """Generate Maynard phi law function."""
-        def func(t, y):
-            return maynard_phi_law(t, y, Ko, Kc)
-        return func
+        return partial(maynard_phi_law, Ko=Ko, Kc=Kc)
     
     @staticmethod
     def gen_time_shifter(delay: float, T: float):
         """Generate time shifter function."""
-        def func(t):
-            return time_shift(t, delay, T)
-        return func
+        return partial(time_shift, shift=delay, tcycle=T)
     
     @staticmethod
     def gen_activation_function(af, time_shifter, **kwargs):
         """Generate activation function with parameters."""
-        varnames = [name for name in af.__code__.co_varnames if name not in ['coeff', 't']]
-        kwargs2 = {key: val for key, val in kwargs.items() if key in varnames}
+        # Pre-compute filtered kwargs once during function creation
+        excluded_names = {'coeff', 't'}
+        af_varnames = af.__code__.co_varnames
+        kwargs2 = {key: val for key, val in kwargs.items() 
+                  if key in af_varnames and key not in excluded_names}
         
+        # Return optimized function with pre-computed parameters
         def func(t, dt=False):
             return af(time_shifter(t), dt=dt, **kwargs2)
         return func
@@ -118,13 +101,20 @@ class ElastanceFactory:
     @staticmethod
     def gen_constant_elastance(E_act: float, E_pas: float, af, v_ref: float):
         """Generate constant elastance functions."""
-        comp_E = lambda t: af(t) * E_act + (1.0 - af(t)) * E_pas
+        # Pre-compute the difference for better performance
+        E_diff = E_act - E_pas
+        def comp_E(t):
+            af_t = af(t)
+            return af_t * E_diff + E_pas
         return comp_E
     
     @staticmethod
     def gen_constant_elastance_derivative(comp_E, eps: float = 1e-3):
         """Generate elastance derivative function."""
-        comp_dEdt = lambda t: (comp_E(t + eps) - comp_E(t - eps)) / (2.0 * eps)
+        # Pre-compute the division constant for better performance
+        inv_2eps = 1.0 / (2.0 * eps)
+        def comp_dEdt(t):
+            return (comp_E(t + eps) - comp_E(t - eps)) * inv_2eps
         return comp_dEdt
     
     @staticmethod
@@ -235,7 +225,9 @@ class ElastanceFactory:
         """Generate total pressure function with fixed interface."""
         def func(t, y):
             _af_t = _af(t)
-            return _af_t * active_p(y) + (1.0 - _af_t) * passive_p(y)
+            active_val = active_p(y)
+            passive_val = passive_p(y) 
+            return _af_t * active_val + (1.0 - _af_t) * passive_val
         return func
     
     @staticmethod
@@ -275,10 +267,13 @@ class ComponentSetupMixin:
     
     def _validate_initial_conditions(self):
         """Validate that at least one initial condition is provided."""
-        has_v0 = hasattr(self, 'v0') and self.v0 is not None and not np.isnan(self.v0)
-        has_p0 = hasattr(self, 'p0') and self.p0 is not None and not np.isnan(self.p0)
+        # More efficient validation - short-circuit evaluation
+        has_v0 = (hasattr(self, 'v0') and self.v0 is not None and 
+                  not (isinstance(self.v0, float) and np.isnan(self.v0)))
+        has_p0 = (hasattr(self, 'p0') and self.p0 is not None and 
+                  not (isinstance(self.p0, float) and np.isnan(self.p0)))
         
-        if not has_v0 and not has_p0:
+        if not (has_v0 or has_p0):
             raise ValueError("Solver needs at least the initial volume or pressure to be defined!")
     
     def _setup_volume_state_variable(self):
