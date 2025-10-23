@@ -33,7 +33,7 @@ def resistor_upstream_pressure(t:float,
     q_in, p_out = y[:2]
     return p_out + r * q_in
 
-@nb.njit(cache=True)
+@nb.njit(cache=True, inline='always')
 def resistor_model_dp(q_in:float, r:float) -> float:
     return q_in * r
 
@@ -115,7 +115,17 @@ def chamber_volume_rate_change(t:float,
     q_in, q_out = y[:2]
     return q_in - q_out
 
-@nb.njit(cache=True)
+@nb.njit(cache=True, parallel=True)
+def chamber_volume_rate_change_vectorized(t:float, y_batch:np.ndarray[float]) -> np.ndarray[float]:
+    """Vectorized version for batch processing multiple chambers simultaneously."""
+    n_samples = y_batch.shape[0]
+    result = np.empty(n_samples, dtype=np.float64)
+    for i in nb.prange(n_samples):
+        q_in, q_out = y_batch[i, :2]
+        result[i] = q_in - q_out
+    return result
+
+@nb.njit(cache=True, inline='always')
 def relu_max(val:float) -> float:
     return np.maximum(val, 0.0)
 
@@ -217,9 +227,15 @@ def maynard_impedance_dqdt(t:float,
                            RRA:float=0.0
                            )->nb.types.Array:
     p_in, p_out, q_in, phi = y[:4]
-    dp   = p_in - p_out
+    dp = p_in - p_out
     aeff = (1.0 - RRA) * phi + RRA
-    return np.where(aeff > 1.0e-5, (dp * aeff - q_in * R * aeff  - q_in * np.abs(q_in) / CQ**2.0 * aeff**(-1.0)  ) / L, 0.0)
+    # Optimize division and power operations
+    CQ_squared = CQ * CQ
+    aeff_inv = 1.0 / aeff if aeff > 1.0e-5 else 0.0
+    q_abs = np.abs(q_in)
+    return np.where(aeff > 1.0e-5, 
+                   (dp * aeff - q_in * R * aeff - q_abs * q_in * aeff_inv / CQ_squared) / L, 
+                   0.0)
 
 @nb.njit(cache=True)
 def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
@@ -237,6 +253,24 @@ def leaky_diode_flow(p_in:float, p_out:float, r_o:float, r_r:float) -> float:
     """
     dp = p_in - p_out
     return np.where(dp >= 0.0, dp/r_o, dp/r_r)
+
+@nb.njit(cache=True)
+def activation_function_1_numba(t:float, t_max:float, t_tr:float, tau:float, dt: bool=False) -> float:
+    """
+    Numba-optimized activation function with explicit type signature.
+    """
+    if not dt:
+        if t <= t_tr:
+            return 0.5 * (1.0 - np.cos(np.pi * t / t_max))
+        else:
+            coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
+            return  np.exp(-(t - t_tr)/tau) * coeff
+    else:
+        if t <= t_tr:
+            return 0.5 * np.pi / t_max * np.sin(np.pi * t / t_max)
+        else:
+            coeff = 0.5 * (1.0 - np.cos(np.pi * t_tr / t_max))
+            return - np.exp(-(t - t_tr)/tau) * coeff / tau
 
 def activation_function_1(t:float, t_max:float, t_tr:float, tau:float, dt: bool=False) -> float:
     """
@@ -384,6 +418,18 @@ def time_shift(t:float, shift:float=np.nan, tcycle:float=0.0):
         return t + shift
     else:
         return t + shift - tcycle
+
+@nb.njit(cache=True, parallel=True)
+def time_shift_inplace(t_array:np.ndarray[float], shift:float, tcycle:float, output:np.ndarray[float]):
+    """In-place vectorized time shift to avoid memory allocation."""
+    for i in nb.prange(len(t_array)):
+        t = t_array[i]
+        if np.isnan(shift):
+            output[i] = t
+        elif t < tcycle - shift:
+            output[i] = t + shift
+        else:
+            output[i] = t + shift - tcycle
 
 
 BOLD = '\033[1m'
