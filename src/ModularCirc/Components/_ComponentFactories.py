@@ -11,7 +11,7 @@ from ..HelperRoutines import (
     grounded_capacitor_model_pressure, grounded_capacitor_model_volume,
     resistor_model_flow, chamber_volume_rate_change, resistor_impedance_flux_rate,
     simple_bernoulli_diode_flow, non_ideal_diode_flow, maynard_valve_flow,
-    maynard_impedance_dqdt, maynard_phi_law, time_shift, activation_function_1,
+    maynard_impedance_dqdt, maynard_phi_law, time_shift,
     active_pressure_law, passive_pressure_law, active_dpdt_law, passive_dpdt_law,
     volume_from_pressure_nonlinear
 )

@@ -1,7 +1,6 @@
 from .OdeModel import OdeModel
 from .NaghaviModelParameters import NaghaviModelParameters, TEMPLATE_TIME_SETUP_DICT
 from ..Components import Rlc_component, Valve_non_ideal, HC_mixed_elastance
-from ..HelperRoutines import *
 
 class NaghaviModel(OdeModel):
     def __init__(self, time_setup_dict, parobj:NaghaviModelParameters=NaghaviModelParameters(), suppress_printing:bool=False) -> None:
