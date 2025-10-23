@@ -388,6 +388,97 @@ def chamber_exponential_law(v:float, E:float, k:float, v_ref:float, *args, **kwa
     """
     return E * np.exp(k * (v - v_ref) - 1)
 
+@nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
+def active_pressure_law(t:float, y:np.ndarray[float], E_act:float, v_ref:float) -> float:
+    """
+    Active pressure law for heart chambers (linear elastance).
+    
+    Args:
+        t (float): current time
+        y (ndarray): state variables [volume, ...]
+        E_act (float): active elastance
+        v_ref (float): reference volume
+    
+    Returns:
+        float: active pressure
+    """
+    v = y[0]
+    return E_act * (v - v_ref)
+
+@nb.njit(['float64(float64, float64[:], float64, float64, float64)'], cache=True)
+def passive_pressure_law(t:float, y:np.ndarray[float], E_pas:float, k_pas:float, v_ref:float) -> float:
+    """
+    Passive pressure law for heart chambers (exponential elastance).
+    
+    Args:
+        t (float): current time
+        y (ndarray): state variables [volume, ...]
+        E_pas (float): passive elastance
+        k_pas (float): exponential factor
+        v_ref (float): reference volume
+    
+    Returns:
+        float: passive pressure
+    """
+    v = y[0]
+    return E_pas * (np.exp(k_pas * (v - v_ref)) - 1.0)
+
+
+
+@nb.njit(['float64(float64, float64[:], float64)'], cache=True)
+def active_dpdt_law(t:float, y:np.ndarray[float], E_act:float) -> float:
+    """
+    Active pressure derivative law.
+    
+    Args:
+        t (float): current time
+        y (ndarray): state variables [volume, q_in, q_out, ...]
+        E_act (float): active elastance
+    
+    Returns:
+        float: active pressure derivative
+    """
+    q_in, q_out = y[1], y[2]
+    return E_act * (q_in - q_out)
+
+@nb.njit(['float64(float64, float64[:], float64, float64, float64)'], cache=True)
+def passive_dpdt_law(t:float, y:np.ndarray[float], E_pas:float, k_pas:float, v_ref:float) -> float:
+    """
+    Passive pressure derivative law.
+    
+    Args:
+        t (float): current time
+        y (ndarray): state variables [volume, q_in, q_out, ...]
+        E_pas (float): passive elastance
+        k_pas (float): exponential factor
+        v_ref (float): reference volume
+    
+    Returns:
+        float: passive pressure derivative
+    """
+    v, q_in, q_out = y[0], y[1], y[2]
+    return E_pas * k_pas * np.exp(k_pas * (v - v_ref)) * (q_in - q_out)
+
+
+
+@nb.njit(['float64(float64, float64[:], float64, float64, float64)'], cache=True)
+def volume_from_pressure_nonlinear(t:float, y:np.ndarray[float], E_pas:float, v_ref:float, k_pas:float) -> float:
+    """
+    Calculate volume from pressure for nonlinear (exponential) elastance.
+    
+    Args:
+        t (float): current time
+        y (ndarray): state variables [pressure, ...]
+        E_pas (float): passive elastance
+        v_ref (float): reference volume
+        k_pas (float): exponential factor
+    
+    Returns:
+        float: volume
+    """
+    p = y[0]
+    return v_ref + np.log(p / E_pas + 1.0) / k_pas
+
 def chamber_pressure_function(t:float, v:float, v_ref:float, E_pas:float, E_act:float,
                               activation_function = activation_function_1,
                               active_law = chamber_linear_elastic_law,
