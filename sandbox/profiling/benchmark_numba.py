@@ -49,11 +49,11 @@ def main():
     
     # Test cases: (function, args, name)
     test_cases = [
-        (hr.resistor_model_flow, (0.0, 5.0, 2.0, 1.0), "resistor_model_flow"),
-        (hr.resistor_upstream_pressure, (0.0, 2.0, 3.0, 0.5), "resistor_upstream_pressure"),
-        (hr.grounded_capacitor_model_pressure, (0.0, 3.0, 1.0, 0.2), "grounded_capacitor_model_pressure"),
-        (hr.grounded_capacitor_model_volume, (0.0, 15.0, 1.0, 0.2), "grounded_capacitor_model_volume"),
-        (hr.simple_bernoulli_diode_flow, (0.0, 4.0, 2.0, 2.0, 0.1), "simple_bernoulli_diode_flow"),
+        (hr.resistor_model_flow, (0.0, np.array([5.0, 2.0]), 1.0), "resistor_model_flow"),
+        (hr.resistor_upstream_pressure, (0.0, np.array([2.0, 3.0]), 0.5), "resistor_upstream_pressure"),
+        (hr.grounded_capacitor_model_pressure, (0.0, np.array([3.0]), 1.0, 0.2), "grounded_capacitor_model_pressure"),
+        (hr.grounded_capacitor_model_volume, (0.0, np.array([15.0]), 1.0, 0.2), "grounded_capacitor_model_volume"),
+        (hr.simple_bernoulli_diode_flow, (0.0, np.array([4.0, 2.0]), 2.0, 0.1), "simple_bernoulli_diode_flow"),
         (hr.softplus, (2.0, 0.3), "softplus"),
         (hr.time_shift, (0.7, 0.2, 1.0), "time_shift"),
         (hr.leaky_diode_flow, (5.0, 2.0, 1.0, 0.2), "leaky_diode_flow"),
