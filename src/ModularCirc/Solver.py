@@ -413,6 +413,24 @@ class Solver():
     def _safe_extract(self, func_result):
         """Safe scalar extraction helper method"""
         return func_result.item() if hasattr(func_result, 'item') and func_result.ndim > 0 else func_result
+    
+    def _compute_derivatives_optimized(self, ht: float, y_temp: np.ndarray):
+        """
+        Optimized derivative computation that minimizes Python overhead.
+        Uses vectorized input extraction - the fastest approach tested.
+        """
+        # Optimal approach: direct vectorized indexing is fastest
+        # Avoids both allocation and copying overhead
+        all_inputs = y_temp[self._ids3]  # NumPy's optimized vectorized indexing
+        
+        # Fast loop with local references and optimized scalar handling
+        results = self._derivatives_temp
+        funcs = self._funcs3
+        
+        for i in range(len(funcs)):
+            func_result = funcs[i](t=ht, y=all_inputs[i])
+            # Optimized for Numba functions which typically return scalars
+            results[i] = func_result if np.isscalar(func_result) else func_result.item()
 
     def initialize_by_function_method(self, y: np.ndarray[float]) -> np.ndarray[float]:
         """
@@ -566,9 +584,12 @@ class Solver():
         if self._optimize_secondary_sv:
             y_temp[self._keys4] = self.optimize_method(y_temp, self._keys4)
 
-        # Compute derivatives using pre-computed function-index pairs (hot path optimization)
-        results = [self._safe_extract(fi(t=ht, y=y_temp[indices])) for fi, indices in self._func_index_pairs3]
-        self._derivatives_temp[:] = results
+        # Smart vectorized approach: use bulk operations where possible
+        # Since the functions are heterogeneous but have similar computational patterns,
+        # we can optimize by reducing Python overhead and leveraging NumPy operations
+        
+        # Method: Pre-extract all input slices and use optimized batch calling
+        self._compute_derivatives_optimized(ht, y_temp)
         
         # Apply inverse permutation using index-based operation
         return self._derivatives_temp[self.perm_indices]
