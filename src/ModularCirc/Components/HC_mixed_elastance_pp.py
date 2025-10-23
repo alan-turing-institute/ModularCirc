@@ -41,14 +41,11 @@ class HC_mixed_elastance_pp(ComponentBase):
         _af = ComponentFunctionFactory.gen_activation_function(
             self.af, time_shifter, **self.kwargs)
 
-        active_p = ElastanceFactory.gen_active_pressure_fixed(self.E_act, self.v_ref)
-        active_dpdt = ElastanceFactory.gen_active_dpdt_fixed(self.E_act)
-        passive_p = ElastanceFactory.gen_passive_pressure_fixed(self.E_pas, self.k_pas, self.v_ref)
-        passive_dpdt = ElastanceFactory.gen_passive_dpdt_fixed(self.E_pas, self.k_pas, self.v_ref)
-        # Use PP variant functions (passive always included)
-        total_p = ElastanceFactory.gen_total_pressure_pp(_af, active_p, passive_p)
+        # Use simplified PP variant functions (passive always included)
+        total_p = ElastanceFactory.gen_total_pressure_pp(
+            _af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
         total_dpdt = ElastanceFactory.gen_total_dpdt_pp(
-            active_p, passive_p, _af, active_dpdt, passive_dpdt)
+            _af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
         comp_v = ElastanceFactory.gen_volume_from_pressure_nonlinear(
             self.E_pas, self.v_ref, self.k_pas)
 
