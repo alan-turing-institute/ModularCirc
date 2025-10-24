@@ -23,37 +23,58 @@ class ComponentFunctionFactory:
     @staticmethod
     def gen_resistor_upstream_pressure(r: float):
         """Generate resistor upstream pressure function."""
-        return partial(resistor_upstream_pressure, r=r)
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def resistor_upstream_pressure_func(t, y):    
+            return resistor_upstream_pressure(t, y, r=r)
+        return resistor_upstream_pressure_func
     
     @staticmethod
     def gen_resistor_flow(r: float):
         """Generate resistor flow function."""
-        return partial(resistor_model_flow, r=r)
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):    
+            return resistor_model_flow(t, y, r=r)
+        return func
     
     @staticmethod
     def gen_capacitor_dpdt(c: float):
         """Generate capacitor pressure derivative function."""
-        return partial(grounded_capacitor_model_dpdt, c=c)
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):    
+            return grounded_capacitor_model_dpdt(t, y, c=c)
+        return func
     
     @staticmethod
     def gen_capacitor_pressure(v_ref: float, c: float):
         """Generate capacitor pressure initialization function."""
-        return partial(grounded_capacitor_model_pressure, v_ref=v_ref, c=c)
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):    
+            return grounded_capacitor_model_pressure(t, y, v_ref=v_ref, c=c)
+        return func
     
     @staticmethod
     def gen_capacitor_volume(v_ref: float, c: float):
         """Generate capacitor volume function."""
-        return partial(grounded_capacitor_model_volume, v_ref=v_ref, c=c)
-    
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):
+            return grounded_capacitor_model_volume(t, y, v_ref=v_ref, c=c)
+        return func
+
     @staticmethod
     def gen_impedance_flow_rate(r: float, l: float):
         """Generate resistor-impedance flow rate function."""
-        return partial(resistor_impedance_flux_rate, r=r, l=l)
-    
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):
+            return resistor_impedance_flux_rate(t, y, r=r, l=l)
+        return func
+
     @staticmethod
     def gen_simple_bernoulli_flow(CQ: float, RRA: float = 0.0):
         """Generate simple Bernoulli diode flow function."""
-        return partial(simple_bernoulli_diode_flow, CQ=CQ, RRA=RRA)
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):
+            return simple_bernoulli_diode_flow(t, y, CQ=CQ, RRA=RRA)
+        return func
     
     @staticmethod
     def gen_non_ideal_diode_flow(r: float, max_func):
@@ -63,18 +84,27 @@ class ComponentFunctionFactory:
     @staticmethod
     def gen_maynard_valve_flow(CQ: float, RRA: float = 0.0):
         """Generate Maynard valve flow function."""
-        return partial(maynard_valve_flow, CQ=CQ, RRA=RRA)
-    
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):
+            return maynard_valve_flow(t, y, CQ=CQ, RRA=RRA) 
+        return func
+
     @staticmethod
     def gen_maynard_impedance_dqdt(CQ: float, RRA: float, L: float, R: float):
         """Generate Maynard impedance derivative function."""
-        return partial(maynard_impedance_dqdt, CQ=CQ, R=R, L=L, RRA=RRA)
-    
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):
+            return maynard_impedance_dqdt(t, y, CQ=CQ, R=R, L=L, RRA=RRA)
+        return func
+
     @staticmethod
     def gen_maynard_phi_law(Ko: float, Kc: float):
         """Generate Maynard phi law function."""
-        return partial(maynard_phi_law, Ko=Ko, Kc=Kc)
-    
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):
+            return maynard_phi_law(t, y, Ko=Ko, Kc=Kc)
+        return func
+
     @staticmethod
     def gen_time_shifter(delay: float, T: float):
         """Generate time shifter function."""
@@ -153,6 +183,7 @@ class ElastanceFactory:
         """Generate constant elastance functions."""
         # Pre-compute the difference for better performance
         E_diff = E_act - E_pas
+        @nb.njit('float64(float64)', cache=True)
         def comp_E(t):
             af_t = af(t)
             return af_t * E_diff + E_pas
@@ -163,6 +194,7 @@ class ElastanceFactory:
         """Generate elastance derivative function."""
         # Pre-compute the division constant for better performance
         inv_2eps = 1.0 / (2.0 * eps)
+        @nb.njit('float64(float64)', cache=True)
         def comp_dEdt(t):
             return (comp_E(t + eps) - comp_E(t - eps)) * inv_2eps
         return comp_dEdt
@@ -170,6 +202,7 @@ class ElastanceFactory:
     @staticmethod
     def gen_pressure_from_volume(comp_E, v_ref: float):
         """Generate pressure calculation from volume."""
+        @nb.njit('float64(float64, float64[:])', cache=True)
         def func(t, y):
             return comp_E(t) * (y - v_ref)
         return func
@@ -177,6 +210,7 @@ class ElastanceFactory:
     @staticmethod
     def gen_volume_from_pressure(comp_E, v_ref: float):
         """Generate volume calculation from pressure."""
+        @nb.njit('float64(float64, float64[:])', cache=True)
         def func(t, y):
             return y / comp_E(t) + v_ref
         return func
@@ -184,6 +218,7 @@ class ElastanceFactory:
     @staticmethod
     def gen_pressure_derivative(comp_E, comp_dEdt, v_ref: float):
         """Generate pressure time derivative."""
+        @nb.njit('float64(float64, float64[:])', cache=True)
         def func(t, y):
             return comp_dEdt(t) * (y[0] - v_ref) + comp_E(t) * (y[1] - y[2])
         return func
@@ -192,26 +227,38 @@ class ElastanceFactory:
     @staticmethod
     def gen_active_pressure(E_act: float, v_ref: float):
         """Generate active pressure function."""
-        return partial(active_pressure_law, E_act=E_act, v_ref=v_ref)
-    
+        @nb.njit('float64(float64, float64[:])', cache=True)
+        def func(t, y):
+            return active_pressure_law(t, y, E_act=E_act, v_ref=v_ref)
+        return func
+
     @staticmethod
     def gen_active_dpdt(E_act: float):
         """Generate active pressure derivative."""
-        return partial(active_dpdt_law, E_act=E_act)
-    
+        @nb.njit('float64(float64, float64[:])', cache=True)
+        def func(t, y):
+            return active_dpdt_law(t, y, E_act=E_act)
+        return func
+
     @staticmethod
     def gen_passive_pressure(E_pas: float, k_pas: float, v_ref: float):
         """Generate passive pressure function."""
-        return partial(passive_pressure_law, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
-    
+        @nb.njit('float64(float64, float64[:])', cache=True)
+        def func(t, y):
+            return passive_pressure_law(t, y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
+        return func
+
     @staticmethod
     def gen_passive_dpdt(E_pas: float, k_pas: float, v_ref: float):
         """Generate passive pressure derivative."""
-        return partial(passive_dpdt_law, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
-    
+        def func(t, y):
+            return passive_dpdt_law(t, y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
+        return func
+        
     @staticmethod
     def gen_total_pressure(_af, active_p, passive_p):
         """Generate total pressure function."""
+        @nb.njit('float64(float64, float64[:])', cache=True)
         def func(t, y):
             return _af(t) * active_p(t, y) + (1.0 - _af(t)) * passive_p(t, y)
         return func
@@ -219,6 +266,7 @@ class ElastanceFactory:
     @staticmethod
     def gen_total_dpdt(active_p, passive_p, _af, active_dpdt, passive_dpdt):
         """Generate total pressure derivative."""
+        @nb.njit('float64(float64, float64[:])', cache=True)
         def func(t, y):
             dtact = _af(t, dt=True)
             act = _af(t)
@@ -229,12 +277,16 @@ class ElastanceFactory:
     @staticmethod
     def gen_volume_from_pressure_nonlinear(E_pas: float, v_ref: float, k_pas: float):
         """Generate volume from pressure for nonlinear case."""
-        return partial(volume_from_pressure_nonlinear, E_pas=E_pas, v_ref=v_ref, k_pas=k_pas)
-    
+        @nb.njit('float64(float64, float64[:])', cache=True)
+        def func(t, y):
+            return volume_from_pressure_nonlinear(t, y, E_pas=E_pas, v_ref=v_ref, k_pas=k_pas)
+        return func
+
     # Consolidated mixed elastance functions - eliminates redundant gen_*_fixed methods
     @staticmethod
     def gen_total_pressure_fixed(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
         """Generate total pressure function directly using law functions."""
+        @nb.njit(['float64(float64, float64[:])'], cache=True,)
         def func(t, y):
             _af_t = _af(t, dt=False)
             # Use law functions directly - they extract y[0] internally
@@ -246,6 +298,7 @@ class ElastanceFactory:
     @staticmethod
     def gen_total_dpdt_fixed(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
         """Generate total pressure derivative function directly using law functions."""
+        @nb.njit(['float64(float64, float64[:])'], cache=True,)
         def func(t, y):
             _af_t = _af(t,dt=False)
             _d_af_dt = _af(t, dt=True)
@@ -267,6 +320,7 @@ class ElastanceFactory:
     @staticmethod
     def gen_total_pressure_pp(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
         """Generate total pressure function for PP variant (passive always included)."""
+        @nb.njit(['float64(float64, float64[:])'], cache=True,)
         def func(t, y):
             _af_t = _af(t, dt=False)
             # Use law functions directly - they extract y[0] internally
@@ -278,6 +332,7 @@ class ElastanceFactory:
     @staticmethod
     def gen_total_dpdt_pp(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
         """Generate total pressure derivative for PP variant."""
+        @nb.njit(['float64(float64, float64[:])'], cache=True,)
         def func(t, y):
             _af_t = _af(t, dt=False)
             _d_af_dt = _af(t, dt=True)

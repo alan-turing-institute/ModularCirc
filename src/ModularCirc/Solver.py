@@ -319,6 +319,17 @@ class Solver():
         self.optimize = self.optimize_method
         self.s_u_residual = self.s_u_residual_method
 
+        N_psv = self._N_psv
+        temp_func3 = tuple(self._funcs3)
+        ids3 = self._ids3  # Capture ids3 in local scope
+
+        # for func in self._funcs3:
+        #     print(func.__name__)
+        # raise Exception
+        # @nb.njit('float64[:](float64, float64[:])', cache=True)
+        # def compute_pv_dfdt_func_iteration(ht, y):
+        #     return [temp_func3[i](ht, y[ids3[i]]) for i in range(N_psv)]
+        # self.compute_pv_dfdt_func_iteration = compute_pv_dfdt_func_iteration
 
     def advance_cycle(self, y0, cycleID, step = 1):
         """
@@ -616,6 +627,7 @@ class Solver():
         
         # Method: Pre-extract all input slices and use optimized batch calling
         self._compute_derivatives_optimized(ht, y_temp)
+        # self._derivatives_temp = self.compute_pv_dfdt_func_iteration(ht, y_temp)
         
         # Apply inverse permutation using index-based operation
         return self._derivatives_temp[self.perm_indices]
