@@ -15,7 +15,7 @@ from ..HelperRoutines import (
     active_pressure_law, passive_pressure_law, active_dpdt_law, passive_dpdt_law,
     volume_from_pressure_nonlinear
 )
-
+import numba as nb
 
 class ComponentFunctionFactory:
     """Factory class for generating commonly used component functions."""
@@ -78,21 +78,71 @@ class ComponentFunctionFactory:
     @staticmethod
     def gen_time_shifter(delay: float, T: float):
         """Generate time shifter function."""
-        return partial(time_shift, shift=delay, tcycle=T)
+        @nb.njit('float64(float64)',cache=True)
+        def func(t):
+            return time_shift(t, shift=delay, tcycle=T)
+        return func
+
     
     @staticmethod
     def gen_activation_function(af, time_shifter, **kwargs):
-        """Generate activation function with parameters."""
-        # Pre-compute filtered kwargs once during function creation
-        excluded_names = {'coeff', 't'}
-        af_varnames = af.__code__.co_varnames
-        kwargs2 = {key: val for key, val in kwargs.items() 
-                  if key in af_varnames and key not in excluded_names}
+        # Import activation functions for direct comparison
+        from ..HelperRoutines import activation_function_1, activation_function_2, activation_function_3
         
-        # Return optimized function with pre-computed parameters
-        def func(t, dt=False):
-            return af(time_shifter(t), dt=dt, **kwargs2)
-        return func
+        # Pre-defined optimized functions for each activation function type
+        if af is activation_function_1:
+            # Extract parameters for activation_function_1
+            t_max = kwargs.get('t_max')
+            t_tr = kwargs.get('t_tr') 
+            tau = kwargs.get('tau')
+
+            @nb.njit(['float64(float64, boolean)'], cache=True)
+            def func(t, dt=False):
+                shifted_t = time_shifter(t)
+                return activation_function_1(shifted_t, t_max=t_max, t_tr=t_tr, tau=tau, dt=dt)
+            return func
+            
+        elif af is activation_function_2:
+            # Extract parameters for activation_function_2
+            tr = kwargs.get('tr')
+            td = kwargs.get('td')
+            
+            @nb.njit(['float64(float64, boolean)'], cache=True)
+            def func(t, dt=False):
+                shifted_t = time_shifter(t)
+                return activation_function_2(shifted_t, tr=tr, td=td, dt=dt)
+            return func
+            
+        elif af is activation_function_3:
+            # Extract parameters for activation_function_3
+            tpwb = kwargs.get('tpwb')
+            tpww = kwargs.get('tpww')
+            
+            @nb.njit(['float64(float64, boolean)'], cache=True)
+            def func(t, dt=False):
+                shifted_t = time_shifter(t)
+                return activation_function_3(shifted_t, tpwb=tpwb, tpww=tpww, dt=dt)
+            return func
+            
+        else:
+            # Fallback to original dynamic approach for unknown activation functions
+            excluded_names = {'coeff', 't'}
+            af_varnames = af.__code__.co_varnames
+            kwargs2 = {k: v for k, v in kwargs.items()
+                    if k in af_varnames and k not in excluded_names}
+
+            # Build explicit param list for injected kwargs
+            params_code = ", ".join([f"{k}={repr(v)}" for k, v in kwargs2.items()])
+            func_code = f"""
+def func(t, dt=False):
+    return af(time_shifter(t), dt=dt{(', ' + params_code) if params_code else ''})
+"""
+            ns = {'af': af, 'time_shifter': time_shifter}
+            exec(func_code, ns)
+            func = ns['func']
+
+            # disable cache because func was created from a string
+            return nb.jit(nopython=True, cache=False)(func)
 
 
 class ElastanceFactory:
@@ -186,7 +236,7 @@ class ElastanceFactory:
     def gen_total_pressure_fixed(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
         """Generate total pressure function directly using law functions."""
         def func(t, y):
-            _af_t = _af(t)
+            _af_t = _af(t, dt=False)
             # Use law functions directly - they extract y[0] internally
             active_val = active_pressure_law(t=0.0, y=y, E_act=E_act, v_ref=v_ref)
             passive_val = passive_pressure_law(t=0.0, y=y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
@@ -197,7 +247,7 @@ class ElastanceFactory:
     def gen_total_dpdt_fixed(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
         """Generate total pressure derivative function directly using law functions."""
         def func(t, y):
-            _af_t = _af(t)
+            _af_t = _af(t,dt=False)
             _d_af_dt = _af(t, dt=True)
             
             # Use law functions directly - they extract needed values internally
@@ -218,7 +268,7 @@ class ElastanceFactory:
     def gen_total_pressure_pp(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
         """Generate total pressure function for PP variant (passive always included)."""
         def func(t, y):
-            _af_t = _af(t)
+            _af_t = _af(t, dt=False)
             # Use law functions directly - they extract y[0] internally
             active_val = active_pressure_law(t=0.0, y=y, E_act=E_act, v_ref=v_ref)
             passive_val = passive_pressure_law(t=0.0, y=y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
@@ -229,7 +279,7 @@ class ElastanceFactory:
     def gen_total_dpdt_pp(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
         """Generate total pressure derivative for PP variant."""
         def func(t, y):
-            _af_t = _af(t)
+            _af_t = _af(t, dt=False)
             _d_af_dt = _af(t, dt=True)
             
             # Use law functions directly - they extract needed values internally
