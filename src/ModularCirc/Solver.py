@@ -534,7 +534,7 @@ class Solver():
             
             # Apply function to each row (still need individual calls due to function signature)
             for row_idx in range(n_rows):
-                result = fi(t=t, y=y_inputs_batch[row_idx])
+                result = fi(t=t, y=y_inputs_batch[row_idx].copy())
                 results_batch[row_idx, func_idx] = result
         
         return results_batch
