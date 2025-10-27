@@ -185,7 +185,6 @@ def simple_bernoulli_diode_flow(t:float,
         p_in (float): input pressure
         p_out (float): output pressure
         r (float): valve constant resistance
-        max_func (function): function that dictates when valve oppens
 
     Returns:
         float: q (flow rate through valve)
