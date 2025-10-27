@@ -38,6 +38,7 @@ try:
         volume_from_pressure_nonlinear,
         time_shift,
         bold_text,
+        gen_total_dpdt_fixed,
     )
     USING_CYTHON = True
     if '--verbose' in sys.argv or True:  # Always show for now

@@ -443,6 +443,53 @@ def get_softplus_max(double alpha):
     """Return a lambda function with fixed alpha for softplus."""
     return lambda val: softplus(val, alpha)
 
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def gen_total_dpdt_fixed(_af, double E_act, double v_ref, double E_pas, double k_pas):
+    """
+    Generate a total dp/dt function with fixed parameters.
+    
+    Args:
+        _af: activation function
+        E_act: active elastance
+        v_ref: reference volume
+        E_pas: passive elastance
+        k_pas: exponential factor
+    
+    Returns:
+        function that computes total dp/dt
+    """
+    # Bind numeric parameters as Python floats for safe capture in the nested Python function
+    # (Cython cannot capture C-level variables from an outer scope).
+    E_act_f = float(E_act)
+    v_ref_f = float(v_ref)
+    E_pas_f = float(E_pas)
+    k_pas_f = float(k_pas)
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def total_dpdt(double t, double[::1] y, _af=_af,
+                   E_act=E_act_f, v_ref=v_ref_f, E_pas=E_pas_f, k_pas=k_pas_f):
+        """
+        Total dp/dt combining active and passive components.
+        
+        Args:
+            t: current time
+            y: [volume, q_in, q_out, ...]
+        
+        Returns:
+            total pressure derivative
+        """
+        cdef double af_t = _af(t, dt=False)
+        cdef double af_dt = _af(t, dt=True)
+
+        return (af_dt * (active_pressure_law(t, y, E_act, v_ref) - passive_pressure_law(t, y, E_pas, k_pas, v_ref)) +
+                af_t * active_dpdt_law(t, y, E_act) +
+                (1.0 - af_t) * passive_dpdt_law(t, y, E_pas, k_pas, v_ref))
+    
+    return total_dpdt
+
 # Terminal formatting helpers
 BOLD = '\033[1m'
 YELLOW = '\033[93m'

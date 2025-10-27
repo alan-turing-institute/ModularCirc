@@ -1,6 +1,10 @@
 from .ComponentBase import ComponentBase
 from ._ComponentFactoriesAuto import ComponentFunctionFactory, ElastanceFactory
 from ..HelperRoutines import activation_function_1, chamber_volume_rate_change
+try: 
+    from ..HelperRoutines import gen_total_dpdt_fixed
+except:
+    pass
 from ..Time import TimeClass
 
 import pandas as pd
@@ -44,8 +48,13 @@ class HC_mixed_elastance(ComponentBase):
         # Use simplified factory methods - eliminates intermediate function generation
         total_p = ElastanceFactory.gen_total_pressure_fixed(
             _af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
-        total_dpdt = ElastanceFactory.gen_total_dpdt_fixed(
-            _af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
+        try:
+            total_dpdt = gen_total_dpdt_fixed(
+                _af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
+        except Exception as e:
+            print(f"Error generating total_dpdt_fixed: {e}")
+            total_dpdt = ElastanceFactory.gen_total_dpdt_fixed(
+                _af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
         comp_v = ElastanceFactory.gen_volume_from_pressure_nonlinear(
             self.E_pas, self.v_ref, self.k_pas)
 
