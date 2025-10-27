@@ -147,29 +147,26 @@ def get_softplus_max(alpha:float):
     """
     return lambda val : softplus(val=val, alpha=alpha)
 
+@nb.njit(['float64(float64, float64[:], float64)'], cache=True)
 def non_ideal_diode_flow(t:float,
-                         p_in:float=None,
-                         p_out:float=None,
-                         r:float=None,
-                         max_func:Callable[[float],float]=relu_max,
-                         y:np.ndarray[float]=None,
+                         y:np.ndarray[float],
+                         r:float,
                          ) -> float:
     """
-    Non-ideal diode model with the option to choose the re
+    Non-ideal diode model for resistive flow through a valve.
 
     Args:
     -----
-        p_in (float): input pressure
-        p_out (float): output pressure
+        t (float): current time
+        y (ndarray): state variables where y[0] is the pressure difference (dp)
         r (float): valve constant resistance
-        max_func (function): function that dictates when valve opens
 
     Returns:
+    -------
         float: q (flow rate through valve)
     """
-    if y is not None:
-        p_in, p_out = y[:2]
-    return (max_func((p_in - p_out)/ r))
+    dp = y[0]
+    return dp / r
 
 @nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
 def simple_bernoulli_diode_flow(t:float,

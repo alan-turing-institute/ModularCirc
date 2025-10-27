@@ -79,8 +79,13 @@ class ComponentFunctionFactory:
     @staticmethod
     def gen_non_ideal_diode_flow(r: float, max_func):
         """Generate non-ideal diode flow function."""
-        return partial(non_ideal_diode_flow, r=r, max_func=max_func)
-    
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):
+            dp = y[0] - y[1]
+            dp = max_func(dp)
+            return non_ideal_diode_flow(t, y=np.array([dp]), r=r)
+        return func
+
     @staticmethod
     def gen_maynard_valve_flow(CQ: float, RRA: float = 0.0):
         """Generate Maynard valve flow function."""
