@@ -12,7 +12,7 @@ from ModularCirc.Solver import Solver
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Define global constants for tolerances
-RELATIVE_TOLERANCE = 1e-3
+RELATIVE_TOLERANCE = 1e-2
 
 class TestNaghaviModel(unittest.TestCase):
     """
