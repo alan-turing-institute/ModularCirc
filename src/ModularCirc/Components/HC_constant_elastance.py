@@ -1,6 +1,9 @@
 from .ComponentBase import ComponentBase
-from ._ComponentFactories import ComponentFunctionFactory, ElastanceFactory
-from ..HelperRoutines import activation_function_1, chamber_volume_rate_change, time_shift
+# from ._ComponentFactories import ComponentFunctionFactory, ElastanceFactory
+from ._ComponentFactoriesAuto import ComponentFunctionFactory, ElastanceFactory
+from ..HelperRoutines import (
+    activation_function_1, chamber_volume_rate_change
+)
 from ..Time import TimeClass
 
 import pandas as pd

@@ -1,5 +1,5 @@
 from .Rc_component import Rc_component
-from ._ComponentFactories import ComponentFunctionFactory
+from ._ComponentFactoriesAuto import ComponentFunctionFactory
 from ..Time import TimeClass
 
 import pandas as pd

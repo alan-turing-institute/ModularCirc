@@ -1,5 +1,5 @@
 from .ComponentBase import ComponentBase
-from ._ComponentFactories import ComponentFunctionFactory
+from ._ComponentFactoriesAuto import ComponentFunctionFactory
 from ..HelperRoutines import chamber_volume_rate_change
 from ..Time import TimeClass
 
