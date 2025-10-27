@@ -419,19 +419,19 @@ cpdef double volume_from_pressure_nonlinear(double t, double[::1] y, double E_pa
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef double time_shift(double t, double shift, double tcycle) nogil:
+cpdef double time_shift(double t, double shift=0.0, double tcycle=0.0) nogil:
     """
     Time shift function for periodic signals.
     
     Args:
         t: current time
         shift: time shift amount
-        tcycle: cycle period
+        tcycle: cycle period (default: 0.0)
     
     Returns:
         shifted time
     """
-    if isnan(shift):
+    if shift == 0.0:
         return t
     elif t < tcycle - shift:
         return t + shift

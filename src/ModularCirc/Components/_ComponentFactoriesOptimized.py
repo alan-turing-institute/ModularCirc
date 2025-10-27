@@ -10,6 +10,7 @@ in the pre-compiled Cython functions.
 import numpy as np
 import pandas as pd
 from typing import Dict, Tuple
+from functools import partial
 from ..HelperRoutines import (
     resistor_upstream_pressure, grounded_capacitor_model_dpdt,
     grounded_capacitor_model_pressure, grounded_capacitor_model_volume,
@@ -38,44 +39,32 @@ class ComponentFunctionFactory:
     @staticmethod
     def gen_resistor_flow(r: float):
         """Generate resistor flow function."""
-        def func(t, y):    
-            return resistor_model_flow(t, y, r=r)
-        return func
+        return partial(resistor_model_flow, r=r)
     
     @staticmethod
     def gen_capacitor_dpdt(c: float):
         """Generate capacitor pressure derivative function."""
-        def func(t, y):    
-            return grounded_capacitor_model_dpdt(t, y, c=c)
-        return func
+        return partial(grounded_capacitor_model_dpdt, c=c)
     
     @staticmethod
     def gen_capacitor_pressure(v_ref: float, c: float):
         """Generate capacitor pressure initialization function."""
-        def func(t, y):    
-            return grounded_capacitor_model_pressure(t, y, v_ref=v_ref, c=c)
-        return func
+        return partial(grounded_capacitor_model_pressure, v_ref=v_ref, c=c)
     
     @staticmethod
     def gen_capacitor_volume(v_ref: float, c: float):
         """Generate capacitor volume function."""
-        def func(t, y):
-            return grounded_capacitor_model_volume(t, y, v_ref=v_ref, c=c)
-        return func
+        return partial(grounded_capacitor_model_volume, v_ref=v_ref, c=c)
 
     @staticmethod
     def gen_impedance_flow_rate(r: float, l: float):
         """Generate resistor-impedance flow rate function."""
-        def func(t, y):
-            return resistor_impedance_flux_rate(t, y, r=r, l=l)
-        return func
+        return partial(resistor_impedance_flux_rate, r=r, l=l)
 
     @staticmethod
     def gen_simple_bernoulli_flow(CQ: float, RRA: float = 0.0):
         """Generate simple Bernoulli diode flow function."""
-        def func(t, y):
-            return simple_bernoulli_diode_flow(t, y, CQ=CQ, RRA=RRA)
-        return func
+        return partial(simple_bernoulli_diode_flow, CQ=CQ, RRA=RRA)
     
     @staticmethod
     def gen_non_ideal_diode_flow(r: float, max_func):
@@ -89,39 +78,22 @@ class ComponentFunctionFactory:
     @staticmethod
     def gen_maynard_valve_flow(CQ: float, RRA: float = 0.0):
         """Generate Maynard valve flow function."""
-        def func(t, y):
-            return maynard_valve_flow(t, y, CQ=CQ, RRA=RRA) 
-        return func
+        return partial(maynard_valve_flow, CQ=CQ, RRA=RRA)
 
     @staticmethod
     def gen_maynard_impedance_dqdt(CQ: float, RRA: float, L: float, R: float):
         """Generate Maynard impedance derivative function."""
-        def func(t, y):
-            return maynard_impedance_dqdt(t, y, CQ=CQ, R=R, L=L, RRA=RRA)
-        return func
+        return partial(maynard_impedance_dqdt, CQ=CQ, RRA=RRA, L=L, R=R)    
 
     @staticmethod
     def gen_maynard_phi_law(Ko: float, Kc: float):
         """Generate Maynard phi law function."""
-        def func(t, y):
-            return maynard_phi_law(t, y, Ko=Ko, Kc=Kc)
-        return func
+        return partial(maynard_phi_law, Ko=Ko, Kc=Kc)
 
     @staticmethod
     def gen_time_shifter(delay: float, T: float):
         """Generate time shifter function."""
-        # Reuse a compiled closure if the same parameters are requested again
-        # Quantize floats to avoid cache misses due to tiny representation differences
-        key = (round(float(delay), 12), round(float(T), 12))
-        cached = _TIME_SHIFTER_CACHE.get(key)
-        if cached is not None:
-            return cached
-
-        def func(t):
-            return time_shift(t, shift=delay, tcycle=T)
-
-        _TIME_SHIFTER_CACHE[key] = func
-        return func
+        return partial(time_shift, shift=delay, tcycle=T)
 
     
     @staticmethod
