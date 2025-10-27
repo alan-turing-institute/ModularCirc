@@ -69,6 +69,45 @@ pip install ./
 
 This will install the package based on the `pyproject.toml` file specifications.
 
+### Optional: Building Cython Extensions for Better Performance
+
+For improved performance, you can build the optional Cython extensions. This pre-compiles performance-critical functions, eliminating JIT compilation overhead.
+
+**Requirements:**
+- Cython (`pip install cython` or `pip install ".[performance]"`)
+- C compiler (gcc on Linux, clang on macOS, MSVC on Windows)
+
+**Building the extensions:**
+
+After installing ModularCirc from source, run:
+
+```bash
+# Install with performance optimizations
+pip install ".[performance]"
+
+# Quick build using the provided script
+./build_cython.sh
+
+# Or manually
+python setup_cython.py build_ext --inplace
+```
+
+**Verification:**
+
+Check that Cython extensions are loaded:
+
+```bash
+python -c "import ModularCirc.HelperRoutines.HelperRoutinesCython; print('Cython extensions loaded successfully!')"
+```
+
+Or run the comprehensive verification script:
+
+```bash
+python verify_installation.py
+```
+
+If the import succeeds, ModularCirc will automatically use the optimized Cython version. If Cython extensions are not available, the package will fall back to the Numba JIT version with no code changes required.
+
 
 ## Steps for running basic models
 1. Load the classes for the model of interest and the parameter object used to paramterise the said model:

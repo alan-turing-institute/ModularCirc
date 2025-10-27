@@ -26,6 +26,26 @@ pre-commit install # this will install a pre-commit hook into the git repo
 You can also/alternatively run `pre-commit run` (changes only) or
 `pre-commit run --all-files` to check even without installing the hook.
 
+## Building Cython Extensions (Optional but Recommended)
+
+For optimal performance during development, build the Cython extensions:
+
+```bash
+# Install Cython if not already installed
+pip install cython
+
+# Build the extensions
+./build_cython.sh
+
+# Or manually
+python setup_cython.py build_ext --inplace
+```
+
+**When to rebuild:**
+- After modifying any `.pyx` files (e.g., `src/ModularCirc/HelperRoutines.pyx`)
+- After pulling changes that include `.pyx` modifications
+- When switching between branches with different Cython code
+
 # Testing
 
 This repo uses `unittest` for testing. You can run locally the tests by running the following command:
