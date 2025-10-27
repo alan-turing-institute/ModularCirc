@@ -28,6 +28,7 @@ dependencies = [
 [project.optional-dependencies]
 notebooks = ["ipykernel"]
 dev = ["pre-commit", "black", "flake8", "isort"]
+performance = ["cython>=3.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/alan-turing-institute/ModularCirc"
