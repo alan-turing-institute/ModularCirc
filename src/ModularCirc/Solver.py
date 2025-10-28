@@ -458,7 +458,7 @@ class Solver():
         Uses Cythonized batch computation for better performance.
         """
         # compute_derivatives_batch_indexed(ht, y_temp, self._ids3, self._funcs3, self._derivatives_temp)
-        compute_derivatives_batch(ht, y_temp[self._ids2], self._funcs2, self._secondary_temp)
+        compute_derivatives_batch(ht, y_temp[self._ids3], self._funcs3, self._secondary_temp)
 
     def initialize_by_function_method(self, y: np.ndarray[float]) -> np.ndarray[float]:
         """
