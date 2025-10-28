@@ -16,7 +16,7 @@ extensions = [
         ["src/ModularCirc/HelperRoutines/HelperRoutines.pyx"],
         include_dirs=[np.get_include()],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
-        extra_compile_args=["-O3", "-ffast-math", "-march=native"],
+        extra_compile_args=["-O3", "-ffast-math"],  # Removed -march=native for CI compatibility
         extra_link_args=["-O3"],
     )
 ]

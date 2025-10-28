@@ -1,5 +1,12 @@
 #!/bin/bash
 # Build script for Cythonizing ModularCirc HelperRoutines
+#
+# NOTE: This script is now OPTIONAL for development.
+# The Cython extension is automatically built during 'pip install -e .'
+# This script is useful for:
+#   - Quick rebuilds during development without reinstalling
+#   - Testing Cython changes
+#   - Manual builds in environments where pip install fails
 
 set -e  # Exit on error
 

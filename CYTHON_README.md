@@ -2,26 +2,38 @@
 
 This directory contains a Cythonized version of the `HelperRoutines` module for improved performance.
 
-## Prerequisites
+## Quick Start (Automatic Build)
 
-Install Cython if not already available:
+**The Cython extension is now built automatically during package installation!**
 
 ```bash
-pip install cython
+# Install with Cython support (requires cython and numpy)
+pip install cython numpy
+pip install -e .
 ```
 
-## Building the Cython Extension
+The setup will automatically detect Cython and build the extension. If Cython is not available or the build fails, the package will fall back to the Numba implementation.
 
-From the repository root, run:
+## Manual Build (Development)
+
+For quick rebuilds during development without reinstalling the entire package:
+
+```bash
+bash build_cython.sh
+```
+
+Or manually:
 
 ```bash
 python setup_cython.py build_ext --inplace
 ```
 
-This will:
-- Compile `src/ModularCirc/HelperRoutines.pyx` to C code
-- Build the C extension as a shared library
-- Place the compiled module in the source tree
+## Prerequisites
+
+- Python >= 3.10
+- Cython >= 3.0
+- NumPy >= 1.20
+- C compiler (gcc, clang, or MSVC)
 
 ## Using the Cython Module
 

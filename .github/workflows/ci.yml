@@ -43,9 +43,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install setuptools --upgrade
-          pip install cython numpy
-          bash build_cython.sh
-          pip install ./
+          pip install cython numpy  # Install build dependencies first
+          pip install -e .
+
+      - name: Verify installation
+        run: |
+          python verify_installation.py
 
       - name: Run tests
         run: |
@@ -73,9 +76,12 @@ jobs:
       run: |
         source venv/bin/activate
         python -m pip install --upgrade pip
-        pip install cython numpy
-        bash build_cython.sh
-        pip install ./
+        pip install cython numpy  # Install build dependencies first
+        pip install -e .
+    
+    - name: Verify installation
+      run: |
+        source venv/bin/activate
         ls src/ModularCirc/HelperRoutines/
         python verify_installation.py
 
