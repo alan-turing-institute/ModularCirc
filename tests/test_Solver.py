@@ -260,8 +260,7 @@ class TestSolver(unittest.TestCase):
         temp_dict = dict(zip(self.solver._funcs3[self.solver.perm_indices], self.solver._derivatives_temp[self.solver.perm_indices].tolist()))
         temp_str = "\n".join([f"{key}: {value:.3f}" for key, value in temp_dict.items()])
         logging.info(f"pv_dfdt_update output sample: \n{temp_str}")
-        logging.info(f"{self.solver.model.components['la']._P_i._ode_sys_mapping['dudt_func']}",
-                     f'{self.solver.model.components["la"]._P_i._ode_sys_mapping["dudt_func"](0, np.ones(3,)):.3f}')
+        logging.info(f"{self.solver.model.components['lv']._P_i._ode_sys_mapping['dudt_func']}\n{self.solver.model.components['lv']._P_i._ode_sys_mapping['dudt_func'](0, np.ones(3,)):.3f}")
 
         np.testing.assert_allclose(pv_dfdt_result, expected_output)
 
