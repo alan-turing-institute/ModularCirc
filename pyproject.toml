@@ -11,8 +11,7 @@ authors = [
 description = "A python package for creating and running 0D models of the cardiovascular system"
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
-license-files = ["LICEN[CS]E*"]
+license = { file = "LICENSE" }
 
 dependencies = [
     "matplotlib",
