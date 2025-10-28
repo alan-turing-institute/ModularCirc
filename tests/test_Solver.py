@@ -7,6 +7,7 @@ from ModularCirc.Models.OdeModel import OdeModel
 from ModularCirc.Solver import Solver
 from ModularCirc.Models.KorakianitisMixedModel import KorakianitisMixedModel
 from ModularCirc.Models.KorakianitisMixedModel_parameters import KorakianitisMixedModel_parameters
+from ModularCirc.HelperRoutines import USING_CYTHON
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -255,6 +256,7 @@ class TestSolver(unittest.TestCase):
         self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
 
         expected_output = np.load(output_file_path)
+        print("USING_CYTHON:", USING_CYTHON)
 
         np.testing.assert_allclose(pv_dfdt_result, expected_output)
 

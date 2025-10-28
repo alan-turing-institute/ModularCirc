@@ -44,8 +44,8 @@ try:
         gen_total_dpdt_fixed,
     )
     USING_CYTHON = True
-    # if '--verbose' in sys.argv or True:  # Always show for now
-    #     print("✓ Using Cythonized HelperRoutines (C-compiled, no JIT overhead)")
+    if '--verbose' in sys.argv or True:  # Always show for now
+        print("✓ Using Cythonized HelperRoutines (C-compiled, no JIT overhead)")
 except ImportError as e:
     print(e)
     # Fall back to original Numba implementation
