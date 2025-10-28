@@ -16,9 +16,9 @@ import sys
 import time
 import cProfile
 import pstats
-
+import os
 # Add the src directory to the path (going up two levels from sandbox/profiling/)
-sys.path.insert(0, '/home/mb5613/Git/ModularCirc/src')
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
 
 from ModularCirc.Models.KorakianitisMixedModel import KorakianitisMixedModel
 from ModularCirc.Models.KorakianitisMixedModel_parameters import KorakianitisMixedModel_parameters
