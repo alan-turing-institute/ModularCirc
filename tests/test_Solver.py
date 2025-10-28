@@ -256,7 +256,7 @@ class TestSolver(unittest.TestCase):
         self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
 
         expected_output = np.load(output_file_path)
-        print("USING_CYTHON:", USING_CYTHON)
+        logging.info("USING_CYTHON:", USING_CYTHON)
 
         np.testing.assert_allclose(pv_dfdt_result, expected_output)
 
