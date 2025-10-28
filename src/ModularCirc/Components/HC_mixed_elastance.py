@@ -42,6 +42,7 @@ class HC_mixed_elastance(ComponentBase):
         # Use factory methods for all function generation
         time_shifter = ComponentFunctionFactory.gen_time_shifter(
             self.kwargs['delay'], self._to.tcycle)
+        self._temp = time_shifter
         self._af = ComponentFunctionFactory.gen_activation_function(
             self.af, time_shifter, **self.kwargs)
 
