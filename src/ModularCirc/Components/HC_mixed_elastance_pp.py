@@ -25,8 +25,11 @@ class HC_mixed_elastance_pp(ComponentBase):
         self.E_act = E_act
         self.v_ref = v_ref
         self.eps = 1.0e-3
+        kwargs.setdefault('delay', 0.0)
         self.kwargs = kwargs
         self.af = af
+        
+    
 
         self.make_unique_io_state_variable(p_flag=True, q_flag=False)
 

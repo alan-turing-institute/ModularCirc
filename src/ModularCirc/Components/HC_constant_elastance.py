@@ -28,6 +28,7 @@ class HC_constant_elastance(ComponentBase):
         self.eps = 1.0e-3
         self.p0 = p
         self.af = af
+        kwargs.setdefault('delay', 0.0)
         self.kwargs = kwargs
 
         # Create parameterized activation function

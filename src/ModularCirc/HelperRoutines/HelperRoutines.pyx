@@ -8,6 +8,7 @@ import numpy as np
 cimport numpy as cnp
 from libc.math cimport sqrt, exp, log, cos, sin, fabs, isnan, M_PI
 cimport cython
+from libc.stdio cimport printf
 
 cnp.import_array()
 
@@ -431,7 +432,7 @@ cpdef double time_shift(double t, double shift=0.0, double tcycle=0.0) nogil:
     Returns:
         shifted time
     """
-    if shift == 0.0:
+    if fabs(shift) < 1e-12:
         return t
     elif t < tcycle - shift:
         return t + shift
@@ -470,7 +471,7 @@ cdef class GenTimeShifter:
         Returns:
             shifted time
         """
-        return time_shift(t, self.shift, self.tcycle)
+        return time_shift(t, shift=self.shift, tcycle=self.tcycle)
 
 
 @cython.boundscheck(False)

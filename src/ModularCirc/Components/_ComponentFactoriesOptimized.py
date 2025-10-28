@@ -98,6 +98,7 @@ class ComponentFunctionFactory:
         GenTimeShifter is used instead of partial(time_shift, ...) because it provides
         better performance and avoids closure overhead for repeated (delay, T) pairs.
         """
+        delay = 0.0 if np.isnan(delay) else delay
         return GenTimeShifter(shift=delay, tcycle=T)
         
     

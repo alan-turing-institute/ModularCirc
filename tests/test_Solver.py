@@ -7,7 +7,7 @@ from ModularCirc.Models.OdeModel import OdeModel
 from ModularCirc.Solver import Solver
 from ModularCirc.Models.KorakianitisMixedModel import KorakianitisMixedModel
 from ModularCirc.Models.KorakianitisMixedModel_parameters import KorakianitisMixedModel_parameters
-from ModularCirc.HelperRoutines import USING_CYTHON
+from ModularCirc.HelperRoutines import USING_CYTHON, GenTimeShifter
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -264,6 +264,8 @@ class TestSolver(unittest.TestCase):
         logging.info(f'lv {self.solver.model.components["lv"]._temp(0.0):.3f}')
         logging.info(f'la {self.solver.model.components["la"]._temp(0.0):.3f}')
                 
+        test = GenTimeShifter(shift=0.0, tcycle=1.0)
+        logging.info(f'Test GenTimeShifter output: {test(0.0):.3f}')
         np.testing.assert_allclose(pv_dfdt_result, expected_output)
 
 
