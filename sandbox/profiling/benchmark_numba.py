@@ -7,9 +7,9 @@ of HelperRoutines functions.
 import sys
 import time
 import numpy as np
-
+import os
 # Add the src path to import our module
-sys.path.insert(0, '/home/mb5613/Git/ModularCirc/src')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src')))
 
 from ModularCirc import HelperRoutines as hr
 
