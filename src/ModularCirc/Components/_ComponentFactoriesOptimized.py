@@ -19,7 +19,8 @@ from ..HelperRoutines import (
     maynard_impedance_dqdt, maynard_phi_law, time_shift,
     active_pressure_law, passive_pressure_law, active_dpdt_law, passive_dpdt_law,
     volume_from_pressure_nonlinear,
-    activation_function_1, activation_function_2, activation_function_3
+    activation_function_1, activation_function_2, activation_function_3,
+    GenTimeShifter
 )
 
 # Cache compiled time shifter closures to avoid recompiling identical (delay, T)
@@ -93,8 +94,9 @@ class ComponentFunctionFactory:
     @staticmethod
     def gen_time_shifter(delay: float, T: float):
         """Generate time shifter function."""
-        return partial(time_shift, shift=delay, tcycle=T)
-
+        # return partial(time_shift, shift=delay, tcycle=T)
+        return GenTimeShifter(delay, T)
+        
     
     @staticmethod
     def gen_activation_function(af, time_shifter, **kwargs):

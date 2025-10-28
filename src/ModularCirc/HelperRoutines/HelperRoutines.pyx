@@ -438,6 +438,41 @@ cpdef double time_shift(double t, double shift=0.0, double tcycle=0.0) nogil:
     else:
         return t + shift - tcycle
 
+
+cdef class GenTimeShifter:
+    """
+    Cythonized time shifter callable class.
+    
+    This replaces Python partial functions for time shifting,
+    providing a fully compiled C implementation with nogil capability.
+    """
+    cdef double shift
+    cdef double tcycle
+    
+    def __init__(self, double shift, double tcycle):
+        """
+        Initialize the time shifter.
+        
+        Args:
+            shift: time shift amount
+            tcycle: cycle period
+        """
+        self.shift = shift
+        self.tcycle = tcycle
+    
+    def __call__(self, double t):
+        """
+        Apply time shift to input time.
+        
+        Args:
+            t: current time
+        
+        Returns:
+            shifted time
+        """
+        return time_shift(t, self.shift, self.tcycle)
+
+
 # Helper function for softplus (kept for API compatibility)
 def get_softplus_max(double alpha):
     """Return a lambda function with fixed alpha for softplus."""

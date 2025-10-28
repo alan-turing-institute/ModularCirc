@@ -37,12 +37,13 @@ try:
         passive_dpdt_law,
         volume_from_pressure_nonlinear,
         time_shift,
+        GenTimeShifter,
         bold_text,
         gen_total_dpdt_fixed,
     )
     USING_CYTHON = True
-    if '--verbose' in sys.argv or True:  # Always show for now
-        print("✓ Using Cythonized HelperRoutines (C-compiled, no JIT overhead)")
+    # if '--verbose' in sys.argv or True:  # Always show for now
+    #     print("✓ Using Cythonized HelperRoutines (C-compiled, no JIT overhead)")
 except ImportError as e:
     print(e)
     # Fall back to original Numba implementation
@@ -116,5 +117,6 @@ __all__ = [
     'passive_dpdt_law',
     'volume_from_pressure_nonlinear',
     'time_shift',
+    'GenTimeShifter',
     'bold_text',
 ]
