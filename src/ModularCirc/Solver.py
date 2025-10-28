@@ -1,5 +1,5 @@
 from .Models.OdeModel import OdeModel
-from .HelperRoutines import bold_text
+from .HelperRoutines import bold_text, compute_derivatives_batch
 from .Models.OdeModel import OdeModel
 
 import pandas as pd
@@ -319,18 +319,6 @@ class Solver():
         self.optimize = self.optimize_method
         self.s_u_residual = self.s_u_residual_method
 
-        N_psv = self._N_psv
-        temp_func3 = tuple(self._funcs3)
-        ids3 = self._ids3  # Capture ids3 in local scope
-
-        # for func in self._funcs3:
-        #     print(func.__name__)
-        # raise Exception
-        # @nb.njit('float64[:](float64, float64[:])', cache=True)
-        # def compute_pv_dfdt_func_iteration(ht, y):
-        #     return [temp_func3[i](ht, y[ids3[i]]) for i in range(N_psv)]
-        # self.compute_pv_dfdt_func_iteration = compute_pv_dfdt_func_iteration
-
     def advance_cycle(self, y0, cycleID, step = 1):
         """
         Optimized advance_cycle method with reduced allocations and computations.
@@ -467,16 +455,12 @@ class Solver():
     def _compute_derivatives_optimized(self, ht: float, y_temp: np.ndarray):
         """
         Optimized derivative computation that minimizes Python overhead.
-        Uses vectorized input extraction - the fastest approach tested.
+        Uses Cythonized batch computation for better performance.
         """
-        all_inputs = y_temp[self._ids3]  # NumPy's optimized vectorized indexing
         
-        results = self._derivatives_temp
-        funcs = self._funcs3
-        
-        for i in range(self.N_psv):
-            func_result = funcs[i](t=ht, y=all_inputs[i])
-            results[i] = func_result
+        # Call Cythonized batch computation function
+        # This reduces Python loop overhead by moving the iteration to Cython
+        compute_derivatives_batch(ht, y_temp[self._ids3], self._funcs3, self._derivatives_temp)
 
     def initialize_by_function_method(self, y: np.ndarray[float]) -> np.ndarray[float]:
         """
@@ -484,10 +468,11 @@ class Solver():
         Vectorized version for better performance.
         """
         # Use pre-computed function-index pairs for consistent optimization
-        results = [fi(t=0.0, y=y[self._ids1[i]]) for fi, i in self._func_index_pairs1]
+        # results = [fi(t=0.0, y=y[self._ids1[i]]) for fi, i in self._func_index_pairs1]
+        compute_derivatives_batch(0.0, y[self._ids1], self._funcs1, self._initialization_temp)
         
         # Copy results to pre-allocated array
-        self._initialization_temp[:] = results
+        # self._initialization_temp[:] = results
         
         return self._initialization_temp
 
@@ -496,14 +481,7 @@ class Solver():
         Updates the secondary state variables based on the current values of the primary state variables.
         Vectorized version for better performance.
         """
-        # Create input arrays in one vectorized operation
-        y_inputs = y[self._ids2]
-        
-        funcs = self._funcs2
-        results = self._secondary_temp
-        
-        for i in range(self.N_ssv):
-            results[i] = funcs[i](t=t, y=y_inputs[i])
+        compute_derivatives_batch(t, y[self._ids2], self._funcs2, self._secondary_temp)
         
         return self._secondary_temp
 
@@ -562,6 +540,7 @@ class Solver():
             
             # Update secondary variables for this batch
             secondary_updates = self.s_u_update_batch_method(t=0.0, y_batch=batch)
+            # secondary_updates = self.s_u_update_method(t=0.0, y=batch)
             
             # Apply updates back to batch data
             batch[:, keys4] = secondary_updates

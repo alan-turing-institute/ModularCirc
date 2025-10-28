@@ -38,6 +38,7 @@ try:
         volume_from_pressure_nonlinear,
         time_shift,
         GenTimeShifter,
+        compute_derivatives_batch,
         bold_text,
         gen_total_dpdt_fixed,
     )
@@ -118,5 +119,6 @@ __all__ = [
     'volume_from_pressure_nonlinear',
     'time_shift',
     'GenTimeShifter',
+    'compute_derivatives_batch',
     'bold_text',
 ]

@@ -473,6 +473,39 @@ cdef class GenTimeShifter:
         return time_shift(t, self.shift, self.tcycle)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef void compute_derivatives_batch(double ht, double[:, :] all_inputs, 
+                                      object funcs, double[::1] results) except *:
+    """
+    Cythonized batch computation of derivatives for primary state variables.
+    
+    This function iterates through derivative functions and computes results,
+    minimizing Python overhead by using typed memoryviews and cpdef.
+    
+    Args:
+        ht: current time in the heart cycle
+        all_inputs: 2D array where each row contains inputs for one derivative function
+        funcs: iterable of derivative functions (can be list or numpy array)
+        results: 1D output array to store computed derivatives (modified in-place)
+    
+    Note:
+        This function calls Python callables, so it cannot be fully nogil,
+        but it reduces loop overhead compared to pure Python iteration.
+    """
+    cdef int i
+    cdef int n_funcs = len(funcs)
+    cdef object func
+    cdef object func_result
+    
+    for i in range(n_funcs):
+        func = funcs[i]
+        # Call the function with current time and input slice
+        # We need to pass a dict with keyword arguments since the functions expect t= and y=
+        func_result = func(t=ht, y=all_inputs[i])
+        results[i] = func_result
+
+
 # Helper function for softplus (kept for API compatibility)
 def get_softplus_max(double alpha):
     """Return a lambda function with fixed alpha for softplus."""
