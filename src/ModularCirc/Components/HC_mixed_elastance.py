@@ -42,19 +42,19 @@ class HC_mixed_elastance(ComponentBase):
         # Use factory methods for all function generation
         time_shifter = ComponentFunctionFactory.gen_time_shifter(
             self.kwargs['delay'], self._to.tcycle)
-        _af = ComponentFunctionFactory.gen_activation_function(
+        self._af = ComponentFunctionFactory.gen_activation_function(
             self.af, time_shifter, **self.kwargs)
 
         # Use simplified factory methods - eliminates intermediate function generation
         total_p = ElastanceFactory.gen_total_pressure_fixed(
-            _af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
+            self._af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
         try:
             total_dpdt = gen_total_dpdt_fixed(
-                _af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
+                self._af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
         except Exception as e:
             print(f"Error generating total_dpdt_fixed: {e}")
             total_dpdt = ElastanceFactory.gen_total_dpdt_fixed(
-                _af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
+                self._af, self.E_act, self.v_ref, self.E_pas, self.k_pas)
         comp_v = ElastanceFactory.gen_volume_from_pressure_nonlinear(
             self.E_pas, self.v_ref, self.k_pas)
 
