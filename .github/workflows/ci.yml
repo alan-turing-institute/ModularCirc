@@ -76,6 +76,7 @@ jobs:
         pip install cython numpy
         bash build_cython.sh
         pip install ./
+        ls src/ModularCirc/HelperRoutines/
         python verify_installation.py
 
     - name: Run tests
