@@ -75,6 +75,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install cython numpy
         bash build_cython.sh
+        python verify_installation.py
         pip install ./
 
     - name: Run tests
