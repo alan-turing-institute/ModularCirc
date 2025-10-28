@@ -243,6 +243,7 @@ class TestSolver(unittest.TestCase):
 
         # Load the expected values from an npy file
         y0 = np.load(input_file_path)
+        logging.info(f"pv_dfdt_update input sample: {y0[self.solver.perm_indices]}")
 
         # Verify the function can run with the expected input
         pv_dfdt_result = self.solver.pv_dfdt_global(t=0, y=y0)
