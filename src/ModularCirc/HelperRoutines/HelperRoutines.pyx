@@ -480,30 +480,89 @@ cpdef void compute_derivatives_batch(double ht, double[:, :] all_inputs,
     """
     Cythonized batch computation of derivatives for primary state variables.
     
-    This function iterates through derivative functions and computes results,
-    minimizing Python overhead by using typed memoryviews and cpdef.
+    Optimized version that assumes:
+    - funcs is a numpy array of callable objects
+    - Each function has signature: func(t=double, y=double[::1]) -> double
+    
+    This minimizes Python overhead by:
+    1. Using typed memoryviews for array access
+    2. Iterating at C speed through the functions array
+    3. Direct assignment to results without intermediate Python objects
     
     Args:
         ht: current time in the heart cycle
         all_inputs: 2D array where each row contains inputs for one derivative function
-        funcs: iterable of derivative functions (can be list or numpy array)
+        funcs: numpy array of derivative functions (each accepts t and y, returns double)
         results: 1D output array to store computed derivatives (modified in-place)
     
     Note:
-        This function calls Python callables, so it cannot be fully nogil,
-        but it reduces loop overhead compared to pure Python iteration.
+        While the function calls are still Python objects (cannot be nogil),
+        the iteration and array access are optimized at the C level.
     """
     cdef int i
-    cdef int n_funcs = len(funcs)
+    cdef Py_ssize_t n_funcs = all_inputs.shape[0]
     cdef object func
-    cdef object func_result
+    cdef double result
     
+    # Iterate through functions using C-level loop
     for i in range(n_funcs):
+        # Get function from array (Python object access)
         func = funcs[i]
-        # Call the function with current time and input slice
-        # We need to pass a dict with keyword arguments since the functions expect t= and y=
-        func_result = func(t=ht, y=all_inputs[i])
-        results[i] = func_result
+        # Call with known signature - pass memoryview slice directly
+        # This avoids creating intermediate Python objects for the arguments
+        result = func(t=ht, y=all_inputs[i])
+        # Direct assignment to typed memoryview
+        results[i] = result
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef void compute_derivatives_batch_indexed(double ht, double[::1] y_temp,
+                                              long[:, ::1] ids,
+                                              object funcs, double[::1] results) except *:
+    """
+    Highly optimized derivative computation that extracts inputs on-the-fly.
+    
+    This version avoids creating the intermediate all_inputs array by:
+    - Taking the full state vector y_temp
+    - Taking index array ids where each row specifies which elements to extract
+    - Extracting values directly in the C loop
+    
+    Args:
+        ht: current time in the heart cycle
+        y_temp: full state vector
+        ids: 2D array of indices, where each row specifies inputs for one function
+        funcs: numpy array of derivative functions
+        results: 1D output array to store computed derivatives (modified in-place)
+    """
+    cdef int i
+    cdef int j
+    cdef int valid_count
+    cdef Py_ssize_t n_funcs = ids.shape[0]
+    cdef Py_ssize_t n_inputs = ids.shape[1]
+    cdef object func
+    cdef double result
+    cdef long idx
+    
+    # Pre-allocate a buffer for function inputs
+    cdef double[::1] input_buffer = np.empty(n_inputs, dtype=np.float64)
+    
+    # Iterate through each function
+    for i in range(n_funcs):
+        # Extract inputs for this function
+        valid_count = 0
+        for j in range(n_inputs):
+            idx = ids[i, j]
+            if idx >= 0:  # -1 is used as padding, skip it
+                input_buffer[valid_count] = y_temp[idx]
+                valid_count += 1
+            else:
+                break  # Stop when we hit padding
+        
+        # Get function and call it with only the valid inputs
+        func = funcs[i]
+        result = func(t=ht, y=input_buffer[:valid_count])
+        results[i] = result
 
 
 # Helper function for softplus (kept for API compatibility)

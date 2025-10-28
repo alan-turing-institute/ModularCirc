@@ -39,6 +39,7 @@ try:
         time_shift,
         GenTimeShifter,
         compute_derivatives_batch,
+        compute_derivatives_batch_indexed,
         bold_text,
         gen_total_dpdt_fixed,
     )
@@ -120,5 +121,6 @@ __all__ = [
     'time_shift',
     'GenTimeShifter',
     'compute_derivatives_batch',
+    'compute_derivatives_batch_indexed',
     'bold_text',
 ]

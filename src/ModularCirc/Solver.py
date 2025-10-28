@@ -1,5 +1,5 @@
 from .Models.OdeModel import OdeModel
-from .HelperRoutines import bold_text, compute_derivatives_batch
+from .HelperRoutines import bold_text, compute_derivatives_batch, compute_derivatives_batch_indexed
 from .Models.OdeModel import OdeModel
 
 import pandas as pd
@@ -206,8 +206,8 @@ class Solver():
         used during the numerical integration process to update the state variables."""
 
         # Extract function arrays and indices for class attribute storage
-        funcs1 = list(self._global_sv_init_fun.values())
-        ids1   = list(self._global_sv_init_ind.values())
+        funcs1 = np.array(list(self._global_sv_init_fun.values()))
+        ids1   = np.stack(list(self._global_sv_init_ind.values()))
         funcs2 = np.array(list(self._global_ssv_update_fun.values()))
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
         keys3  = np.array(list(self._global_psv_update_fun.keys()))
@@ -276,8 +276,8 @@ class Solver():
         self.uband = uband
 
         # Store function arrays and indices as class attributes
-        self._funcs1 = list(funcs1)
-        self._ids1 = list(ids1)
+        self._funcs1 = funcs1
+        self._ids1 = ids1
         self._funcs2 = funcs2
         self._ids2 = ids2
         self._funcs3 = funcs3
@@ -457,22 +457,15 @@ class Solver():
         Optimized derivative computation that minimizes Python overhead.
         Uses Cythonized batch computation for better performance.
         """
-        
-        # Call Cythonized batch computation function
-        # This reduces Python loop overhead by moving the iteration to Cython
-        compute_derivatives_batch(ht, y_temp[self._ids3], self._funcs3, self._derivatives_temp)
+        compute_derivatives_batch_indexed(ht, y_temp, self._ids3, self._funcs3, self._derivatives_temp)
 
     def initialize_by_function_method(self, y: np.ndarray[float]) -> np.ndarray[float]:
         """
         Initialize the state variables using a set of initialization functions.
-        Vectorized version for better performance.
+        Cythonised version for better performance.
         """
-        # Use pre-computed function-index pairs for consistent optimization
-        # results = [fi(t=0.0, y=y[self._ids1[i]]) for fi, i in self._func_index_pairs1]
         compute_derivatives_batch(0.0, y[self._ids1], self._funcs1, self._initialization_temp)
-        
-        # Copy results to pre-allocated array
-        # self._initialization_temp[:] = results
+
         
         return self._initialization_temp
 
@@ -606,7 +599,6 @@ class Solver():
         
         # Method: Pre-extract all input slices and use optimized batch calling
         self._compute_derivatives_optimized(ht, y_temp)
-        # self._derivatives_temp = self.compute_pv_dfdt_func_iteration(ht, y_temp)
         
         # Apply inverse permutation using index-based operation
         return self._derivatives_temp[self.perm_indices]
