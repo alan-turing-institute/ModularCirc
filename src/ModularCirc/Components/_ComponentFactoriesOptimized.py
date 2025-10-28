@@ -93,8 +93,11 @@ class ComponentFunctionFactory:
 
     @staticmethod
     def gen_time_shifter(delay: float, T: float):
-        """Generate time shifter function."""
-        # return partial(time_shift, shift=delay, tcycle=T)
+        """Generate time shifter function.
+        
+        GenTimeShifter is used instead of partial(time_shift, ...) because it provides
+        better performance and avoids closure overhead for repeated (delay, T) pairs.
+        """
         return GenTimeShifter(delay, T)
         
     
