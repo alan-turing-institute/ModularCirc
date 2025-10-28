@@ -256,7 +256,10 @@ class TestSolver(unittest.TestCase):
         self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
 
         expected_output = np.load(output_file_path)
-        logging.info("USING_CYTHON:", USING_CYTHON)
+        # logging.info("USING_CYTHON:", f"{USING_CYTHON}")
+        temp_dict = dict(zip(self.solver._funcs3[self.solver.perm_indices], self.solver._derivatives_temp[self.solver.perm_indices].tolist()))
+        temp_str = "\n".join([f"{key}: {value:.3f}" for key, value in temp_dict.items()])
+        logging.info(f"pv_dfdt_update output sample: \n{temp_str}")
 
         np.testing.assert_allclose(pv_dfdt_result, expected_output)
 
