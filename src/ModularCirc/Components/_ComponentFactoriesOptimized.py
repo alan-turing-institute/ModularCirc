@@ -98,7 +98,7 @@ class ComponentFunctionFactory:
         GenTimeShifter is used instead of partial(time_shift, ...) because it provides
         better performance and avoids closure overhead for repeated (delay, T) pairs.
         """
-        return GenTimeShifter(time_shift=delay, T=T)
+        return GenTimeShifter(shift=delay, tcycle=T)
         
     
     @staticmethod
