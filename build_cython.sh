@@ -32,13 +32,16 @@ if [ -f src/ModularCirc/HelperRoutines/HelperRoutinesCython*.so ] || [ -f src/Mo
     ls -lh src/ModularCirc/HelperRoutines/HelperRoutinesCython*.{so,pyd} 2>/dev/null || true
     
     # Copy to site-packages if editable install exists
-    SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])" 2>/dev/null)
-    if [ -d "$SITE_PACKAGES/ModularCirc/HelperRoutines" ]; then
+    SITE_PACKAGES=$(python -c "import site; import sys; print(site.getsitepackages()[0] if hasattr(site, 'getsitepackages') else sys.prefix + '/lib/python' + sys.version[:3] + '/site-packages')" 2>/dev/null || echo "")
+    if [ -n "$SITE_PACKAGES" ] && [ -d "$SITE_PACKAGES/ModularCirc/HelperRoutines" ]; then
         echo ""
         echo "Copying extension to installed package..."
         cp src/ModularCirc/HelperRoutines/HelperRoutinesCython*.so "$SITE_PACKAGES/ModularCirc/HelperRoutines/" 2>/dev/null || true
         cp src/ModularCirc/HelperRoutines/HelperRoutinesCython*.pyd "$SITE_PACKAGES/ModularCirc/HelperRoutines/" 2>/dev/null || true
         echo "✓ Extension copied to: $SITE_PACKAGES/ModularCirc/HelperRoutines/"
+    else
+        echo ""
+        echo "ℹ️  Skipping copy to site-packages (will be installed with 'pip install')"
     fi
     
     echo ""
