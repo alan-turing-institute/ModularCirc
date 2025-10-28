@@ -78,6 +78,26 @@ except ImportError as e:
         time_shift,
         time_shift_inplace,
     )
+    
+    # Provide a Python fallback for gen_total_dpdt_fixed to keep API parity
+    def gen_total_dpdt_fixed(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
+        """Fallback generator for total dp/dt when Cython is unavailable.
+
+        Mirrors the Cython implementation using the Numba-accelerated law functions.
+        Returns a Python callable with signature: func(t: float, y: array) -> float.
+        """
+        def total_dpdt(t, y,
+                       _af=_af,
+                       E_act=E_act, v_ref=v_ref, E_pas=E_pas, k_pas=k_pas):
+            _af_t = _af(t, dt=False)
+            _af_dt = _af(t, dt=True)
+            return (
+                _af_dt * (active_pressure_law(t, y, E_act, v_ref) -
+                          passive_pressure_law(t, y, E_pas, k_pas, v_ref))
+                + _af_t * active_dpdt_law(t, y, E_act)
+                + (1.0 - _af_t) * passive_dpdt_law(t, y, E_pas, k_pas, v_ref)
+            )
+        return total_dpdt
     warnings.warn(
         "Cython version of HelperRoutines not found. Using Numba version.\n"
         "To build Cython version for faster startup, run:\n"
@@ -123,4 +143,5 @@ __all__ = [
     'compute_derivatives_batch',
     'compute_derivatives_batch_indexed',
     'bold_text',
+    'gen_total_dpdt_fixed',
 ]
