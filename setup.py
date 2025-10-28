@@ -1,19 +1,17 @@
 """
 Setup script for ModularCirc package.
-This handles both regular installation and optional Cython extension building.
+This handles Cython extension building with graceful fallback.
+Most configuration is in pyproject.toml.
 """
 
-from setuptools import setup, find_packages
+from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-import sys
-import os
 
 # Try to build Cython extension if available
 ext_modules = []
 try:
     from Cython.Build import cythonize
     import numpy as np
-    from setuptools import Extension
     
     extensions = [
         Extension(
@@ -29,7 +27,7 @@ try:
     ext_modules = cythonize(
         extensions,
         compiler_directives={
-            "language_level": "3",
+            "language_level": 3,
             "boundscheck": False,
             "wraparound": False,
             "cdivision": True,
@@ -45,14 +43,14 @@ except ImportError:
 
 
 class BuildExtSafe(build_ext):
-    """Safe build extension that doesn't fail if compilation fails"""
+    """Build extension that doesn't fail if compilation fails"""
     
     def run(self):
         try:
             build_ext.run(self)
         except Exception as e:
             print(f"⚠️  Cython extension build failed: {e}")
-            print("   Falling back to Numba implementation")
+            print("   Package will use Numba fallback")
     
     def build_extension(self, ext):
         try:
@@ -61,6 +59,7 @@ class BuildExtSafe(build_ext):
             print(f"⚠️  Failed to build {ext.name}: {e}")
 
 
+# All other configuration is in pyproject.toml
 setup(
     ext_modules=ext_modules,
     cmdclass={'build_ext': BuildExtSafe},

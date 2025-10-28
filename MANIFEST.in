@@ -3,6 +3,5 @@ include LICENSE
 include CONTRIBUTING.md
 include pyproject.toml
 include setup.py
-include setup_cython.py
 recursive-include src/ModularCirc *.pyx *.pxd
 recursive-include src/ModularCirc *.py

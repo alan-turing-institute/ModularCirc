@@ -28,7 +28,7 @@ fi
 
 echo ""
 echo "Building Cython extension..."
-python setup_cython.py build_ext --inplace
+python setup.py build_ext --inplace
 
 # Check if build succeeded
 if [ -f src/ModularCirc/HelperRoutines/HelperRoutinesCython*.so ] || [ -f src/ModularCirc/HelperRoutines/HelperRoutinesCython*.pyd ]; then

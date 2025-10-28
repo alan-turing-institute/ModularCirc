@@ -43,3 +43,13 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "ModularCirc.HelperRoutines" = ["*.pyx", "*.so", "*.pyd"]
+
+[tool.cython]
+# Cython compiler directives
+language_level = "3"
+boundscheck = false
+wraparound = false
+cdivision = true
+initializedcheck = false
+nonecheck = false
+annotate = true
