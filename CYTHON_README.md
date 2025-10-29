@@ -96,9 +96,9 @@ To remove compiled artifacts:
 
 ```bash
 # Remove compiled extensions
-rm -f src/ModularCirc/HelperRoutines/HelpereRoutinesCython*.so
+rm -f src/ModularCirc/HelperRoutines/HelperRoutinesCython*.so
 rm -f src/ModularCirc/HelperRoutines/HelperRoutinesCython*.pyd
-rm -f src/ModularCirc/HelperRoutines/HelperRoutinesCython.c
+rm -f src/ModularCirc/HelperRoutines/HelperRoutines.c
 
 # Remove build artifacts
 rm -rf build/

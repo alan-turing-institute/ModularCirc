@@ -2,44 +2,57 @@
 Setup script for ModularCirc package.
 This handles Cython extension building with graceful fallback.
 Most configuration is in pyproject.toml.
+
+Environment variables:
+  MODULARCIRC_USE_CYTHON=0  - Disable Cython extension building
+  MODULARCIRC_USE_CYTHON=1  - Enable Cython extension building (default if Cython available)
 """
 
+import os
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 
-# Try to build Cython extension if available
+# Check environment variable for Cython preference
+use_cython_env = os.environ.get('MODULARCIRC_USE_CYTHON', '1')
+disable_cython = use_cython_env.lower() in ('0', 'false', 'no')
+
+# Try to build Cython extension if available and not disabled
 ext_modules = []
-try:
-    from Cython.Build import cythonize
-    import numpy as np
-    
-    extensions = [
-        Extension(
-            "ModularCirc.HelperRoutines.HelperRoutinesCython",
-            ["src/ModularCirc/HelperRoutines/HelperRoutines.pyx"],
-            include_dirs=[np.get_include()],
-            define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
-            extra_compile_args=["-O3", "-ffast-math"],
-            extra_link_args=["-O3"],
+if disable_cython:
+    print("⚠️  Cython extension building disabled via MODULARCIRC_USE_CYTHON")
+    print("   Package will use Numba implementation only")
+else:
+    try:
+        from Cython.Build import cythonize
+        import numpy as np
+        
+        extensions = [
+            Extension(
+                "ModularCirc.HelperRoutines.HelperRoutinesCython",
+                ["src/ModularCirc/HelperRoutines/HelperRoutines.pyx"],
+                include_dirs=[np.get_include()],
+                define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+                extra_compile_args=["-O3", "-ffast-math"],
+                extra_link_args=["-O3"],
+            )
+        ]
+        
+        ext_modules = cythonize(
+            extensions,
+            compiler_directives={
+                "language_level": 3,
+                "boundscheck": False,
+                "wraparound": False,
+                "cdivision": True,
+                "initializedcheck": False,
+                "nonecheck": False,
+            },
+            annotate=True,
         )
-    ]
-    
-    ext_modules = cythonize(
-        extensions,
-        compiler_directives={
-            "language_level": 3,
-            "boundscheck": False,
-            "wraparound": False,
-            "cdivision": True,
-            "initializedcheck": False,
-            "nonecheck": False,
-        },
-        annotate=True,
-    )
-    print("✓ Cython extension will be built")
-except ImportError:
-    print("⚠️  Cython not available - skipping extension build (will use Numba fallback)")
-    ext_modules = []
+        print("✓ Cython extension will be built")
+    except ImportError:
+        print("⚠️  Cython not available - skipping extension build (will use Numba fallback)")
+        ext_modules = []
 
 
 class BuildExtSafe(build_ext):

@@ -456,6 +456,70 @@ def time_shift_inplace(t_array:np.ndarray[float], shift:float, tcycle:float, out
             output[i] = t + shift
         else:
             output[i] = t + shift - tcycle
+            
+def compute_derivatives_batch(t: float, y: np.ndarray, funcs: list, out: np.ndarray):
+    """
+    Compute derivatives for a batch of functions.
+    Fallback implementation for when Cython is not available.
+    
+    Args:
+        t: time value
+        y: state array (could be 1D or 2D if multiple indices)
+        funcs: list of functions to call
+        out: output array to store results
+    """
+    for i, func in enumerate(funcs):
+        # If y is 2D, pass the i-th row; if 1D, pass the whole array
+        if y.ndim == 2:
+            out[i] = func(t, y[i])
+        else:
+            out[i] = func(t, y)
+
+def compute_derivatives_batch_indexed(t: float, y: np.ndarray, ids: np.ndarray, funcs: list, out: np.ndarray):
+    """
+    Compute derivatives for a batch of functions with indexing.
+    Fallback implementation for when Cython is not available.
+    """
+    for i, (idx, func) in enumerate(zip(ids, funcs)):
+        out[i] = func(t, y[idx])
+
+class GenTimeShifter:
+    """
+    Time shifter class for delayed activation functions.
+    Fallback implementation for when Cython is not available.
+    """
+    def __init__(self, shift: float, tcycle: float):
+        self.shift = shift
+        self.tcycle = tcycle
+    
+    def __call__(self, t: float, dt: bool = False) -> float:
+        # Numba time_shift doesn't have a dt parameter, just returns shifted time
+        # If dt=True is requested, we'd need to compute the derivative, but
+        # for a simple time shift the derivative is just 1.0
+        if dt:
+            return 1.0  # Derivative of time shift is 1
+        else:
+            return time_shift(t, self.shift, self.tcycle)
+
+def gen_total_dpdt_fixed(_af, E_act: float, v_ref: float, E_pas: float, k_pas: float):
+    """
+    Generate total pressure derivative function.
+    This is imported from ComponentFactoriesOptimized, included here for compatibility.
+    """
+    def func(t, y):
+        _af_t = _af(t, dt=False)
+        _d_af_dt = _af(t, dt=True)
+        
+        active_p_val = active_pressure_law(t=0.0, y=y, E_act=E_act, v_ref=v_ref)
+        passive_p_val = passive_pressure_law(t=0.0, y=y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
+        
+        active_dpdt_val = active_dpdt_law(t=0.0, y=y, E_act=E_act)
+        passive_dpdt_val = passive_dpdt_law(t=0.0, y=y, E_pas=E_pas, k_pas=k_pas, v_ref=v_ref)
+        
+        return (_d_af_dt * (active_p_val - passive_p_val) +
+               _af_t * active_dpdt_val +
+               (1. - _af_t) * passive_dpdt_val)
+    return func
 
 
 BOLD = '\033[1m'
