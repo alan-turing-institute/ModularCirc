@@ -47,7 +47,7 @@ try:
     if '--verbose' in sys.argv or True:  # Always show for now
         print("✓ Using Cythonized HelperRoutines (C-compiled, no JIT overhead)")
 except ImportError as e:
-    print(e)
+    warnings.warn(f"ImportError: {e}", ImportWarning, stacklevel=2)
     # Fall back to original Numba implementation
     from .HelperRoutines import (
         resistor_model_flow,
