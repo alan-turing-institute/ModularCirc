@@ -39,29 +39,26 @@ python setup_cython.py build_ext --inplace
 
 ### Option 1: Automatic (Recommended)
 
-Add this at the top of `src/ModularCirc/HelperRoutines.py`:
-
+Add this at the top of the script:
 ```python
 # Try to import Cython version, fall back to Numba if unavailable
 try:
-    from .HelperRoutinesCython import *
+    from ModularCirc.HelperRoutines import resistor_model_flow
     print("Using Cythonized HelperRoutines")
 except ImportError:
     # Fall back to current Numba implementation
     pass
 ```
 
-### Option 2: Manual Import
+### Option 2: Manual Import (where function hasn't been cythonised)
 
 In any module that uses HelperRoutines:
 
 ```python
 try:
-    from ModularCirc.HelperRoutinesCython import resistor_model_flow, chamber_volume_rate_change
-    USE_CYTHON = True
+    from ModularCirc.HelperRoutines.HelperRoutinesCython import resistor_model_flow, chamber_volume_rate_change
 except ImportError:
-    from ModularCirc.HelperRoutines import resistor_model_flow, chamber_volume_rate_change
-    USE_CYTHON = False
+    from ModularCirc.HelperRoutines.HelperRoutines import resistor_model_flow, chamber_volume_rate_change
 ```
 
 ## Performance Benefits
@@ -99,9 +96,9 @@ To remove compiled artifacts:
 
 ```bash
 # Remove compiled extensions
-rm -f src/ModularCirc/HelperRoutinesCython*.so
-rm -f src/ModularCirc/HelperRoutinesCython*.pyd
-rm -f src/ModularCirc/HelperRoutinesCython.c
+rm -f src/ModularCirc/HelperRoutines/HelpereRoutinesCython*.so
+rm -f src/ModularCirc/HelperRoutines/HelperRoutinesCython*.pyd
+rm -f src/ModularCirc/HelperRoutines/HelperRoutinesCython.c
 
 # Remove build artifacts
 rm -rf build/
