@@ -82,7 +82,6 @@ jobs:
     - name: Verify installation
       run: |
         source venv/bin/activate
-        ls src/ModularCirc/HelperRoutines/
         python verify_installation.py
 
     - name: Run tests
