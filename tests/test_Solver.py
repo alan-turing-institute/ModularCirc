@@ -243,7 +243,6 @@ class TestSolver(unittest.TestCase):
 
         # Load the expected values from an npy file
         y0 = np.load(input_file_path)
-        # logging.info(f"pv_dfdt_update input sample: {y0[self.solver.perm_indices]}")
 
         # Verify the function can run with the expected input
         pv_dfdt_result = self.solver.pv_dfdt_global(t=0, y=y0)
@@ -257,15 +256,7 @@ class TestSolver(unittest.TestCase):
         self.assertTrue(os.path.exists(output_file_path), f"Expected output file not found: {output_file_path}")
 
         expected_output = np.load(output_file_path)
-        temp_dict = dict(zip(self.solver._funcs3[self.solver.perm_indices], self.solver._derivatives_temp[self.solver.perm_indices].tolist()))
-        temp_str = "\n".join([f"{key}: {value:.3f}" for key, value in temp_dict.items()])
-        logging.info(f"pv_dfdt_update output sample: \n{temp_str}")
-        logging.info(f"{self.solver.model.components['lv']._P_i._ode_sys_mapping['dudt_func']}\n{self.solver.model.components['lv']._P_i._ode_sys_mapping['dudt_func'](0, np.ones(3,)):.3f}")
-        logging.info(f'lv {self.solver.model.components["lv"]._temp(0.0):.3f}')
-        logging.info(f'la {self.solver.model.components["la"]._temp(0.0):.3f}')
-                
-        test = GenTimeShifter(shift=0.0, tcycle=1.0)
-        logging.info(f'Test GenTimeShifter output: {test(0.0):.3f}')
+
         np.testing.assert_allclose(pv_dfdt_result, expected_output)
 
 
