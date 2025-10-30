@@ -73,6 +73,8 @@ This will install the package based on the `pyproject.toml` file specifications.
 
 For improved performance, you can build the optional Cython extensions. This pre-compiles performance-critical functions, eliminating JIT compilation overhead.
 
+> **📖 For detailed installation options and runtime configuration, see [INSTALLATION_OPTIONS.md](INSTALLATION_OPTIONS.md)**
+
 **Requirements:**
 - Cython (`pip install cython` or `pip install ".[performance]"`)
 - C compiler (gcc on Linux, clang on macOS, MSVC on Windows)
@@ -89,7 +91,7 @@ pip install ".[performance]"
 ./build_cython.sh
 
 # Or manually
-python setup_cython.py build_ext --inplace
+python setup.py build_ext --inplace
 ```
 
 **Verification:**
@@ -97,7 +99,7 @@ python setup_cython.py build_ext --inplace
 Check that Cython extensions are loaded:
 
 ```bash
-python -c "import ModularCirc.HelperRoutines.HelperRoutinesCython; print('Cython extensions loaded successfully!')"
+python -c "import ModularCirc.HelperRoutines; print(f'Using Cython: {ModularCirc.HelperRoutines.USING_CYTHON}')"
 ```
 
 Or run the comprehensive verification script:
