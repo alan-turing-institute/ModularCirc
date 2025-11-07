@@ -33,7 +33,8 @@ dependencies = [
     "scipy",
     "joblib",
     "pandera",
-    "tdqm"
+    "tqdm",
+    "setuptools"
 ]
 
 [project.optional-dependencies]
