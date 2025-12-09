@@ -6,7 +6,7 @@
 
 import numpy as np
 cimport numpy as cnp
-from libc.math cimport sqrt, exp, log, cos, sin, fabs, isnan, M_PI
+from libc.math cimport sqrt, exp, log, cos, sin, fabs, isnan, M_PI, tan, atan
 cimport cython
 from libc.stdio cimport printf
 
@@ -87,10 +87,36 @@ cpdef double grounded_capacitor_model_pressure(double t, double[::1] y, double v
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+cpdef double grounded_nonlinear_capacitor_model_pressure(double t, double[::1] y, double v_ref, double c0, double p0) nogil:
+    """
+    Nonlinear capacitor model.
+    
+    Args:
+        t: current time
+        y: [volume]
+        v_ref: reference volume for zero pressure
+        c: capacitance constant
+        k: nonlinearity factor
+    
+    Returns:
+        pressure at input node
+    """
+    cdef double v = y[0]
+    return p0 + tan((v - v_ref) / c0)
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef double grounded_capacitor_model_volume(double t, double[::1] y, double v_ref, double c) nogil:
     """Calculate volume from pressure."""
     cdef double p = y[0]
     return v_ref + p * c
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef double grounded_nonlinear_capacitor_model_volume(double t, double[::1] y, double v_ref, double c0, double p0) nogil:
+    """Calculate volume from pressure (nonlinear capacitor)."""
+    cdef double p = y[0]
+    return v_ref + c0 * atan(p - p0)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -99,6 +125,15 @@ cpdef double grounded_capacitor_model_dpdt(double t, double[::1] y, double c) no
     cdef double q_in = y[0]
     cdef double q_out = y[1]
     return (q_in - q_out) / c
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef double grounded_nonlinear_capacitor_model_dpdt(double t, double[::1] y, double c0, double p0) nogil:
+    """Nonlinear capacitor pressure derivative."""
+    cdef double q_in = y[0]
+    cdef double q_out = y[1]
+    cdef double p = y[2]
+    return (q_in - q_out) * (1.0 + (p - p0) * (p - p0)) / c0
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

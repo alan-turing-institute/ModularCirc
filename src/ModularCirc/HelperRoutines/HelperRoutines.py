@@ -80,6 +80,16 @@ def grounded_capacitor_model_pressure(t:float,
     v = y[0]  # Extract scalar from array
     return (v - v_ref) / c
 
+@nb.njit(['float64(float64, float64[:], float64, float64, float64)'], cache=True)
+def grounded_nonlinear_capacitor_model_pressure(t: float,
+                                                y: np.ndarray[float],
+                                                v_ref: float,
+                                                c0: float,
+                                                p0: float
+                                                ) -> float:
+    v = y[0]
+    return p0 + np.tan((v-v_ref) / c0)
+
 @nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
 def grounded_capacitor_model_volume(t:float,
                                     y:np.ndarray[float],
@@ -89,6 +99,16 @@ def grounded_capacitor_model_volume(t:float,
     p = y[0]  # Extract scalar from array
     return v_ref + p * c
 
+@nb.njit(['float64(float64, float64[:], float64, float64, float64)'], cache=True)
+def grounded_nonlinear_capacitor_model_volume(t: float,
+                                               y: np.ndarray[float],
+                                               v_ref: float,
+                                               c0: float,
+                                               p0: float
+                                               ) -> float:
+    p = y[0]
+    return v_ref + c0 * np.arctan(p - p0)
+
 @nb.njit(['float64(float64, float64[:], float64)'], cache=True)
 def grounded_capacitor_model_dpdt(t:float,
                                   y:np.ndarray[float],
@@ -96,6 +116,16 @@ def grounded_capacitor_model_dpdt(t:float,
                                   ) -> float:
     q_in, q_out = y[:2]
     return (q_in - q_out) / c
+
+@nb.njit(['float64(float64, float64[:,:], float64)'], cache=True)
+def grounded_nonlinear_capacitor_model_dpdt(t: float,
+                                            y: np.ndarray[float],
+                                            c0: float,
+                                            p0: float
+                                            ) -> float:
+    q_in, q_out, p_in = y[:3]
+    return (q_in - q_out) * (1 + (p_in - p0)**2.) / c0
+    
 
 @nb.njit(['float64(float64, float64[:])'], cache=True)
 def chamber_volume_rate_change(t:float,
