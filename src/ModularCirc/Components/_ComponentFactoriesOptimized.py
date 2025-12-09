@@ -9,11 +9,12 @@ in the pre-compiled Cython functions.
 
 import numpy as np
 import pandas as pd
-from typing import Dict, Tuple
 from functools import partial
 from ..HelperRoutines import (
-    resistor_upstream_pressure, grounded_capacitor_model_dpdt,
-    grounded_capacitor_model_pressure, grounded_capacitor_model_volume,
+    resistor_upstream_pressure, 
+    grounded_capacitor_model_dpdt, grounded_nonlinear_capacitor_model_dpdt,
+    grounded_capacitor_model_pressure, grounded_nonlinear_capacitor_model_pressure,
+    grounded_capacitor_model_volume, grounded_nonlinear_capacitor_model_volume,
     resistor_model_flow, chamber_volume_rate_change, resistor_impedance_flux_rate,
     simple_bernoulli_diode_flow, non_ideal_diode_flow, maynard_valve_flow,
     maynard_impedance_dqdt, maynard_phi_law, time_shift,
@@ -22,9 +23,6 @@ from ..HelperRoutines import (
     activation_function_1, activation_function_2, activation_function_3,
     GenTimeShifter
 )
-
-# Cache compiled time shifter closures to avoid recompiling identical (delay, T)
-_TIME_SHIFTER_CACHE: Dict[Tuple[float, float], object] = {}
 
 
 class ComponentFunctionFactory:
@@ -48,14 +46,29 @@ class ComponentFunctionFactory:
         return partial(grounded_capacitor_model_dpdt, c=c)
     
     @staticmethod
+    def gen_nonlinear_capacitor_dpdt(c0: float, p0: float):
+        """Generate nonlinear capacitor pressure derivative function."""
+        return partial(grounded_nonlinear_capacitor_model_dpdt, c0=c0, p0=p0)
+    
+    @staticmethod
     def gen_capacitor_pressure(v_ref: float, c: float):
         """Generate capacitor pressure initialization function."""
         return partial(grounded_capacitor_model_pressure, v_ref=v_ref, c=c)
     
     @staticmethod
+    def gen_nonlinear_capacitor_pressure(v_ref: float, c0: float, p0: float):
+        """Generate nonlinear capacitor pressure initialization function."""
+        return partial(grounded_nonlinear_capacitor_model_pressure, v_ref=v_ref, c0=c0, p0=p0)
+    
+    @staticmethod
     def gen_capacitor_volume(v_ref: float, c: float):
         """Generate capacitor volume function."""
         return partial(grounded_capacitor_model_volume, v_ref=v_ref, c=c)
+    
+    @staticmethod
+    def gen_nonlinear_capacitor_volume(v_ref: float, c0: float, p0: float):
+        """Generate nonlinear capacitor volume function."""
+        return partial(grounded_nonlinear_capacitor_model_volume, v_ref=v_ref, c0=c0, p0=p0)
 
     @staticmethod
     def gen_impedance_flow_rate(r: float, l: float):

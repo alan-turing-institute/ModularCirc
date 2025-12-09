@@ -7,8 +7,10 @@ import numpy as np
 import pandas as pd
 from functools import partial
 from ..HelperRoutines import (
-    resistor_upstream_pressure, grounded_capacitor_model_dpdt,
-    grounded_capacitor_model_pressure, grounded_capacitor_model_volume,
+    resistor_upstream_pressure, 
+    grounded_capacitor_model_dpdt, grounded_nonlinear_capacitor_model_dpdt,
+    grounded_capacitor_model_pressure, grounded_nonlinear_capacitor_model_pressure,
+    grounded_capacitor_model_volume, grounded_nonlinear_capacitor_model_volume,
     resistor_model_flow, chamber_volume_rate_change, resistor_impedance_flux_rate,
     simple_bernoulli_diode_flow, non_ideal_diode_flow, maynard_valve_flow,
     maynard_impedance_dqdt, maynard_phi_law, time_shift,
@@ -45,6 +47,14 @@ class ComponentFunctionFactory:
         return func
     
     @staticmethod
+    def gen_nonlinear_capacitor_dpdt(c0: float, p0: float):
+        """Generate nonlinear capacitor pressure derivative function."""
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):    
+            return grounded_nonlinear_capacitor_model_dpdt(t, y, c0=c0, p0=p0)
+        return func
+    
+    @staticmethod
     def gen_capacitor_pressure(v_ref: float, c: float):
         """Generate capacitor pressure initialization function."""
         @nb.njit('float64(float64, float64[:])',cache=True)
@@ -53,11 +63,27 @@ class ComponentFunctionFactory:
         return func
     
     @staticmethod
+    def gen_nonlinear_capacitor_pressure(v_ref: float, c0: float, p0: float):
+        """Generate nonlinear capacitor pressure initialization function."""
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):    
+            return grounded_nonlinear_capacitor_model_pressure(t, y, v_ref=v_ref, c0=c0, p0=p0)
+        return func
+    
+    @staticmethod
     def gen_capacitor_volume(v_ref: float, c: float):
         """Generate capacitor volume function."""
         @nb.njit('float64(float64, float64[:])',cache=True)
         def func(t, y):
             return grounded_capacitor_model_volume(t, y, v_ref=v_ref, c=c)
+        return func
+    
+    @staticmethod
+    def gen_nonlinear_capacitor_volume(v_ref: float, c0: float, p0: float):
+        """Generate nonlinear capacitor volume function."""
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def func(t, y):
+            return grounded_nonlinear_capacitor_model_volume(t, y, v_ref=v_ref, c0=c0, p0=p0)
         return func
 
     @staticmethod
