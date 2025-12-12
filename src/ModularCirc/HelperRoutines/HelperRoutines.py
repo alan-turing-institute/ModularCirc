@@ -117,13 +117,15 @@ def grounded_capacitor_model_dpdt(t:float,
     q_in, q_out = y[:2]
     return (q_in - q_out) / c
 
-@nb.njit(['float64(float64, float64[:,:], float64)'], cache=True)
+@nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
 def grounded_nonlinear_capacitor_model_dpdt(t: float,
                                             y: np.ndarray[float],
                                             c0: float,
                                             p0: float
                                             ) -> float:
-    q_in, q_out, p_in = y[:3]
+    q_in = y[0]
+    q_out = y[1]
+    p_in = y[2]
     return (q_in - q_out) * (1 + (p_in - p0)**2.) / c0
     
 
