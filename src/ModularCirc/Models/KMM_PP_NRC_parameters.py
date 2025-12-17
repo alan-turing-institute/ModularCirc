@@ -23,7 +23,7 @@ VESSELS = ['sas', 'sat', 'svn', 'pas', 'pvn']
 VESSELS_PAR = ['r', 'c', 'l', 'v_ref', 'v', 'p']
 
 NONLINEAR_VESSELS = ['pat',]
-NONLINEAR_VESSELS_PAR = ['r', 'c0', 'p0', 'v_ref', 'v', 'p']
+NONLINEAR_VESSELS_PAR = ['r', 'c_ref', 'p_ref', 'v_ref', 'v', 'p']
 
 VALVES  = ['mi', 'ao', 'ti', 'po']
 VALVES_PAR = ['CQ', 'RRA']
@@ -63,10 +63,10 @@ class KMM_PP_NRC_parameters(ParametersObject):
         self._valves  = VALVES
         self._chambers= CHAMBERS
 
-        self.set_chamber_comp('lv', E_pas= 1.7,  E_act= 2.5,  v_ref=5.0, k_pas=0.01, tr = 0.30,  td = 0.450,              v=50.)
-        self.set_chamber_comp('la', E_pas= 0.5, E_act= 0.25, v_ref=4.0, k_pas=0.01, tpwb = 0.0, tpww = 0.09, delay=0.08, v=0.0)
-        self.set_chamber_comp('rv', E_pas= 0.67,  E_act= 1.15, v_ref=10., k_pas=0.01, tr=0.30,    td=0.45,                 v=100.)
-        self.set_chamber_comp('ra', E_pas= 0.5, E_act= 0.25, v_ref=4.,  k_pas=0.01, tpwb=0.0,   tpww=0.09,   delay=0.08, v=0.0)
+        self.set_chamber_comp('lv', E_pas= 1.7,  E_act= 3.0,  v_ref=15.0, k_pas=0.015, tr = 0.30,  td = 0.450,              v=50.)
+        self.set_chamber_comp('la', E_pas= 0.5, E_act= 0.25, v_ref=4.0, k_pas=0.07,  tpwb = 0.0, tpww = 0.09, delay=0.08, v=0.0)
+        self.set_chamber_comp('rv', E_pas= 0.67,  E_act= 1.15, v_ref=15., k_pas=0.015, tr=0.30,    td=0.45,                 v=100.)
+        self.set_chamber_comp('ra', E_pas= 0.5, E_act= 0.25, v_ref=4.0, k_pas=0.07,  tpwb = 0.0, tpww = 0.09, delay=0.08, v=0.0)
 
         self.set_activation_function('lv', af=activation_function_2)
         self.set_activation_function('rv', af=activation_function_2)

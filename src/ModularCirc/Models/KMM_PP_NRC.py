@@ -1,7 +1,7 @@
 from .OdeModel import OdeModel
 from .KMM_PP_NRC_parameters import KMM_PP_NRC_parameters
 from .ParametersObject import ParametersObject as po
-from ..Components import Rlc_component, Valve_simple_bernoulli, HC_mixed_elastance, Rc_nonlinear_component
+from ..Components import Rlc_component, Valve_simple_bernoulli, HC_mixed_elastance_pp, Rc_nonlinear_component
 
 
 FULL_NAMES = [
@@ -19,7 +19,7 @@ FULL_NAMES = [
     'PulArtSin',
     'PulArt',
     'PulVen',
-],   # pulmonary valve
+]   # pulmonary valve
 
 class KMM_PP_NRC(OdeModel):
     def __init__(self, time_setup_dict, parobj=KMM_PP_NRC_parameters, suppress_printing:bool=False) -> None:
@@ -37,9 +37,10 @@ class KMM_PP_NRC(OdeModel):
             elif key in parobj._valves:
                 class_ = Valve_simple_bernoulli
             elif key in parobj._chambers:
-                class_ = HC_mixed_elastance
+                class_ = HC_mixed_elastance_pp
             else:
                 raise Exception(f'Component name {key} not in the model list.')
+
             self.components[key] = class_(name=name,
                                     time_object=self.time_object,
                                     **parobj[key].to_dict())
@@ -65,7 +66,18 @@ class KMM_PP_NRC(OdeModel):
                              self.components['svn'],
                              plabel='p_svn',
                              qlabel='q_sat')
-
+        self.connect_modules(self.components['svn'],
+                             self.components['ra'],
+                             plabel='p_ra',
+                             qlabel='q_svn')
+        self.connect_modules(self.components['ra'],
+                             self.components['ti'],
+                             plabel='p_ra',
+                             qlabel='q_ti')
+        self.connect_modules(self.components['ti'],
+                             self.components['rv'],
+                             plabel='p_rv',
+                             qlabel='q_ti')
         self.connect_modules(self.components['rv'],
                              self.components['po'],
                              plabel='p_rv',
@@ -82,3 +94,18 @@ class KMM_PP_NRC(OdeModel):
                              self.components['pvn'],
                              plabel='p_pvn',
                              qlabel='q_pat')
+        self.connect_modules(self.components['pvn'],
+                             self.components['la'],
+                             plabel='p_la',
+                             qlabel='q_pvn')
+        self.connect_modules(self.components['la'],
+                             self.components['mi'],
+                             plabel='p_la',
+                             qlabel='q_mi')
+        self.connect_modules(self.components['mi'],
+                             self.components['lv'],
+                             plabel='p_lv',
+                             qlabel='q_mi')
+
+        for component in self.components.values():
+            component.setup()
