@@ -46,9 +46,9 @@ class ComponentFunctionFactory:
         return partial(grounded_capacitor_model_dpdt, c=c)
     
     @staticmethod
-    def gen_nonlinear_capacitor_dpdt(c0: float, p0: float):
+    def gen_nonlinear_capacitor_dpdt(c0: float, p1: float, p2: float):
         """Generate nonlinear capacitor pressure derivative function."""
-        return partial(grounded_nonlinear_capacitor_model_dpdt, c0=c0, p0=p0)
+        return partial(grounded_nonlinear_capacitor_model_dpdt, c0=c0, p1=p1, p2=p2)
     
     @staticmethod
     def gen_capacitor_pressure(v_ref: float, c: float):
@@ -56,9 +56,9 @@ class ComponentFunctionFactory:
         return partial(grounded_capacitor_model_pressure, v_ref=v_ref, c=c)
     
     @staticmethod
-    def gen_nonlinear_capacitor_pressure(v_ref: float, c0: float, p0: float):
+    def gen_nonlinear_capacitor_pressure(v_ref: float, c0: float, p1: float, p2: float):
         """Generate nonlinear capacitor pressure initialization function."""
-        return partial(grounded_nonlinear_capacitor_model_pressure, v_ref=v_ref, c0=c0, p0=p0)
+        return partial(grounded_nonlinear_capacitor_model_pressure, v_ref=v_ref, c0=c0, p1=p1, p2=p2)
     
     @staticmethod
     def gen_capacitor_volume(v_ref: float, c: float):
@@ -66,9 +66,9 @@ class ComponentFunctionFactory:
         return partial(grounded_capacitor_model_volume, v_ref=v_ref, c=c)
     
     @staticmethod
-    def gen_nonlinear_capacitor_volume(v_ref: float, c0: float, p0: float):
+    def gen_nonlinear_capacitor_volume(v_ref: float, c0: float, p1: float, p2: float):
         """Generate nonlinear capacitor volume function."""
-        return partial(grounded_nonlinear_capacitor_model_volume, v_ref=v_ref, c0=c0, p0=p0)
+        return partial(grounded_nonlinear_capacitor_model_volume, v_ref=v_ref, c0=c0, p1=p1, p2=p2)
 
     @staticmethod
     def gen_impedance_flow_rate(r: float, l: float):

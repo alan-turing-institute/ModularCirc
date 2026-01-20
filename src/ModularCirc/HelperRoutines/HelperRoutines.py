@@ -80,15 +80,19 @@ def grounded_capacitor_model_pressure(t:float,
     v = y[0]  # Extract scalar from array
     return (v - v_ref) / c
 
-@nb.njit(['float64(float64, float64[:], float64, float64, float64)'], cache=True)
+@nb.njit(['float64(float64, float64[:], float64, float64, float64, float64)'], cache=True)
 def grounded_nonlinear_capacitor_model_pressure(t: float,
                                                 y: np.ndarray[float],
                                                 v_ref: float,
                                                 c0: float,
-                                                p0: float
+                                                p1: float,
+                                                p2: float
                                                 ) -> float:
     v = y[0]
-    return p0 + np.tan((v-v_ref) / c0)
+    if p2 < 1e6:
+        return p1 + np.tan((v-v_ref) / c0 / p2) * p2
+    else:
+        return grounded_capacitor_model_pressure(t, y, v_ref, c0)
 
 @nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
 def grounded_capacitor_model_volume(t:float,
@@ -99,15 +103,19 @@ def grounded_capacitor_model_volume(t:float,
     p = y[0]  # Extract scalar from array
     return v_ref + p * c
 
-@nb.njit(['float64(float64, float64[:], float64, float64, float64)'], cache=True)
+@nb.njit(['float64(float64, float64[:], float64, float64, float64, float64)'], cache=True)
 def grounded_nonlinear_capacitor_model_volume(t: float,
                                                y: np.ndarray[float],
                                                v_ref: float,
                                                c0: float,
-                                               p0: float
+                                               p1: float,
+                                               p2: float
                                                ) -> float:
     p = y[0]
-    return v_ref + c0 * np.arctan(p - p0)
+    if p2 < 1e6:
+        return v_ref + c0 * np.arctan((p - p1) / p2) * p2
+    else:
+        return grounded_capacitor_model_volume(t, y, v_ref, c0)
 
 @nb.njit(['float64(float64, float64[:], float64)'], cache=True)
 def grounded_capacitor_model_dpdt(t:float,
@@ -117,17 +125,20 @@ def grounded_capacitor_model_dpdt(t:float,
     q_in, q_out = y[:2]
     return (q_in - q_out) / c
 
-@nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
+@nb.njit(['float64(float64, float64[:], float64, float64, float64)'], cache=True)
 def grounded_nonlinear_capacitor_model_dpdt(t: float,
                                             y: np.ndarray[float],
                                             c0: float,
-                                            p0: float
+                                            p1: float,
+                                            p2: float 
                                             ) -> float:
     q_in = y[0]
     q_out = y[1]
     p_in = y[2]
-    return (q_in - q_out) * (1 + (p_in - p0)**2.) / c0
-    
+    if p2 < 1e6:
+        return (q_in - q_out) * (1 + (p_in - p1)**2.0 / (p2 * p2)) / c0
+    else:
+        return grounded_capacitor_model_dpdt(t, y, c0)
 
 @nb.njit(['float64(float64, float64[:])'], cache=True)
 def chamber_volume_rate_change(t:float,

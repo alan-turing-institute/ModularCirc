@@ -23,7 +23,7 @@ VESSELS = ['sas', 'sat', 'svn', 'pas', 'pvn']
 VESSELS_PAR = ['r', 'c', 'l', 'v_ref', 'v', 'p']
 
 NONLINEAR_VESSELS = ['pat',]
-NONLINEAR_VESSELS_PAR = ['r', 'c_ref', 'p_ref', 'v_ref', 'v', 'p']
+NONLINEAR_VESSELS_PAR = ['r', 'c_ref', 'p1', 'p2', 'v_ref', 'v', 'p']
 
 VALVES  = ['mi', 'ao', 'ti', 'po']
 VALVES_PAR = ['CQ', 'RRA']
@@ -85,7 +85,7 @@ class KMM_PP_NRC_parameters(ParametersObject):
         self.set_rlc_comp('pvn', r=0.006           , c=20.5            , v=9.1, v_ref=0.0)
 
         # nonlinear vessel
-        self.set_nonlinear_rc_comp('pat', r=(0.01+0.05+0.25), c_ref=1075., p_ref=0.0, v=0.0, v_ref=0.0)
+        self.set_nonlinear_rc_comp('pat', r=(0.01+0.05+0.25), c_ref=1., p1=29.5, p2=22.9, v_ref=0.0)
 
         # valves
         dyn = 1333.22

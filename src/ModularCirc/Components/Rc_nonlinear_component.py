@@ -13,7 +13,8 @@ class Rc_nonlinear_component(ComponentBase):
         time_object:TimeClass, 
         r:float,
         c_ref:float,
-        p_ref:float,
+        p1:float,
+        p2:float,
         v_ref:float,
         v:float = None, 
         p:float = None,
@@ -22,9 +23,10 @@ class Rc_nonlinear_component(ComponentBase):
         super().__init__(name=name, time_object=time_object, v=v)
         self.R = r
         self.C_ref = c_ref
-        self.P_ref = p_ref
+        self.p1 = p1
         self.V_ref = v_ref
         self.p0 = p
+        self.p2 = p2
         
         if p is not None:
             self._P_i._u.loc[0] = p
@@ -32,9 +34,9 @@ class Rc_nonlinear_component(ComponentBase):
     
     def setup(self) -> None:
         # Use factory methods for all functions
-        p_i_dudt_func = ComponentFunctionFactory.gen_nonlinear_capacitor_dpdt(c0 = self.C_ref, p0 = self.P_ref)
-        p_i_init_func = ComponentFunctionFactory.gen_nonlinear_capacitor_pressure(v_ref=self.V_ref, c0=self.C_ref, p0=self.P_ref)
-        v_i_func = ComponentFunctionFactory.gen_nonlinear_capacitor_volume(v_ref=self.V_ref, c0=self.C_ref, p0=self.P_ref)
+        p_i_dudt_func = ComponentFunctionFactory.gen_nonlinear_capacitor_dpdt(c0 = self.C_ref, p1 = self.p1, p2=self.p2)
+        p_i_init_func = ComponentFunctionFactory.gen_nonlinear_capacitor_pressure(v_ref=self.V_ref, c0=self.C_ref, p1=self.p1, p2=self.p2)
+        v_i_func = ComponentFunctionFactory.gen_nonlinear_capacitor_volume(v_ref=self.V_ref, c0=self.C_ref, p1=self.p1, p2=self.p2)
         q_o_func = ComponentFunctionFactory.gen_resistor_flow(self.R)
         
         # Set the dudt function for the input pressure state variable

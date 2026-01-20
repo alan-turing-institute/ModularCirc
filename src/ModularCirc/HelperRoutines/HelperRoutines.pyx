@@ -87,7 +87,7 @@ cpdef double grounded_capacitor_model_pressure(double t, double[::1] y, double v
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef double grounded_nonlinear_capacitor_model_pressure(double t, double[::1] y, double v_ref, double c0, double p0) nogil:
+cpdef double grounded_nonlinear_capacitor_model_pressure(double t, double[::1] y, double v_ref, double c0, double p1, double p2) nogil:
     """
     Nonlinear capacitor model.
     
@@ -102,7 +102,10 @@ cpdef double grounded_nonlinear_capacitor_model_pressure(double t, double[::1] y
         pressure at input node
     """
     cdef double v = y[0]
-    return p0 + tan((v - v_ref) / c0)
+    if p2 < 1e6:
+        return p1 + tan((v - v_ref) / c0 / p2) * p2
+    else:
+        return grounded_capacitor_model_pressure(t, y, v_ref, c0)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -113,10 +116,13 @@ cpdef double grounded_capacitor_model_volume(double t, double[::1] y, double v_r
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef double grounded_nonlinear_capacitor_model_volume(double t, double[::1] y, double v_ref, double c0, double p0) nogil:
+cpdef double grounded_nonlinear_capacitor_model_volume(double t, double[::1] y, double v_ref, double c0, double p1, double p2) nogil:
     """Calculate volume from pressure (nonlinear capacitor)."""
     cdef double p = y[0]
-    return v_ref + c0 * atan(p - p0)
+    if p2 < 1e6:
+        return v_ref + c0 * atan((p - p1) / p2) * p2
+    else:
+        return grounded_capacitor_model_volume(t, y, v_ref, c0)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -128,12 +134,15 @@ cpdef double grounded_capacitor_model_dpdt(double t, double[::1] y, double c) no
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef double grounded_nonlinear_capacitor_model_dpdt(double t, double[::1] y, double c0, double p0) nogil:
+cpdef double grounded_nonlinear_capacitor_model_dpdt(double t, double[::1] y, double c0, double p1, double p2) nogil:
     """Nonlinear capacitor pressure derivative."""
     cdef double q_in = y[0]
     cdef double q_out = y[1]
     cdef double p = y[2]
-    return (q_in - q_out) * (1.0 + (p - p0) * (p - p0)) / c0
+    if p2 < 1e6:
+        return (q_in - q_out) * (1.0 + (p - p1) * (p - p1) / (p2 * p2)) / c0
+    else:     
+        return grounded_capacitor_model_dpdt(t, y, c0)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
