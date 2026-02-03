@@ -21,6 +21,7 @@ from ..HelperRoutines import (
     active_pressure_law, passive_pressure_law, active_dpdt_law, passive_dpdt_law,
     volume_from_pressure_nonlinear,
     activation_function_1, activation_function_2, activation_function_3,
+    starling_resistor_flow,
     GenTimeShifter
 )
 
@@ -39,6 +40,12 @@ class ComponentFunctionFactory:
     def gen_resistor_flow(r: float):
         """Generate resistor flow function."""
         return partial(resistor_model_flow, r=r)
+    
+    @staticmethod
+    def gen_starling_resistor_flow(r: float, p_crit: float):
+        """Generate Starling resistor flow function."""
+    
+        return partial(starling_resistor_flow, r=r, p_crit=p_crit)
     
     @staticmethod
     def gen_capacitor_dpdt(c: float):

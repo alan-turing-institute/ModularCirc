@@ -23,7 +23,7 @@ VESSELS = ['sas', 'sat', 'svn', 'pas', 'pvn']
 VESSELS_PAR = ['r', 'c', 'l', 'v_ref', 'v', 'p']
 
 NONLINEAR_VESSELS = ['pat',]
-NONLINEAR_VESSELS_PAR = ['r', 'c_ref', 'p1', 'p2', 'v_ref', 'v', 'p']
+NONLINEAR_VESSELS_PAR = ['r', 'c_ref', 'p1', 'p2',  'v_ref', 'v', 'p', 'p_crit']
 
 VALVES  = ['mi', 'ao', 'ti', 'po']
 VALVES_PAR = ['CQ', 'RRA']

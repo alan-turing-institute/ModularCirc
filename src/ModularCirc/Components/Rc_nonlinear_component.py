@@ -16,6 +16,7 @@ class Rc_nonlinear_component(ComponentBase):
         p1:float,
         p2:float,
         v_ref:float,
+        p_crit:float = None,
         v:float = None, 
         p:float = None,
     
@@ -27,6 +28,7 @@ class Rc_nonlinear_component(ComponentBase):
         self.V_ref = v_ref
         self.p0 = p
         self.p2 = p2
+        self.p_crit = p_crit
         
         if p is not None:
             self._P_i._u.loc[0] = p
@@ -37,7 +39,10 @@ class Rc_nonlinear_component(ComponentBase):
         p_i_dudt_func = ComponentFunctionFactory.gen_nonlinear_capacitor_dpdt(c0 = self.C_ref, p1 = self.p1, p2=self.p2)
         p_i_init_func = ComponentFunctionFactory.gen_nonlinear_capacitor_pressure(v_ref=self.V_ref, c0=self.C_ref, p1=self.p1, p2=self.p2)
         v_i_func = ComponentFunctionFactory.gen_nonlinear_capacitor_volume(v_ref=self.V_ref, c0=self.C_ref, p1=self.p1, p2=self.p2)
-        q_o_func = ComponentFunctionFactory.gen_resistor_flow(self.R)
+        if self.p_crit is None or np.isnan(self.p_crit):
+            q_o_func = ComponentFunctionFactory.gen_resistor_flow(self.R)
+        else:
+            q_o_func = ComponentFunctionFactory.gen_starling_resistor_flow(r=self.R, p_crit=self.p_crit)
         
         # Set the dudt function for the input pressure state variable
         self._P_i.set_dudt_func(p_i_dudt_func, function_name='grounded_nonlinear_capacitor_model_dpdt')

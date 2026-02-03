@@ -52,6 +52,7 @@ if not force_numba:
             compute_derivatives_batch,
             compute_derivatives_batch_indexed,
             gen_total_dpdt_fixed,
+            starling_resistor_flow,
         )
         USING_CYTHON = True
         if '--verbose' in sys.argv or os.environ.get('MODULARCIRC_VERBOSE', '0') == '1':
@@ -100,6 +101,7 @@ if force_numba or not USING_CYTHON:
         compute_derivatives_batch_indexed,
         GenTimeShifter,
         gen_total_dpdt_fixed,
+        starling_resistor_flow,
     )
     if '--verbose' in sys.argv or os.environ.get('MODULARCIRC_VERBOSE', '0') == '1':
         if os.environ.get('MODULARCIRC_FORCE_NUMBA', '0') == '1':
@@ -159,4 +161,5 @@ __all__ = [
     'compute_derivatives_batch_indexed',
     'GenTimeShifter',
     'gen_total_dpdt_fixed',
+    'starling_resistor_flow',
 ]

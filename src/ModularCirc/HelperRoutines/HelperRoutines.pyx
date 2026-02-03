@@ -35,6 +35,33 @@ cpdef double resistor_model_flow(double t, double[::1] y, double r) nogil:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+cpdef double starling_resistor_flow(double t, double[::1] y, double r, double p_crit) nogil:
+    """
+    Starling resistor flow model.
+    
+    Args:
+        t: current time
+        y: state array where y[0]=p_in, y[1]=p_out
+        r: resistor constant
+        p_crit: critical pressure
+    
+    Returns:
+        flow rate through Starling resistor
+    """
+    cdef double p_in = y[0]
+    cdef double p_out = y[1]
+    if p_in > p_crit:
+        if p_out > p_crit:
+            return (p_in - p_out) / r
+        else:
+            return (p_in - p_crit) / r
+    elif p_out >= p_crit:
+        return (p_crit - p_out) / r
+    else:
+        return 0.0
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef double resistor_upstream_pressure(double t, double[::1] y, double r) nogil:
     """Calculate upstream pressure from flow and downstream pressure."""
     cdef double q_in = y[0]

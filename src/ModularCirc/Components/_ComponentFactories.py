@@ -15,7 +15,7 @@ from ..HelperRoutines import (
     simple_bernoulli_diode_flow, non_ideal_diode_flow, maynard_valve_flow,
     maynard_impedance_dqdt, maynard_phi_law, time_shift,
     active_pressure_law, passive_pressure_law, active_dpdt_law, passive_dpdt_law,
-    volume_from_pressure_nonlinear
+    volume_from_pressure_nonlinear, starling_resistor_flow
 )
 import numba as nb
 
@@ -29,6 +29,14 @@ class ComponentFunctionFactory:
         def resistor_upstream_pressure_func(t, y):    
             return resistor_upstream_pressure(t, y, r=r)
         return resistor_upstream_pressure_func
+    
+    @staticmethod
+    def gen_starling_resistor_flow(r: float, p_crit: float):
+        """Generate Starling resistor flow function."""
+        @nb.njit('float64(float64, float64[:])',cache=True)
+        def starling_resistor_flow_func(t, y):    
+            return starling_resistor_flow(t, y, r=r, p_crit=p_crit)
+        return starling_resistor_flow_func
     
     @staticmethod
     def gen_resistor_flow(r: float):

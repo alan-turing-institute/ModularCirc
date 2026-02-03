@@ -24,6 +24,25 @@ def resistor_model_flow(t:float,
     p_in, p_out = y[:2]
     return (p_in - p_out) / r
 
+
+@nb.njit(['float64(float64, float64[:], float64, float64)'], cache=True)
+def starling_resistor_flow(t:float,
+                           y:np.ndarray[float],
+                           r:float,
+                           p_crit : float
+                        )->float:
+    p_in, p_out = y[:2]
+    if p_in > p_crit:
+        if p_out > p_crit:
+            return (p_in - p_out) / r
+        else:
+            return (p_in - p_crit) / r
+    elif p_out >= p_crit:
+        return (p_crit - p_out) / r
+    else:
+        return 0.0
+
+
 @nb.njit(['float64(float64, float64[:], float64)'], cache=True)
 def resistor_upstream_pressure(t:float,
                                y:np.ndarray[float],
