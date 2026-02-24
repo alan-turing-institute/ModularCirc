@@ -1,9 +1,38 @@
 #!/usr/bin/env python
 """
-Verify ModularCirc installation and check for performance optimizations.
+Build Cython extensions and check ModularCirc installation.
+
+Usage:
+    python build_and_check.py           # verify only
+    python build_and_check.py --build   # build Cython extension, then verify
 """
 
+import subprocess
 import sys
+
+
+def build_cython():
+    """Build Cython extension in-place."""
+    print("Building Cython extension...")
+    result = subprocess.run(
+        [sys.executable, "setup.py", "build_ext", "--inplace"],
+        capture_output=False,
+    )
+    if result.returncode != 0:
+        print("Build failed.")
+        sys.exit(1)
+
+    import glob
+    built = (
+        glob.glob("src/ModularCirc/HelperRoutines/HelperRoutinesCython*.so")
+        + glob.glob("src/ModularCirc/HelperRoutines/HelperRoutinesCython*.pyd")
+    )
+    if built:
+        print(f"Build successful: {built[0]}")
+    else:
+        print("Build failed - no extension found.")
+        sys.exit(1)
+
 
 def check_installation():
     """Check ModularCirc installation status."""
@@ -107,5 +136,7 @@ def check_installation():
     return True
 
 if __name__ == '__main__':
+    if '--build' in sys.argv:
+        build_cython()
     success = check_installation()
     sys.exit(0 if success else 1)
