@@ -15,7 +15,10 @@ For best performance with faster startup times:
 # Install with Cython dependencies
 pip install -e .[performance]
 
-# Build the Cython extension
+# Build the Cython extension (recommended)
+./build_cython.sh
+
+# Or manually (may show a deprecation warning on newer pip)
 python setup.py build_ext --inplace
 ```
 
@@ -118,8 +121,10 @@ pip install -e .
 ### Want to rebuild Cython extension
 
 ```bash
-# Clean and rebuild
-python setup.py clean --all
+# Rebuild using the provided script (recommended)
+./build_cython.sh
+
+# Or manually (may show a deprecation warning on newer pip)
 python setup.py build_ext --inplace
 ```
 
