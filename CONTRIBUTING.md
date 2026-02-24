@@ -38,11 +38,11 @@ pip install cython
 ./build_cython.sh
 
 # Or manually
-python setup_cython.py build_ext --inplace
+python setup.py build_ext --inplace
 ```
 
 **When to rebuild:**
-- After modifying any `.pyx` files (e.g., `src/ModularCirc/HelperRoutines.pyx`)
+- After modifying any `.pyx` files (e.g., `src/ModularCirc/HelperRoutines/HelperRoutines.pyx`)
 - After pulling changes that include `.pyx` modifications
 - When switching between branches with different Cython code
 
