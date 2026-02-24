@@ -34,11 +34,8 @@ For optimal performance during development, build the Cython extensions:
 # Install Cython if not already installed
 pip install cython
 
-# Build the extensions
-./build_cython.sh
-
-# Or manually
-python setup.py build_ext --inplace
+# Build the extensions and verify
+python build_and_check.py --build
 ```
 
 **When to rebuild:**

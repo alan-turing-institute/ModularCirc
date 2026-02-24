@@ -11,8 +11,9 @@ python -c "from ModularCirc.HelperRoutines import USING_CYTHON; print('Cython' i
 
 | Method | Command | Use Case |
 |--------|---------|----------|
-| **Cython** (recommended) | `pip install -e .[performance]`<br>`./build_cython.sh` | Production, better startup performance |
-| **Numba** (fallback) | `export MODULARCIRC_USE_CYTHON=0`<br>`pip install -e .` | Development, no C compiler available |
+| **Cython** (automatic) | `pip install -e .` | Default — built automatically if C compiler present |
+| **Numba** (fallback) | `export MODULARCIRC_USE_CYTHON=0`<br>`pip install -e .` | No C compiler available, or to skip Cython |
+| **Dev rebuild** | `python build_and_check.py --build` | After modifying `.pyx` files |
 
 ## Environment Variables
 
@@ -33,11 +34,10 @@ pip install -e .
 
 ### I want best performance
 ```bash
-pip install -e .[performance]
-./build_cython.sh
-python -c "from ModularCirc.HelperRoutines import USING_CYTHON; assert USING_CYTHON"
+pip install -e .
+python build_and_check.py  # confirm Cython is active
 ```
-→ Uses Cython (C-compiled, faster startup)
+→ Cython is built automatically if a C compiler is present
 
 ### Cython build failed
 ```bash
@@ -58,7 +58,7 @@ MODULARCIRC_FORCE_NUMBA=1 python my_script.py
 
 ### After pulling new code
 ```bash
-./build_cython.sh
+python build_and_check.py --build
 ```
 → Rebuild Cython extension
 
@@ -66,7 +66,7 @@ MODULARCIRC_FORCE_NUMBA=1 python my_script.py
 
 ```bash
 # Full installation check
-python verify_installation.py
+python build_and_check.py
 
 # Run tests with both implementations
 python -m unittest discover -s tests
@@ -93,4 +93,4 @@ MODULARCIRC_FORCE_NUMBA=1 python -m unittest discover -s tests
 
 - Full installation guide: `INSTALLATION_OPTIONS.md`
 - Cython details: `CYTHON_README.md`
-- Verification script: `verify_installation.py`
+- Verification script: `build_and_check.py`

@@ -7,34 +7,36 @@ ModularCirc supports two performance backends for the `HelperRoutines` module:
 
 ## Installation Methods
 
-### Option 1: Install with Cython (Recommended)
+### Option 1: Standard install (Cython built automatically)
 
-For best performance with faster startup times:
-
-```bash
-# Install with Cython dependencies
-pip install -e .[performance]
-
-# Build the Cython extension (recommended)
-./build_cython.sh
-
-# Or manually (may show a deprecation warning on newer pip)
-python setup.py build_ext --inplace
-```
-
-### Option 2: Install with Numba only
-
-For development or if you encounter Cython build issues:
+Cython extensions are **built automatically during installation** if a C compiler is available. No extra steps required:
 
 ```bash
-# Set environment variable to skip Cython build
-export MODULARCIRC_USE_CYTHON=0
-
-# Install package
 pip install -e .
 ```
 
-Or install normally - if Cython is not available, it will automatically fall back to Numba.
+To confirm which backend is active after installing:
+
+```bash
+python build_and_check.py
+```
+
+### Option 2: Skip Cython (Numba only)
+
+If you don't have a C compiler or want to skip the Cython build:
+
+```bash
+export MODULARCIRC_USE_CYTHON=0
+pip install -e .
+```
+
+### Developer rebuild (after modifying `.pyx` files)
+
+To rebuild the Cython extension without reinstalling the whole package:
+
+```bash
+python build_and_check.py --build
+```
 
 ## Runtime Configuration
 
@@ -118,20 +120,16 @@ export MODULARCIRC_USE_CYTHON=0
 pip install -e .
 ```
 
-### Want to rebuild Cython extension
+### Want to rebuild Cython extension (developer)
 
 ```bash
-# Rebuild using the provided script (recommended)
-./build_cython.sh
-
-# Or manually (may show a deprecation warning on newer pip)
-python setup.py build_ext --inplace
+python build_and_check.py --build
 ```
 
 ### Verify installation
 
 ```bash
-python verify_installation.py
+python build_and_check.py
 ```
 
 This will show which implementation is active and available.

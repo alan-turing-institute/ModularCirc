@@ -19,13 +19,7 @@ The setup will automatically detect Cython and build the extension. If Cython is
 For quick rebuilds during development without reinstalling the entire package:
 
 ```bash
-bash build_cython.sh
-```
-
-Or manually:
-
-```bash
-python setup.py build_ext --inplace
+python build_and_check.py --build
 ```
 
 ## Prerequisites

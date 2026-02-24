@@ -69,46 +69,19 @@ pip install ./
 
 This will install the package based on the `pyproject.toml` file specifications.
 
-### Optional: Building Cython Extensions for Better Performance
+### Optional: Cython Extensions for Better Performance
 
-For improved performance, you can build the optional Cython extensions. This pre-compiles performance-critical functions, eliminating JIT compilation overhead.
+The package includes optional Cython extensions that eliminate JIT compilation overhead. **These are built automatically during installation** if a C compiler is available (gcc on Linux, clang on macOS, MSVC on Windows). No extra steps are needed.
 
-> **📖 For detailed installation options and runtime configuration, see [INSTALLATION_OPTIONS.md](INSTALLATION_OPTIONS.md)**
+If Cython extensions are unavailable, the package silently falls back to a Numba JIT implementation.
 
-**Requirements:**
-- Cython (`pip install cython` or `pip install ".[performance]"`)
-- C compiler (gcc on Linux, clang on macOS, MSVC on Windows)
-
-**Building the extensions:**
-
-After installing ModularCirc from source, run:
+**Verify which backend is active:**
 
 ```bash
-# Install with performance optimizations
-pip install ".[performance]"
-
-# Build using the provided script (recommended)
-./build_cython.sh
-
-# Or manually (may show a deprecation warning on newer pip)
-python setup.py build_ext --inplace
+python build_and_check.py
 ```
 
-**Verification:**
-
-Check that Cython extensions are loaded:
-
-```bash
-python -c "import ModularCirc.HelperRoutines; print(f'Using Cython: {ModularCirc.HelperRoutines.USING_CYTHON}')"
-```
-
-Or run the comprehensive verification script:
-
-```bash
-python verify_installation.py
-```
-
-If the import succeeds, ModularCirc will automatically use the optimized Cython version. If Cython extensions are not available, the package will fall back to the Numba JIT version with no code changes required.
+> **📖 For runtime configuration and developer rebuild instructions, see [INSTALLATION_OPTIONS.md](INSTALLATION_OPTIONS.md)**
 
 
 ## Steps for running basic models
