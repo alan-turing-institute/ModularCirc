@@ -11,7 +11,7 @@ python -c "from ModularCirc.HelperRoutines import USING_CYTHON; print('Cython' i
 
 | Method | Command | Use Case |
 |--------|---------|----------|
-| **Cython** (recommended) | `pip install -e .[performance]`<br>`python setup.py build_ext --inplace` | Production, better startup performance |
+| **Cython** (recommended) | `pip install -e .[performance]`<br>`./build_cython.sh` | Production, better startup performance |
 | **Numba** (fallback) | `export MODULARCIRC_USE_CYTHON=0`<br>`pip install -e .` | Development, no C compiler available |
 
 ## Environment Variables
@@ -34,7 +34,7 @@ pip install -e .
 ### I want best performance
 ```bash
 pip install -e .[performance]
-python setup.py build_ext --inplace
+./build_cython.sh
 python -c "from ModularCirc.HelperRoutines import USING_CYTHON; assert USING_CYTHON"
 ```
 → Uses Cython (C-compiled, faster startup)
@@ -58,8 +58,6 @@ MODULARCIRC_FORCE_NUMBA=1 python my_script.py
 
 ### After pulling new code
 ```bash
-python setup.py build_ext --inplace
-# Or use the convenience script
 ./build_cython.sh
 ```
 → Rebuild Cython extension
@@ -70,12 +68,9 @@ python setup.py build_ext --inplace
 # Full installation check
 python verify_installation.py
 
-# Quick check
-python examples_usage.py
-
 # Run tests with both implementations
-python -m pytest tests/
-MODULARCIRC_FORCE_NUMBA=1 python -m pytest tests/
+python -m unittest discover -s tests
+MODULARCIRC_FORCE_NUMBA=1 python -m unittest discover -s tests
 ```
 
 ## Performance Notes
@@ -97,5 +92,5 @@ MODULARCIRC_FORCE_NUMBA=1 python -m pytest tests/
 ## More Information
 
 - Full installation guide: `INSTALLATION_OPTIONS.md`
-- Changes summary: `CHANGES_SUMMARY.md`
-- Example usage: `examples_usage.py`
+- Cython details: `CYTHON_README.md`
+- Verification script: `verify_installation.py`
