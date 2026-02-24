@@ -1,5 +1,6 @@
 from ..Time import TimeClass
 from ..StateVariable import StateVariable
+import numpy as np
 
 class ComponentBase():
     def __init__(self,
@@ -53,6 +54,23 @@ class ComponentBase():
     @property
     def V(self):
         return self._V._u
+
+    @property 
+    def P(self):
+        """Standard pressure property - can be overridden if needed."""
+        return self._P_i._u
+
+    def _is_none_or_nan(self, value):
+        """Helper to check if value is None or NaN."""
+        return value is None or (isinstance(value, (int, float)) and np.isnan(value))
+    
+    def _validate_initial_conditions(self):
+        """Validate that required initial conditions are provided."""
+        if hasattr(self, 'v0') and hasattr(self, 'p0'):
+            has_v0 = not self._is_none_or_nan(self.v0)
+            has_p0 = not self._is_none_or_nan(self.p0)
+            if not has_v0 and not has_p0:
+                raise ValueError(f"Component {self._name}: Solver needs at least the initial volume or pressure to be defined!")
 
     def make_unique_io_state_variable(self, q_flag:bool=False, p_flag:bool=True) -> None:
         if q_flag:

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 77.0.3", "wheel"]
+requires = ["setuptools >= 77.0.3", "wheel", "cython>=3.0", "numpy>=1.20"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -33,14 +33,36 @@ dependencies = [
     "scipy",
     "joblib",
     "pandera",
-    "tdqm"
+    "tqdm",
+    "setuptools"
 ]
 
 [project.optional-dependencies]
 notebooks = ["ipykernel"]
 dev = ["pre-commit", "black", "flake8", "isort"]
+performance = ["cython>=3.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/alan-turing-institute/ModularCirc"
 "Source Code" = "https://github.com/alan-turing-institute/ModularCirc"
 "Bug Tracker" = "https://github.com/alan-turing-institute/ModularCirc/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+zip-safe = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"ModularCirc.HelperRoutines" = ["*.pyx", "*.so", "*.pyd"]
+
+[tool.cython]
+# Cython compiler directives
+language_level = "3"
+boundscheck = false
+wraparound = false
+cdivision = true
+initializedcheck = false
+nonecheck = false
+annotate = true

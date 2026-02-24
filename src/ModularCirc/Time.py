@@ -44,25 +44,38 @@ class TimeClass():
             return None
 
     def _initialize_time_array(self):
-        # discretization of on heart beat, used as template
-        self._one_cycle_t = pd.Series(np.linspace(
-            start= 0.0,
-            stop = self.tcycle,
-            num  = int(self.tcycle / self.dt)+1,
-            dtype= np.float64
-            ))
-
-        # discretization of the entire simulation duration
-        self._sym_t = pd.Series(
-            [t+cycle*self.tcycle for cycle in range(self.ncycles) for t in self._one_cycle_t[:-1]] + [self._one_cycle_t.values[-1]+(self.ncycles-1)*self.tcycle,]
+        # discretization of on heart beat, used as template (pure numpy)
+        self._one_cycle_t = np.linspace(
+            start=0.0,
+            stop=self.tcycle,
+            num=int(self.tcycle / self.dt) + 1,
+            dtype=np.float64
         )
 
-        # array of the current time within the heart cycle
-        self._cycle_t = pd.Series(
-            [t for _ in range(self.ncycles) for t in self._one_cycle_t[:-1]] + [self._one_cycle_t.values[-1],]
-        )
+        # Pre-calculate array sizes for efficiency
+        n_per_cycle = len(self._one_cycle_t) - 1  # exclude last point to avoid duplication
+        total_points = self.ncycles * n_per_cycle + 1  # +1 for final point
+        
+        # Pre-allocate arrays (much faster than list comprehensions)
+        self._sym_t = np.empty(total_points, dtype=np.float64)
+        self._cycle_t = np.empty(total_points, dtype=np.float64)
+        
+        # Vectorized array filling
+        for cycle in range(self.ncycles):
+            start_idx = cycle * n_per_cycle
+            end_idx = start_idx + n_per_cycle
+            self._sym_t[start_idx:end_idx] = self._one_cycle_t[:-1] + cycle * self.tcycle
+            self._cycle_t[start_idx:end_idx] = self._one_cycle_t[:-1]
+        
+        # Add final point
+        self._sym_t[-1] = self._one_cycle_t[-1] + (self.ncycles - 1) * self.tcycle
+        self._cycle_t[-1] = self._one_cycle_t[-1]
+        
+        # Convert to pandas Series for compatibility with existing code
+        self._sym_t = pd.Series(self._sym_t)
+        self._cycle_t = pd.Series(self._cycle_t)
 
-        self.time = pd.DataFrame({'cycle_t' : self._cycle_t, 'sym_t' : self._sym_t})
+        self.time = pd.DataFrame({'cycle_t': self._cycle_t, 'sym_t': self._sym_t})
 
         # the total number of time steps including initial time step
         self.n_t = len(self._sym_t)

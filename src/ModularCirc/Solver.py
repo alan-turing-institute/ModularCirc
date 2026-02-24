@@ -1,8 +1,5 @@
-from .Time import TimeClass
-from .StateVariable import StateVariable
 from .Models.OdeModel import OdeModel
-from .HelperRoutines import bold_text
-from pandera.typing import DataFrame, Series
+from .HelperRoutines import bold_text, compute_derivatives_batch, compute_derivatives_batch_indexed
 from .Models.OdeModel import OdeModel
 
 import pandas as pd
@@ -10,13 +7,10 @@ import numpy as np
 import numba as nb
 
 from scipy.integrate import solve_ivp
-from scipy.linalg import solve
-from scipy.optimize import newton, approx_fprime, root, least_squares
+from scipy.optimize import least_squares
 
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import reverse_cuthill_mckee
-from scipy.linalg import bandwidth
-from scipy.integrate import LSODA
 
 import warnings
 
@@ -82,6 +76,10 @@ class Solver():
         # Number of sub-iterations for the solver. <- is this right? LB.
         self._N_sv = len(self._global_sv_id)
 
+        # Number of primary and secondary state variables (initialized in setup)
+        self._N_psv = 0  # Number of primary state variables
+        self._N_ssv = 0  # Number of secondary state variables
+
         # Variable to store the number of converged cycles.
         self._Nconv = None
 
@@ -91,6 +89,14 @@ class Solver():
         # flag for checking if the model is converged or not...
         self.converged = False
 
+    def _pad_index_array(self, index_array):
+        """
+        Helper method to pad index arrays to the length of the state variable array.
+        This eliminates code duplication between primary and secondary variable processing.
+        """
+        return np.pad(index_array,
+                     (0, self._N_sv - len(index_array)),
+                     mode='constant', constant_values=-1)
 
     def setup(self,
               optimize_secondary_sv:bool=False,
@@ -148,9 +154,7 @@ class Solver():
                 self._global_psv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
 
                 # Pad the index array to the length of the state variable array.
-                self._global_psv_update_ind[mkey]   = np.pad(self._global_psv_update_ind[mkey],
-                                                             (0, self._N_sv-len(self._global_psv_update_ind[mkey])),
-                                                             mode='constant', constant_values=-1)
+                self._global_psv_update_ind[mkey]   = self._pad_index_array(self._global_psv_update_ind[mkey])
 
                 # Add the state variable name to the global primary state variable list.
                 self._global_psv_names.append(key)
@@ -164,13 +168,21 @@ class Solver():
                 self._global_ssv_update_fun[mkey]   = component.u_func
                 self._global_ssv_update_fun_n[mkey] = component.u_name
                 self._global_ssv_update_ind[mkey]   = [self._global_sv_id[key2] for key2 in component.inputs.to_list()]
-                self._global_ssv_update_ind[mkey]   = np.pad(self._global_ssv_update_ind[mkey],
-                                                             (0, self._N_sv-len(self._global_ssv_update_ind[mkey])),
-                                                             mode='constant', constant_values=-1)
+                self._global_ssv_update_ind[mkey]   = self._pad_index_array(self._global_ssv_update_ind[mkey])
             else:
                 continue
 
         if not suppress_output: print(' ')
+
+        # Update counts of primary and secondary state variables
+        self._N_psv = len(self._global_psv_update_fun)
+        self._N_ssv = len(self._global_ssv_update_fun)
+        self._N_sv = len(self._global_sv_id)
+        
+        if not suppress_output: 
+            print(f" -- Total primary state variables: {bold_text(str(self._N_psv))}")
+            print(f" -- Total secondary state variables: {bold_text(str(self._N_ssv))}")
+            print(' ')
 
         self.generate_dfdt_functions()
 
@@ -193,103 +205,17 @@ class Solver():
         """ Generating the functions needed to compute the derivatives of the state variables over time. These functions are
         used during the numerical integration process to update the state variables."""
 
-
-        # Function to initialize the state variables using the initialization functions.
-        funcs1 = self._global_sv_init_fun.values()
-        # Indexes of the state variables to be initialized.
-        ids1   = self._global_sv_init_ind.values()
-
-        def initialize_by_function(y:np.ndarray[float]) -> np.ndarray[float]:
-            """
-            Initialize the state variables using a set of initialization functions.
-
-            This function applies a list of initialization functions (`funcs1`) to
-            specific subsets of the input array `y`, as determined by the indices
-            in `ids1`. Each function is called with `t=0.0` and the corresponding
-            subset of `y`, and the results are combined into a single NumPy array.
-            The input array `y` is usually the initial state variable array, so
-            the 0th row of the self._asd DataFrame.
-
-            Args:
-                y (np.ndarray[float]): A 1D NumPy array representing the state
-                variables to be initialized. Each subset of `y` is passed to
-                the corresponding initialization function.
-
-            Returns:
-                np.ndarray[float]: A 1D NumPy array containing the initialized
-                state variables, with the same length as the input array `y`.
-
-            Note:
-                - Each function in `funcs1` is expected to accept two arguments:
-                  `t` (a float, representing time) and `y` (a NumPy array,
-                  representing the subset of state variables).
-
-            Example use:
-                >>> initialize_by_function(y=self._asd.iloc[0].to_numpy())
-
-            """
-            return np.fromiter([fun(t=0.0, y=y[inds]) for fun, inds in zip(funcs1, ids1)],
-                               dtype=np.float64)
-
-        # Function to update the secondary state variables based on the primary state variables.
+        # Extract function arrays and indices for class attribute storage
+        funcs1 = np.array(list(self._global_sv_init_fun.values()))
+        ids1   = np.stack(list(self._global_sv_init_ind.values()))
         funcs2 = np.array(list(self._global_ssv_update_fun.values()))
         ids2   = np.stack(list(self._global_ssv_update_ind.values()))
-
-        # @nb.njit(cache=True)
-        def s_u_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
-            """
-            Updates the secondary state variables based on the current values of the primary state variables.
-
-            Args:
-                t (float): The current time step.
-                y (np.ndarray[float]): A NumPy array containing the current values of the primary state variables.
-
-            Returns:
-                np.ndarray[float]: A NumPy array containing the updated values of the secondary state variables.
-
-            Example use:
-                >>> s_u_update(t=0.0, y=self._asd.iloc[0].to_numpy())
-            """
-            return np.fromiter([fi(t=t, y=yi) for fi, yi in zip(funcs2, y[ids2])],
-                               dtype=np.float64)
-
-        def s_u_residual(y, yall, keys):
-            """ Function to compute the residual of the secondary state variables."""
-            yall[keys] = y
-            return (y - s_u_update(0.0, yall))
-
-        def optimize(y:np.ndarray, keys):
-            """ Function to optimize the secondary state variables."""
-            yk = y[keys]
-            sol = least_squares(   # root
-                s_u_residual,
-                yk,
-                args=(y, keys),
-                ftol=1.0e-5,
-                xtol=1.0e-15,
-                loss='linear',
-                method='lm',
-                max_nfev=int(1e6)
-                )
-            y[keys] = sol.x
-            return sol.x  # sol.x
-
-        # indexes of the primary state variables.
         keys3  = np.array(list(self._global_psv_update_fun.keys()))
-
-        # indexes of the secondary state variables.
         keys4  = np.array(list(self._global_ssv_update_fun.keys()))
-
-        # functions to update the primary state variables.
         funcs3 = np.array(list(self._global_psv_update_fun.values()))
-
-        # indexes of the primary state variables dependencies.
         ids3   = np.stack(list(self._global_psv_update_ind.values()))
 
         T = self._to.tcycle
-        N_zeros_0 = len(self._global_sv_id)
-        _n_sub_iter = self._n_sub_iter
-        _optimize_secondary_sv = self._optimize_secondary_sv
 
         # stores the dependencies of primary variables
         keys3_dict = dict()
@@ -332,11 +258,10 @@ class Solver():
         # uses the reverse cuthill mckee algorithm to reduce the bandwidth of the matrix
         sparse_mat = csr_matrix(mat)
         perm = reverse_cuthill_mckee(sparse_mat, symmetric_mode=False)
-        perm_mat = np.zeros((len(perm), len(perm)))
-        for i,j in enumerate(perm):
-            perm_mat[i,j] = 1
-
-        self.perm_mat = perm_mat
+        
+        # Store permutation as indices instead of dense matrix for better performance
+        self.perm_indices = perm.astype(np.int32)
+        self.inv_perm_indices = np.argsort(perm).astype(np.int32)
 
         # reorders the sparse matrix to reduce the bandwidth
         sparse_mat_reordered = sparse_mat[perm, :][:, perm]
@@ -350,50 +275,66 @@ class Solver():
         self.lband = lband
         self.uband = uband
 
-        def pv_dfdt_update(t, y:np.ndarray[float]) -> np.ndarray[float]:
+        # Store function arrays and indices as class attributes
+        self._funcs1 = funcs1
+        self._ids1 = ids1
+        self._funcs2 = funcs2
+        self._ids2 = ids2
+        self._funcs3 = funcs3
+        self._ids3 = ids3
+        self._keys3 = keys3
+        self._keys4 = keys4
+        self._T = T
 
-            """ Function to compute the derivatives of the primary state variables over time."""
-
-
-            # calculates the current time within the heart cycle
-            ht = t%T
-
-            # permutes the primary state variables
-            y2 = perm_mat.T @ y
-
-            # initialises the temporary array to store the state variables
-            if len(y.shape) == 2:
-                y_temp = np.zeros((N_zeros_0,y.shape[1]))
-            else:
-                y_temp = np.zeros((N_zeros_0))
-
-            # assings reordered primary state variables to the temporary array
-            y_temp[keys3] = y2
-
-            # updates the secondary state variables, and optimises them if necessary
-            for _ in range(_n_sub_iter):
-                y_temp[keys4] = s_u_update(t, y_temp)
-            if _optimize_secondary_sv:
-                y_temp[keys4] = optimize(y_temp, keys4)
-            # returns the derivatives of the primary state variables, reordered back to the original order
-            return perm_mat @ np.fromiter([fi(t=ht, y=yi) for fi, yi in zip(funcs3, y_temp[ids3])], dtype=np.float64)
+        # Pre-compute frequently used key arrays to avoid repeated computation
+        self._cached_keys4 = keys4  # Already computed above
+        self._cached_psv_keys = list(self._global_psv_update_fun.keys())  # Primary state variable keys
 
 
-        self.initialize_by_function = initialize_by_function
-        self.pv_dfdt_global = pv_dfdt_update
-        self.s_u_update     = s_u_update
 
-        self.optimize = optimize
-        self.s_u_residual = s_u_residual
+        # Pre-allocate working arrays to avoid repeated memory allocation
+        self._work_array_1d = np.zeros(self._N_sv, dtype=np.float64)
+        self._derivatives_temp = np.zeros(self.N_psv, dtype=np.float64)
+        self._secondary_temp = np.zeros(self.N_ssv, dtype=np.float64)
+        self._initialization_temp = np.zeros(len(funcs1), dtype=np.float64)
 
+        # Pre-compute function-index pairs for hot path optimization
+        # Since _funcs3 and _ids3 never change, compute the pairs once
+        self._func_index_pairs3 = list(zip(self._funcs3, self._ids3))
+        self._func_index_pairs2 = list(zip(self._funcs2, range(len(self._funcs2))))
+        self._func_index_pairs1 = list(zip(self._funcs1, range(len(self._funcs1))))
+
+        # Pre-compute constants for advance_cycle optimization
+        self._n_t_minus_1 = self._to.n_c - 1  # Time points per cycle minus 1
+        self._primary_indices = np.arange(len(self._cached_psv_keys))  # Avoid list(range()) 
+        
+        # Pre-allocate arrays for advance_cycle to avoid repeated allocations
+        self._y0_permuted = np.zeros(len(self._cached_psv_keys), dtype=np.float64)
+        self._convergence_tolerance = 1e-10  # Cache tolerance value
+
+        # Assign method references directly for backward compatibility
+        self.initialize_by_function = self.initialize_by_function_method
+        self.pv_dfdt_global = self.pv_dfdt_update_method
+        self.s_u_update = self.s_u_update_method
+        self.optimize = self.optimize_method
+        self.s_u_residual = self.s_u_residual_method
 
     def advance_cycle(self, y0, cycleID, step = 1):
-
-        # computes the current time within the cycle
-        n_t = self._to.n_c - 1
+        """
+        Optimized advance_cycle method with reduced allocations and computations.
+        """
+        # Use pre-computed constants to avoid repeated calculations
+        n_t = self._n_t_minus_1
         end_cycle = cycleID + step
-        # retrieves the time points for the current cycle, n_t is the step size
-        t = self._to._sym_t.values[cycleID*n_t:end_cycle*n_t+1]
+        
+        # More efficient time slice extraction (single slice operation)
+        start_idx = cycleID * n_t
+        end_idx = end_cycle * n_t + 1
+        t = self._to._sym_t.values[start_idx:end_idx]
+
+        # Optimize initial condition preparation - reuse pre-allocated array
+        np.copyto(self._y0_permuted, y0)  # Copy to pre-allocated array
+        y0_permuted = self._y0_permuted[self.perm_indices]  # Then permute
 
         # solves the system of ODEs
         with warnings.catch_warnings():
@@ -401,7 +342,7 @@ class Solver():
             if self._method != 'LSODA':
                 res = solve_ivp(fun=self.pv_dfdt_global,
                                 t_span=(t[0], t[-1]),
-                                y0=self.perm_mat @ y0,
+                                y0=y0_permuted,
                                 t_eval=t,
                                 max_step=self.dt,
                                 method=self._method,
@@ -411,7 +352,7 @@ class Solver():
             else:
                 res = solve_ivp(fun=self.pv_dfdt_global,
                                 t_span=(t[0], t[-1]),
-                                y0=self.perm_mat @ y0,
+                                y0=y0_permuted,
                                 t_eval=t,
                                 method=self._method,
                                 atol=self._atol,
@@ -423,29 +364,40 @@ class Solver():
         if res.status == -1:
             return False
 
-        # updates the primary state variables
-        y = res.y
-        y = self.perm_mat.T @ y
+        # Optimize state variable updates - reduce array operations
+        y = res.y[self.inv_perm_indices]  # Combine permutation with result extraction
 
-        # updates the state variables in the DataFrame
-        ids = list(self._global_psv_update_fun.keys())
-        inds= list(range(len(ids)))
-        self._asd.iloc[cycleID*n_t:(end_cycle)*n_t+1, ids] = y[inds, 0:n_t*step+1].T
+        # Use pre-computed indices to avoid list creation
+        ids = self._cached_psv_keys
+        n_time_steps = n_t * step + 1
+        self._asd.iloc[start_idx:end_idx, ids] = y[self._primary_indices, :n_time_steps].T
 
-        if cycleID == 0: return False
+        # Early return for first cycle
+        if cycleID == 0: 
+            return False
 
+        # Optimized convergence check with reduced DataFrame operations
         cycleP = end_cycle - 1
+        
+        # Single iloc call per DataFrame section (more efficient)
+        current_start = cycleP * n_t
+        current_end = end_cycle * n_t
+        previous_start = (cycleP - 1) * n_t
+        previous_end = cycleP * n_t
+        
+        # Extract convergence data in one operation each
+        cs = self._asd[self._cols].iloc[current_start:current_end, :].values
+        cp = self._asd[self._cols].iloc[previous_start:previous_end, :].values
 
-        cs   = self._asd[self._cols].iloc[cycleP*n_t:end_cycle*n_t, :].values
-        cp   = self._asd[self._cols].iloc[(cycleP-1) *n_t:(cycleP)*n_t, :].values
-
+        # Vectorized convergence test with cached tolerance
         cp_ptp = np.max(np.abs(cp), axis=0)
-        cp_r   = np.max(np.abs(cs - cp), axis=0)
+        cp_r = np.max(np.abs(cs - cp), axis=0)
 
-        test = cp_r / cp_ptp
-        test[cp_ptp <= 1e-10] = cp_r[cp_ptp <= 1e-10]
-        if np.max(test) > self._step_tol : return False
-        return True
+        # Optimized convergence calculation using pre-cached tolerance
+        test = np.divide(cp_r, cp_ptp, out=cp_r.copy(), where=(cp_ptp > self._convergence_tolerance))
+        test[cp_ptp <= self._convergence_tolerance] = cp_r[cp_ptp <= self._convergence_tolerance]
+        
+        return np.max(test) <= self._step_tol
 
 
     def solve(self):
@@ -458,7 +410,7 @@ class Solver():
 
         for i in range(0, self._to.ncycles, self.step): # step is a pulse, we might wabnt to do it in all pulses
             # print(i)
-            y0 = self._asd.iloc[i * (self._to.n_c-1), list(self._global_psv_update_fun.keys())].to_list()
+            y0 = self._asd.iloc[i * (self._to.n_c-1), self._cached_psv_keys].to_list()
             try:
                 # advances the cycle one step at the time, and only that step,
                 #changes are to select a range of cycles up to to ith, + dept of cycle instead of selecting that index.
@@ -482,22 +434,178 @@ class Solver():
         self._to._cycle_t = self._to._cycle_t.head(self._to.n_t)
 
 
-        keys4  = np.array(list(self._global_ssv_update_fun.keys()))
-        temp   = np.zeros(self._asd.iloc[:,keys4].shape)
-        for i, line in enumerate(self._asd.values) :
-            line[keys4] = self.s_u_update(0.0, line)
-            if self._optimize_secondary_sv:
-                temp[i,:] = self.optimize(line, keys4)
-            else:
-                temp[i,:] = line[keys4]
-        self._asd.iloc[:,keys4] = temp
+        # Use pre-computed keys4 array to avoid recomputation
+        keys4 = self._cached_keys4
+        
+        # Vectorized batch processing for secondary state variables
+        data_array = self._asd.values  # Convert DataFrame to numpy array for faster access
+        secondary_results = self.process_secondary_variables_batch(data_array, keys4, batch_size=1000)
+        
+        # Update the DataFrame with processed results
+        self._asd.iloc[:,keys4] = secondary_results
 
         for key in self._vd.keys():
             self._vd[key]._u = self._asd[key]
 
+    # Class methods for better organization and potential optimization
+    def _safe_extract(self, func_result):
+        """Safe scalar extraction helper method"""
+        return func_result.item() if hasattr(func_result, 'item') and func_result.ndim > 0 else func_result
+    
+    def _compute_derivatives_optimized(self, ht: float, y_temp: np.ndarray):
+        """
+        Optimized derivative computation that minimizes Python overhead.
+        Uses Cythonized batch computation for better performance.
+        """
+        # compute_derivatives_batch_indexed(ht, y_temp, self._ids3, self._funcs3, self._derivatives_temp)
+        compute_derivatives_batch(ht, y_temp[self._ids3], self._funcs3, self._derivatives_temp)
+
+    def initialize_by_function_method(self, y: np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Initialize the state variables using a set of initialization functions.
+        Cythonised version for better performance.
+        """
+        compute_derivatives_batch(0.0, y[self._ids1], self._funcs1, self._initialization_temp)
+
+        
+        return self._initialization_temp
+
+    def s_u_update_method(self, t: float, y: np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Updates the secondary state variables based on the current values of the primary state variables.
+        Vectorized version for better performance.
+        """
+        compute_derivatives_batch(t, y[self._ids2], self._funcs2, self._secondary_temp)
+        
+        return self._secondary_temp
+
+    def s_u_update_batch_method(self, t: float, y_batch: np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Batch version of s_u_update_method that processes multiple rows simultaneously.
+        
+        Args:
+            t: Time parameter
+            y_batch: 2D array where each row is a state vector (shape: [n_rows, n_state_vars])
+            
+        Returns:
+            2D array of secondary state variable updates (shape: [n_rows, n_secondary_vars])
+        """
+        n_rows = y_batch.shape[0]
+        n_secondary = len(self._funcs2)
+        
+        # Pre-allocate result array
+        results_batch = np.zeros((n_rows, n_secondary), dtype=np.float64)
+        
+        # Process each secondary function across all rows
+        for func_idx, (fi, _) in enumerate(self._func_index_pairs2):
+            # Extract input indices for this function
+            input_indices = self._ids2[func_idx]
+            
+            # Get inputs for all rows for this function (vectorized slicing)
+            y_inputs_batch = y_batch[:, input_indices]
+            
+            # Apply function to each row (still need individual calls due to function signature)
+            for row_idx in range(n_rows):
+                result = fi(t=t, y=y_inputs_batch[row_idx].copy())
+                results_batch[row_idx, func_idx] = result
+        
+        return results_batch
+
+    def process_secondary_variables_batch(self, data_batch: np.ndarray[float], keys4: np.ndarray, batch_size: int = 1000) -> np.ndarray[float]:
+        """
+        Process secondary state variables in batches for improved performance.
+        
+        Args:
+            data_batch: 2D array of state variable data (shape: [n_rows, n_state_vars])
+            keys4: Array of secondary state variable column indices
+            batch_size: Number of rows to process simultaneously
+            
+        Returns:
+            2D array of processed secondary state variables (shape: [n_rows, n_secondary_vars])
+        """
+        n_rows = data_batch.shape[0]
+        n_secondary = len(keys4)
+        result = np.zeros((n_rows, n_secondary), dtype=np.float64)
+        
+        # Process data in batches to manage memory usage
+        for start_idx in range(0, n_rows, batch_size):
+            end_idx = min(start_idx + batch_size, n_rows)
+            batch = data_batch[start_idx:end_idx].copy()  # Work on a copy to avoid side effects
+            
+            # Update secondary variables for this batch
+            secondary_updates = self.s_u_update_batch_method(t=0.0, y_batch=batch)
+            # secondary_updates = self.s_u_update_method(t=0.0, y=batch)
+            
+            # Apply updates back to batch data
+            batch[:, keys4] = secondary_updates
+            
+            if self._optimize_secondary_sv:
+                # For optimization, we still need row-by-row processing due to least_squares API
+                for i, row in enumerate(batch):
+                    result[start_idx + i, :] = self.optimize_method(row, keys4)
+            else:
+                # Direct assignment for non-optimized case
+                result[start_idx:end_idx, :] = secondary_updates
+        
+        return result
+
+    def s_u_residual_method(self, y, yall, keys):
+        """Function to compute the residual of the secondary state variables."""
+        yall[keys] = y
+        return (y - self.s_u_update_method(0.0, yall))
+
+    def optimize_method(self, y: np.ndarray, keys):
+        """Function to optimize the secondary state variables."""
+        yk = y[keys]
+        sol = least_squares(
+            self.s_u_residual_method,
+            yk,
+            args=(y, keys),
+            ftol=1.0e-5,
+            xtol=1.0e-15,
+            loss='linear',
+            method='lm',
+            max_nfev=int(1e6)
+        )
+        y[keys] = sol.x
+        return sol.x
+
+    def pv_dfdt_update_method(self, t: float, y: np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Function to compute the derivatives of the primary state variables over time.
+        Class method version for better organization and potential optimization.
+        """
+        # calculates the current time within the heart cycle
+        ht = t % self._T
+
+        # permutes the primary state variables using index-based operation
+        y2 = y[self.inv_perm_indices]
+
+        # Use pre-allocated working arrays to avoid repeated memory allocation
+        self._work_array_1d.fill(0.0)  # Reset instead of allocating
+        y_temp = self._work_array_1d
+
+        # assigns reordered primary state variables to the temporary array
+        y_temp[self._keys3] = y2
+
+        # updates the secondary state variables, and optimizes them if necessary
+        for _ in range(self._n_sub_iter):
+            y_temp[self._keys4] = self.s_u_update_method(t, y_temp)
+        if self._optimize_secondary_sv:
+            y_temp[self._keys4] = self.optimize_method(y_temp, self._keys4)
+
+        # Smart vectorized approach: use bulk operations where possible
+        # Since the functions are heterogeneous but have similar computational patterns,
+        # we can optimize by reducing Python overhead and leveraging NumPy operations
+        
+        # Method: Pre-extract all input slices and use optimized batch calling
+        self._compute_derivatives_optimized(ht, y_temp)
+        
+        # Apply inverse permutation using index-based operation
+        return self._derivatives_temp[self.perm_indices]
 
     @property
-    def vd(self) -> Series[StateVariable]:
+    def vd(self):
         return self._vd
 
 
@@ -520,6 +628,20 @@ class Solver():
     def n_sub_iter(self)->int:
         return self._n_sub_iter
 
+    @property
+    def N_psv(self) -> int:
+        """Number of primary state variables."""
+        return self._N_psv
+
+    @property
+    def N_ssv(self) -> int:
+        """Number of secondary state variables."""
+        return self._N_ssv
+
+    @property
+    def N_sv(self) -> int:
+        """Total number of state variables."""
+        return self._N_sv
 
     @n_sub_iter.setter
     def n_sub_iter(self, value):

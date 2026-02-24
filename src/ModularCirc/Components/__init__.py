@@ -1,4 +1,16 @@
 from .ComponentBase import ComponentBase
+
+# Import the optimized version if Cython HelperRoutines is available
+# Otherwise fall back to the original Numba-JIT version
+try:
+    import ModularCirc.HelperRoutines.HelperRoutinesCython
+    # Cython available - use optimized factories without Numba JIT overhead
+    from ._ComponentFactoriesOptimized import ComponentFunctionFactory, ElastanceFactory
+except ImportError:
+    import ModularCirc.HelperRoutines.HelperRoutines
+    # Cython not available - use original Numba version
+    from ._ComponentFactories import ComponentFunctionFactory, ElastanceFactory
+
 from .HC_constant_elastance import HC_constant_elastance
 from .HC_mixed_elastance import HC_mixed_elastance
 from .HC_mixed_elastance_pp import HC_mixed_elastance_pp

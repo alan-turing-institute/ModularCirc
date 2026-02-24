@@ -172,3 +172,12 @@ cython_debug/
 
 # Ignore vscode settings
 .vscode/
+
+*prof
+
+# Add to .gitignore
+*.c
+*.html
+*.so
+*.pyd
+build/

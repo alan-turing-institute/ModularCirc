@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+include CONTRIBUTING.md
+include pyproject.toml
+include setup.py
+recursive-include src/ModularCirc *.pyx *.pxd
+recursive-include src/ModularCirc *.py

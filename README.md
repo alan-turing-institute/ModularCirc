@@ -69,6 +69,20 @@ pip install ./
 
 This will install the package based on the `pyproject.toml` file specifications.
 
+### Optional: Cython Extensions for Better Performance
+
+The package includes optional Cython extensions that eliminate JIT compilation overhead. **These are built automatically during installation** if a C compiler is available (gcc on Linux, clang on macOS, MSVC on Windows). No extra steps are needed.
+
+If Cython extensions are unavailable, the package silently falls back to a Numba JIT implementation.
+
+**Verify which backend is active:**
+
+```bash
+python build_and_check.py
+```
+
+> **📖 For runtime configuration and developer rebuild instructions, see [INSTALLATION_OPTIONS.md](INSTALLATION_OPTIONS.md)**
+
 
 ## Steps for running basic models
 1. Load the classes for the model of interest and the parameter object used to paramterise the said model:

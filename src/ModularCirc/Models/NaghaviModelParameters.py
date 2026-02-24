@@ -1,4 +1,4 @@
-from ..HelperRoutines import *
+from ..HelperRoutines import activation_function_1, activation_function_2, relu_max
 from .ParametersObject import ParametersObject
 import pandas as pd
 
