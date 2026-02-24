@@ -87,10 +87,10 @@ After installing ModularCirc from source, run:
 # Install with performance optimizations
 pip install ".[performance]"
 
-# Quick build using the provided script
+# Build using the provided script (recommended)
 ./build_cython.sh
 
-# Or manually
+# Or manually (may show a deprecation warning on newer pip)
 python setup.py build_ext --inplace
 ```
 
