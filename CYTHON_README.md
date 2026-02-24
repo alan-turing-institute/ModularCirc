@@ -25,7 +25,7 @@ bash build_cython.sh
 Or manually:
 
 ```bash
-python setup_cython.py build_ext --inplace
+python setup.py build_ext --inplace
 ```
 
 ## Prerequisites
@@ -81,13 +81,13 @@ If compilation fails, check:
 
 1. **Compiler availability**: Ensure you have a C compiler (gcc, clang, or MSVC)
 2. **NumPy headers**: Make sure NumPy is installed: `pip install numpy`
-3. **Cython version**: Use Cython >= 0.29: `pip install --upgrade cython`
+3. **Cython version**: Use Cython >= 3.0: `pip install "cython>=3.0"`
 
 View detailed annotation (optimization opportunities):
 
 ```bash
 # After building, check the generated HTML file
-open src/ModularCirc/HelperRoutines.html
+open src/ModularCirc/HelperRoutines/HelperRoutinesCython.html
 ```
 
 ## Cleanup
