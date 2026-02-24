@@ -12,6 +12,7 @@ import os
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 
+
 # Check environment variable for Cython preference
 use_cython_env = os.environ.get('MODULARCIRC_USE_CYTHON', '1')
 disable_cython = use_cython_env.lower() in ('0', 'false', 'no')
