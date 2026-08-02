@@ -17,6 +17,10 @@ class Valve_simple_bernoulli(ComponentBase):
         self.CQ = CQ
         self.RRA = RRA
 
+    @property
+    def Q(self):
+        return self._Q_i._u
+
     def setup(self) -> None:
         q_i_func = ComponentFunctionFactory.gen_simple_bernoulli_flow(self.CQ, self.RRA)
         self._Q_i.set_u_func(q_i_func, function_name='simple_bernoulli_diode_flow')
